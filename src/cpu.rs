@@ -1,5 +1,4 @@
 use core::panic;
-use std::ops::Add;
 
 use crate::bus::Bus;
 
@@ -16,6 +15,7 @@ pub enum AddressingMode {
     Immediate,
     ZeroPage,
     Absolute,
+    #[allow(dead_code)]
     Implied,
     Indirect
 }
@@ -192,6 +192,40 @@ impl CPU {
                 disasm_str = "TYA".to_string();
                 cycles = 2;
             },
+            0xA0 => {
+                let addr = self.get_operand_address(&AddressingMode::Immediate, bus);
+                let value = bus.read_ram(addr);
+
+                self.reg_y = value;
+                self.update_z_n_flags(self.reg_y);
+
+                instr_bytes = format!("{:02X} {:02X}    ", opcode, value);
+                disasm_str = format!("LDY #${:02X}", value);
+                cycles = 2;
+            },
+            0xA2 => {
+                let addr = self.get_operand_address(&AddressingMode::Immediate, bus);
+                let value = bus.read_ram(addr);
+
+                self.reg_x = value;
+                self.update_z_n_flags(self.reg_x);
+
+                instr_bytes = format!("{:02X} {:02X}    ", opcode, value);
+                disasm_str = format!("LDX #${:02X}", value);
+                cycles = 2;
+            },
+            0xA4 => {
+                let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+                let value = bus.read_ram(addr);
+
+                self.reg_y = value;
+                self.update_z_n_flags(self.reg_y);
+                let op_byte = bus.read_ram(initial_pc + 1);
+
+                instr_bytes = format!("{:02X} {:02X}    ", opcode, op_byte);
+                disasm_str = format!("LDY ${:02X}", op_byte);
+                cycles = 3;
+            },
             0xA5 => {
                 let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
                 let value = bus.read_ram(addr);
@@ -201,6 +235,18 @@ impl CPU {
                 let op_byte = bus.read_ram(initial_pc + 1);
                 instr_bytes = format!("{:02X} {:02X}", opcode, op_byte);
                 disasm_str = format!("LDA ${:02X}", op_byte);
+                cycles = 3;
+            },
+            0xA6 => {
+                let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+                let value = bus.read_ram(addr);
+
+                self.reg_x = value;
+                self.update_z_n_flags(self.reg_x);
+                let op_byte = bus.read_ram(initial_pc + 1);
+
+                instr_bytes = format!("{:02X} {:02X}    ", opcode, op_byte);
+                disasm_str = format!("LDX ${:02X}", op_byte);
                 cycles = 3;
             },
             0xA8 => {
@@ -227,6 +273,19 @@ impl CPU {
                 disasm_str = "TAX".to_string();
                 cycles = 2;
             },
+            0xAC => {
+                let addr = self.get_operand_address(&AddressingMode::Absolute, bus);
+                let value = bus.read_ram(addr);
+
+                self.reg_y = value;
+                self.update_z_n_flags(self.reg_y);
+                let low = bus.read_ram(initial_pc + 1);
+                let high = bus.read_ram(initial_pc + 2);
+
+                instr_bytes = format!("{:02X} {:02X} {:02X}", opcode, low, high);
+                disasm_str = format!("LDY ${:04X}", addr);
+                cycles = 4;
+            },
             0xAD => {
                 let addr = self.get_operand_address(&AddressingMode::Absolute, bus);
                 let value = bus.read_ram(addr);
@@ -238,7 +297,20 @@ impl CPU {
                 instr_bytes = format!("{:02X} {:02X} {:02X}", opcode, low, high);
                 disasm_str = format!("LDA ${:04X}", addr);
                 cycles = 4;
-            }
+            },
+            0xAE => {
+                let addr = self.get_operand_address(&AddressingMode::Absolute, bus);
+                let value = bus.read_ram(addr);
+
+                self.reg_x = value;
+                self.update_z_n_flags(self.reg_x);
+                let low = bus.read_ram(initial_pc + 1);
+                let high = bus.read_ram(initial_pc + 2);
+
+                instr_bytes = format!("{:02X} {:02X} {:02X}", opcode, low, high);
+                disasm_str = format!("LDX ${:04X}", addr);
+                cycles = 4;
+            },
             0xC8 => {
                 self.reg_y = self.reg_y.wrapping_add(1);
                 self.update_z_n_flags(self.reg_y);
@@ -279,7 +351,7 @@ impl CPU {
         let nvdizc_str = format!("{}{}{}{}{}{}", n, v, d, i, z, c);
 
         println!(
-            "{:04X} {:<5}      {:<12} |{:02X} {:02X} {:02X} {:02X}|{}|{}",
+            "{:04X} {:<8}      {:<12} |{:02X} {:02X} {:02X} {:02X}|{}|{}",
             initial_pc,
             instr_bytes,
             disasm_str,
