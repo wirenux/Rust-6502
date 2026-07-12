@@ -48,37 +48,49 @@ impl CPU {
     }
 
     pub fn clock_tick(&mut self, bus: &Bus) -> bool {
+        let initial_pc = self.pc;
         let opcode = bus.read_ram(self.pc);
         self.pc = self.pc + 1;
 
+        let mut keep_running = true;
+        let instr_bytes: String;
+        let disasm_str: String;
+        let cycles: u8;
+
         match opcode {
             0x00 => {
-                println!("Ex: BRK");
-                return false;
+                instr_bytes = format!("{:02X}   ", opcode);
+                disasm_str = "BRK".to_string();
+                cycles = 7;
+                keep_running = false;
             },
             0x88 => {
                 self.reg_y = self.reg_y.wrapping_sub(1);
                 self.update_z_n_flags(self.reg_y);
-                println!("Ex: DEY");
-                return true;
+                instr_bytes = format!("{:02X}   ", opcode);
+                disasm_str = "DEY".to_string();
+                cycles = 2;
             },
             0x8A => {
                 self.reg_a = self.reg_x;
                 self.update_z_n_flags(self.reg_a);
-                println!("Ex: TXA");
-                return true;
+                instr_bytes = format!("{:02X}   ", opcode);
+                disasm_str = "TXA".to_string();
+                cycles = 2;
             },
             0x98 => {
                 self.reg_a = self.reg_y;
                 self.update_z_n_flags(self.reg_a);
-                println!("Ex: TYA");
-                return true;
+                instr_bytes = format!("{:02X}   ", opcode);
+                disasm_str = "TYA".to_string();
+                cycles = 2;
             },
             0xA8 => {
                 self.reg_y = self.reg_a;
                 self.update_z_n_flags(self.reg_y);
-                println!("Ex: TAY");
-                return true;
+                instr_bytes = format!("{:02X}   ", opcode);
+                disasm_str = "TAY".to_string();
+                cycles = 2;
             },
             0xA9 => {
                 let value = bus.read_ram(self.pc);
@@ -86,40 +98,66 @@ impl CPU {
 
                 self.reg_a = value;
                 self.update_z_n_flags(value);
-                println!("Ex: LDA {:#X}", value);
-                return true;
+                instr_bytes = format!("{:02X} {:02X}", opcode, value);
+                disasm_str = format!("LDA #${:02X}", value);
+                cycles = 2;
             },
             0xAA => {
                 self.reg_x = self.reg_a;
                 self.update_z_n_flags(self.reg_x);
-                println!("Ex: TAX");
-                return true;
+                instr_bytes = format!("{:02X}   ", opcode);
+                disasm_str = "TAX".to_string();
+                cycles = 2;
             },
             0xC8 => {
                 self.reg_y = self.reg_y.wrapping_add(1);
                 self.update_z_n_flags(self.reg_y);
-                println!("Ex: INY");
-                return true;
+                instr_bytes = format!("{:02X}   ", opcode);
+                disasm_str = "INY".to_string();
+                cycles = 2;
             },
             0xCA => {
                 self.reg_x = self.reg_x.wrapping_sub(1);
                 self.update_z_n_flags(self.reg_x);
-                println!("Ex: DEX");
-                return true;
+                instr_bytes = format!("{:02X}   ", opcode);
+                disasm_str = "DEX".to_string();
+                cycles = 2;
             },
             0xE8 => {
                 self.reg_x = self.reg_x.wrapping_add(1);
                 self.update_z_n_flags(self.reg_x);
-                println!("Ex: INX");
-                return true;
+                instr_bytes = format!("{:02X}   ", opcode);
+                disasm_str = "INX".to_string();
+                cycles = 2;
             },
             0xEA => {
-                println!("Ex: NOP");
-                return true;
+                instr_bytes = format!("{:02X}   ", opcode);
+                disasm_str = "NOP".to_string();
+                cycles = 2;
             },
             _ => {
                 panic!("Unknow opcode: {:#X} @ {:#X}", opcode, self.pc - 1);
             }
         }
+
+        let n = (self.sr >> 7) & 1;
+        let v = (self.sr >> 6) & 1;
+        let d = (self.sr >> 3) & 1;
+        let i = (self.sr >> 2) & 1;
+        let z = (self.sr >> 1) & 1;
+        let c = (self.sr >> 0) & 1;
+        let nvdizc_str = format!("{}{}{}{}{}{}", n, v, d, i, z, c);
+
+        println!(
+            "{:04X} {:<5}      {:<12} |{:02X} {:02X} {:02X} {:02X}|{}|{}",
+            initial_pc,
+            instr_bytes,
+            disasm_str,
+            self.reg_a, self.reg_x, self.reg_y, self.sp,
+            nvdizc_str,
+            cycles
+        );
+
+        keep_running
     }
 }

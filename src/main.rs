@@ -15,6 +15,9 @@ fn main() {
     bus.write_ram(0xFFFC, 0x00);
     bus.write_ram(0xFFFD, 0x80);
 
+    println!("ADDR HEX        DISASM       |AC XR YR SP|NVDIZC|#");
+    println!("--------------------------------------------------");
+
     cpu.reset_cpu(&bus);
 
     loop {
@@ -22,10 +25,4 @@ fn main() {
             break;
         }
     }
-    println!("\nReg A: {:#X}", cpu.reg_a);
-    println!("Reg X: {:#X}", cpu.reg_x);
-    println!("Reg Y: {:#X}", cpu.reg_y);
-    println!("SP:    {:#X}", cpu.sp);
-    println!("PC:    {:#X}", cpu.pc);
-    println!("SR:    {:#X}", cpu.sr);
 }
