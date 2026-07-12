@@ -1,21 +1,36 @@
-.org $8000 ; say to the assembler code start @ addr 0x8000
+.org $8000
 
 START:
-    LDA #$42
-    LDX #$12
-
-    STA $10
-
+    LDA #$05
+    LDX #$0A
+    LDY #$0F
     TAX
-
-    LDA $15
-
+    TAY
+    TXA
+    TYA
+    INX
+    INY
+    DEX
+    DEY
+    STA $20
+    STX $21
+    STY $22
+    LDA $20
+    LDX $21
+    LDY $22
+    STA $8050
+    LDA $8050
+    NOP
     JMP TARGET
 
-TRAP:
-    NOP
-
 TARGET:
+    JMP (POINTER)
+
+.org $8040
+POINTER:
+    .word FINISH
+
+FINISH:
     BRK
 
 .org $FFFC

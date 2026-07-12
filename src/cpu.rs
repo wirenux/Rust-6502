@@ -94,6 +94,11 @@ impl CPU {
         }
     }
 
+    fn push_stack(&mut self, bus: &mut Bus, value: u8) {
+        bus.write_ram(0x0100 + self.sp as u16, value);
+        self.sp  = self.sp.wrapping_sub(1);
+    }
+
     pub fn clock_tick(&mut self, bus: &mut Bus) -> bool {
         let initial_pc = self.pc;
         let opcode = bus.read_ram(self.pc);
@@ -109,6 +114,18 @@ impl CPU {
                 instr_bytes = format!("{:02X}", opcode);
                 disasm_str = "BRK".to_string();
                 cycles = 7;
+
+                self.push_stack(bus, (self.pc >> 8) as u8);
+                self.push_stack(bus, (self.pc & 0xFF) as u8);
+
+                self.push_stack(bus, self.sr | 0x10);
+
+                self.sr = self.sr | 0x04;
+
+                let low = bus.read_ram(0xFFFE);
+                let high = bus.read_ram(0xFFFF);
+                self.pc = ((high as u16) << 8) | (low as u16);
+
                 keep_running = false;
             },
             0x4C => {
