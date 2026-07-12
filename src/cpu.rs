@@ -106,7 +106,7 @@ impl CPU {
 
         match opcode {
             0x00 => {
-                instr_bytes = format!("{:02X}   ", opcode);
+                instr_bytes = format!("{:02X}", opcode);
                 disasm_str = "BRK".to_string();
                 cycles = 7;
                 keep_running = false;
@@ -163,14 +163,14 @@ impl CPU {
             0x88 => {
                 self.reg_y = self.reg_y.wrapping_sub(1);
                 self.update_z_n_flags(self.reg_y);
-                instr_bytes = format!("{:02X}   ", opcode);
+                instr_bytes = format!("{:02X}", opcode);
                 disasm_str = "DEY".to_string();
                 cycles = 2;
             },
             0x8A => {
                 self.reg_a = self.reg_x;
                 self.update_z_n_flags(self.reg_a);
-                instr_bytes = format!("{:02X}   ", opcode);
+                instr_bytes = format!("{:02X}", opcode);
                 disasm_str = "TXA".to_string();
                 cycles = 2;
             },
@@ -188,7 +188,7 @@ impl CPU {
             0x98 => {
                 self.reg_a = self.reg_y;
                 self.update_z_n_flags(self.reg_a);
-                instr_bytes = format!("{:02X}   ", opcode);
+                instr_bytes = format!("{:02X}", opcode);
                 disasm_str = "TYA".to_string();
                 cycles = 2;
             },
@@ -199,7 +199,7 @@ impl CPU {
                 self.reg_y = value;
                 self.update_z_n_flags(self.reg_y);
 
-                instr_bytes = format!("{:02X} {:02X}    ", opcode, value);
+                instr_bytes = format!("{:02X} {:02X}", opcode, value);
                 disasm_str = format!("LDY #${:02X}", value);
                 cycles = 2;
             },
@@ -210,7 +210,7 @@ impl CPU {
                 self.reg_x = value;
                 self.update_z_n_flags(self.reg_x);
 
-                instr_bytes = format!("{:02X} {:02X}    ", opcode, value);
+                instr_bytes = format!("{:02X} {:02X}", opcode, value);
                 disasm_str = format!("LDX #${:02X}", value);
                 cycles = 2;
             },
@@ -222,7 +222,7 @@ impl CPU {
                 self.update_z_n_flags(self.reg_y);
                 let op_byte = bus.read_ram(initial_pc + 1);
 
-                instr_bytes = format!("{:02X} {:02X}    ", opcode, op_byte);
+                instr_bytes = format!("{:02X} {:02X}", opcode, op_byte);
                 disasm_str = format!("LDY ${:02X}", op_byte);
                 cycles = 3;
             },
@@ -245,14 +245,14 @@ impl CPU {
                 self.update_z_n_flags(self.reg_x);
                 let op_byte = bus.read_ram(initial_pc + 1);
 
-                instr_bytes = format!("{:02X} {:02X}    ", opcode, op_byte);
+                instr_bytes = format!("{:02X} {:02X}", opcode, op_byte);
                 disasm_str = format!("LDX ${:02X}", op_byte);
                 cycles = 3;
             },
             0xA8 => {
                 self.reg_y = self.reg_a;
                 self.update_z_n_flags(self.reg_y);
-                instr_bytes = format!("{:02X}   ", opcode);
+                instr_bytes = format!("{:02X}", opcode);
                 disasm_str = "TAY".to_string();
                 cycles = 2;
             },
@@ -269,7 +269,7 @@ impl CPU {
             0xAA => {
                 self.reg_x = self.reg_a;
                 self.update_z_n_flags(self.reg_x);
-                instr_bytes = format!("{:02X}   ", opcode);
+                instr_bytes = format!("{:02X}", opcode);
                 disasm_str = "TAX".to_string();
                 cycles = 2;
             },
@@ -314,26 +314,26 @@ impl CPU {
             0xC8 => {
                 self.reg_y = self.reg_y.wrapping_add(1);
                 self.update_z_n_flags(self.reg_y);
-                instr_bytes = format!("{:02X}   ", opcode);
+                instr_bytes = format!("{:02X}", opcode);
                 disasm_str = "INY".to_string();
                 cycles = 2;
             },
             0xCA => {
                 self.reg_x = self.reg_x.wrapping_sub(1);
                 self.update_z_n_flags(self.reg_x);
-                instr_bytes = format!("{:02X}   ", opcode);
+                instr_bytes = format!("{:02X}", opcode);
                 disasm_str = "DEX".to_string();
                 cycles = 2;
             },
             0xE8 => {
                 self.reg_x = self.reg_x.wrapping_add(1);
                 self.update_z_n_flags(self.reg_x);
-                instr_bytes = format!("{:02X}   ", opcode);
+                instr_bytes = format!("{:02X}", opcode);
                 disasm_str = "INX".to_string();
                 cycles = 2;
             },
             0xEA => {
-                instr_bytes = format!("{:02X}   ", opcode);
+                instr_bytes = format!("{:02X}", opcode);
                 disasm_str = "NOP".to_string();
                 cycles = 2;
             },
@@ -351,7 +351,7 @@ impl CPU {
         let nvdizc_str = format!("{}{}{}{}{}{}", n, v, d, i, z, c);
 
         println!(
-            "{:04X} {:<8}      {:<12} |{:02X} {:02X} {:02X} {:02X}|{}|{}",
+            "{:04X}  {:<8}  {:<12} | {:02X} {:02X} {:02X} {:02X} | {} | {}",
             initial_pc,
             instr_bytes,
             disasm_str,

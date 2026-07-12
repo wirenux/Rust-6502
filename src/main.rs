@@ -15,8 +15,8 @@ fn main() {
     bus.write_ram(0xFFFC, 0x00);
     bus.write_ram(0xFFFD, 0x80);
 
-    println!("ADDR HEX        DISASM       |AC XR YR SP|NVDIZC|#");
-    println!("--------------------------------------------------");
+    println!("ADDR  HEX       DISASM       | AC XR YR SP | NVDIZC | #");
+    println!("-------------------------------------------------------");
 
     cpu.reset_cpu(&bus);
 
