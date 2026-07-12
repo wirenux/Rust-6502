@@ -8,7 +8,7 @@ fn main() {
     let mut bus = Bus::new();
     let mut cpu = CPU::new();
 
-    let file_byte = std::fs::read("program.bin").expect("Failed to read program.bin");
+    let file_byte = std::fs::read("build/asm/program.bin").expect("Failed to read program.bin");
 
     bus.load_program(0x8000, &file_byte);
 

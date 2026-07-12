@@ -47,12 +47,19 @@ impl CPU {
         }
     }
 
-    pub fn clock_tick(&mut self, bus: &Bus) {
+    pub fn clock_tick(&mut self, bus: &Bus) -> bool {
         let opcode = bus.read_ram(self.pc);
         self.pc = self.pc + 1;
 
         match opcode {
-            0xEA => println!("Ex: NOP"),
+            0x00 => {
+                println!("Ex: BRK");
+                return false;
+            },
+            0xEA => {
+                println!("Ex: NOP");
+                return true;
+            },
             0xA9 => {
                 let value = bus.read_ram(self.pc);
                 self.pc = self.pc + 1;
@@ -60,11 +67,13 @@ impl CPU {
                 self.reg_a = value;
                 self.update_z_n_flags(value);
                 println!("Ex: LDA {}", value);
+                return true;
             },
             0xAA => {
                 self.reg_x = self.reg_a;
                 self.update_z_n_flags(self.reg_y);
-                println!("Ex: TAX")
+                println!("Ex: TAX");
+                return true;
             },
             _ => {
                 panic!("Unknow opcode: {:#X} @ {:#X}", opcode, self.pc - 1);
