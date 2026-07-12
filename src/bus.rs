@@ -16,4 +16,13 @@ impl Bus {
     pub fn write_ram(&mut self, addr: u16, data: u8) {
         self.ram[addr as usize] = data;
     }
+
+    pub fn load_program(&mut self, start_addr: u16, data: &Vec<u8>) {
+        let mut current_addr = start_addr as usize;
+
+        for byte in data {
+            self.ram[current_addr] = *byte;
+            current_addr = current_addr + 1;
+        }
+    }
 }
