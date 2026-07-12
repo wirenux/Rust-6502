@@ -56,8 +56,28 @@ impl CPU {
                 println!("Ex: BRK");
                 return false;
             },
-            0xEA => {
-                println!("Ex: NOP");
+            0x88 => {
+                self.reg_y = self.reg_y - 1;
+                self.update_z_n_flags(self.reg_y);
+                println!("Ex: DEY");
+                return true;
+            },
+            0x8A => {
+                self.reg_a = self.reg_x;
+                self.update_z_n_flags(self.reg_a);
+                println!("Ex: TXA");
+                return true;
+            },
+            0x98 => {
+                self.reg_a = self.reg_y;
+                self.update_z_n_flags(self.reg_a);
+                println!("Ex: TYA");
+                return true;
+            },
+            0xA8 => {
+                self.reg_y = self.reg_a;
+                self.update_z_n_flags(self.reg_y);
+                println!("Ex: TAY");
                 return true;
             },
             0xA9 => {
@@ -66,13 +86,35 @@ impl CPU {
 
                 self.reg_a = value;
                 self.update_z_n_flags(value);
-                println!("Ex: LDA {}", value);
+                println!("Ex: LDA {:#X}", value);
                 return true;
             },
             0xAA => {
                 self.reg_x = self.reg_a;
-                self.update_z_n_flags(self.reg_y);
+                self.update_z_n_flags(self.reg_x);
                 println!("Ex: TAX");
+                return true;
+            },
+            0xC8 => {
+                self.reg_y = self.reg_y + 1;
+                self.update_z_n_flags(self.reg_y);
+                println!("Ex: INY");
+                return true;
+            },
+            0xCA => {
+                self.reg_x = self.reg_x - 1;
+                self.update_z_n_flags(self.reg_x);
+                println!("Ex: DEX");
+                return true;
+            },
+            0xE8 => {
+                self.reg_x = self.reg_x + 1;
+                self.update_z_n_flags(self.reg_x);
+                println!("Ex: INX");
+                return true;
+            },
+            0xEA => {
+                println!("Ex: NOP");
                 return true;
             },
             _ => {

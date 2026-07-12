@@ -18,6 +18,14 @@ fn main() {
     cpu.reset_cpu(&bus);
 
     loop {
-        cpu.clock_tick(&bus);
+        if !cpu.clock_tick(&bus) {
+            break;
+        }
     }
+    println!("\nReg A: {:#X}", cpu.reg_a);
+    println!("Reg X: {:#X}", cpu.reg_x);
+    println!("Reg Y: {:#X}", cpu.reg_y);
+    println!("SP:    {:#X}", cpu.sp);
+    println!("PC:    {:#X}", cpu.pc);
+    println!("SR:    {:#X}", cpu.sr);
 }
