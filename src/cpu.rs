@@ -99,6 +99,33 @@ impl CPU {
         self.sp  = self.sp.wrapping_sub(1);
     }
 
+    fn adc(&mut self, value: u8) {
+        let carry = (self.sr & 0x01) as u16;
+        let a_u16 = self.reg_a as u16;
+        let val_u16 = value as u16;
+
+        let sum = a_u16 + val_u16 + carry;
+
+        if sum > 0xFF {
+            self.sr |= 0x01;
+        } else {
+            self.sr &= !0x01;
+        }
+
+        let result = (sum & 0xFF) as u8;
+
+        let overflow = (!((self.reg_a ^ value) as u16) & ((self.reg_a as u16 ^ result as u16)) & 0x80) != 0;
+
+        if overflow {
+            self.sr |= 0x40;
+        } else {
+            self.sr &= !0x40;
+        }
+
+        self.reg_a = result;
+        self.update_z_n_flags(self.reg_a);
+    }
+
     pub fn clock_tick(&mut self, bus: &mut Bus) -> bool {
         let initial_pc = self.pc;
         let opcode = bus.read_ram(self.pc);
@@ -128,6 +155,20 @@ impl CPU {
 
                 keep_running = false;
             },
+            0x18 => {
+                self.sr &= !0x01;
+
+                instr_bytes = format!("{:02X}", opcode);
+                disasm_str = "CLC".to_string();
+                cycles = 2;
+            },
+            0x38 => {
+                self.sr |= 0x01;
+
+                instr_bytes = format!("{:02X}", opcode);
+                disasm_str = "SEC".to_string();
+                cycles = 2;
+            },
             0x4C => {
                 let target_addr = self.get_operand_address(&AddressingMode::Absolute, bus);
 
@@ -138,6 +179,24 @@ impl CPU {
                 instr_bytes = format!("{:02X} {:02X} {:02X}", opcode, low, high);
                 disasm_str = format!("JMP ${:04X}", target_addr);
                 cycles = 3;
+            },
+            0x65 => {
+                let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+                let value = bus.read_ram(addr);
+                self.adc(value);
+
+                instr_bytes = format!("{:02X} {:02X}", opcode, value);
+                disasm_str = format!("ADC ${:02X}", value);
+                cycles = 2;
+            },
+            0x69 => {
+                let value = bus.read_ram(self.pc);
+                self.pc += 1;
+                self.adc(value);
+
+                instr_bytes = format!("{:02X} {:02X}", opcode, value);
+                disasm_str = format!("ADC #${:02X}", value);
+                cycles = 2;
             },
             0x6C => {
                 let target_addr = self.get_operand_address(&AddressingMode::Indirect, bus);

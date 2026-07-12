@@ -1,37 +1,13 @@
 .org $8000
 
 START:
-    LDA #$05
-    LDX #$0A
-    LDY #$0F
-    TAX
-    TAY
-    TXA
-    TYA
-    INX
-    INY
-    DEX
-    DEY
-    STA $20
-    STX $21
-    STY $22
-    LDA $20
-    LDX $21
-    LDY $22
-    STA $8050
-    LDA $8050
-    NOP
-    JMP TARGET
+    LDA #$05     ; A = 5
+    ADC #$03     ; 5 + 3 = 8 (No flags set)
 
-TARGET:
-    JMP (POINTER)
+    LDA #$FF     ; A = 255
+    ADC #$01     ; 255 + 1 = 0 (Carry flag set)
 
-.org $8040
-POINTER:
-    .word FINISH
+    LDA #$40     ; A = 64
+    ADC #$40     ; 64 + 64 = 128 (V (Overflow) flag set, Result is Negative)
 
-FINISH:
     BRK
-
-.org $FFFC
-    .word START
