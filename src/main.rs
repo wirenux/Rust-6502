@@ -21,7 +21,7 @@ fn main() {
     cpu.reset_cpu(&bus);
 
     loop {
-        if !cpu.clock_tick(&bus) {
+        if !cpu.clock_tick(&mut bus) {
             break;
         }
     }

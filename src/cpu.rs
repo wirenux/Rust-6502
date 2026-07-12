@@ -1,4 +1,5 @@
 use core::panic;
+use std::ops::Add;
 
 use crate::bus::Bus;
 
@@ -15,7 +16,8 @@ pub enum AddressingMode {
     Immediate,
     ZeroPage,
     Absolute,
-    Implied
+    Implied,
+    Indirect
 }
 
 impl CPU {
@@ -56,7 +58,7 @@ impl CPU {
         }
     }
 
-    fn get_operand_address(&mut self, mode: &AddressingMode, bus: &Bus) -> u16 {
+    fn get_operand_address(&mut self, mode: &AddressingMode, bus: &mut Bus) -> u16 {
         match mode {
             AddressingMode::Immediate => {
                 let addr = self.pc;
@@ -76,11 +78,23 @@ impl CPU {
             },
             AddressingMode::Implied => {
                 0
+            },
+            AddressingMode::Indirect => {
+                let ptr = self.get_operand_address(&AddressingMode::Absolute, bus);
+
+                let low = bus.read_ram(ptr) as u16;
+                let high = if (ptr & 0x00FF) == 0x00FF {
+                    bus.read_ram(ptr & 0xFF00) as u16
+                } else {
+                    bus.read_ram(ptr + 1) as u16
+                };
+
+                (high << 8) | low
             }
         }
     }
 
-    pub fn clock_tick(&mut self, bus: &Bus) -> bool {
+    pub fn clock_tick(&mut self, bus: &mut Bus) -> bool {
         let initial_pc = self.pc;
         let opcode = bus.read_ram(self.pc);
         self.pc = self.pc + 1;
@@ -97,6 +111,55 @@ impl CPU {
                 cycles = 7;
                 keep_running = false;
             },
+            0x4C => {
+                let target_addr = self.get_operand_address(&AddressingMode::Absolute, bus);
+
+                self.pc = target_addr;
+
+                let low = bus.read_ram(initial_pc + 1);
+                let high = bus.read_ram(initial_pc + 2);
+                instr_bytes = format!("{:02X} {:02X} {:02X}", opcode, low, high);
+                disasm_str = format!("JMP ${:04X}", target_addr);
+                cycles = 3;
+            },
+            0x6C => {
+                let target_addr = self.get_operand_address(&AddressingMode::Indirect, bus);
+
+                self.pc = target_addr;
+
+                let low = bus.read_ram(initial_pc + 1);
+                let high = bus.read_ram(initial_pc + 2);
+                instr_bytes = format!("{:02X} {:02X} {:02X}", opcode, low, high);
+                disasm_str = format!("JMP (${:02X}{:02X})", high, low);
+                cycles = 5;
+            },
+            0x84 => {
+                let target_addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+                bus.write_ram(target_addr, self.reg_y);
+
+                let op_byte = bus.read_ram(initial_pc + 1);
+                instr_bytes = format!("{:02X} {:02X}", opcode, op_byte);
+                disasm_str = format!("STY ${:02X}", op_byte);
+                cycles = 3;
+            },
+            0x85 => {
+                let target_addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+                bus.write_ram(target_addr, self.reg_a);
+
+                let op_byte = bus.read_ram(initial_pc + 1);
+                instr_bytes = format!("{:02X} {:02X}", opcode, op_byte);
+                disasm_str = format!("STA ${:02X}", op_byte);
+                cycles = 3;
+            },
+            0x86 => {
+                let target_addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+                bus.write_ram(target_addr, self.reg_x);
+
+                let op_byte = bus.read_ram(initial_pc + 1);
+                instr_bytes = format!("{:02X} {:02X}", opcode, op_byte);
+                disasm_str = format!("STX ${:02X}", op_byte);
+                cycles = 3;
+            },
             0x88 => {
                 self.reg_y = self.reg_y.wrapping_sub(1);
                 self.update_z_n_flags(self.reg_y);
@@ -110,6 +173,17 @@ impl CPU {
                 instr_bytes = format!("{:02X}   ", opcode);
                 disasm_str = "TXA".to_string();
                 cycles = 2;
+            },
+            0x8D => {
+                let target_addr = self.get_operand_address(&AddressingMode::Absolute, bus);
+                bus.write_ram(target_addr, self.reg_a);
+
+                let low = bus.read_ram(initial_pc + 1);
+                let high = bus.read_ram(initial_pc + 2);
+
+                instr_bytes = format!("{:02X} {:02X} {:02X}", opcode, low, high);
+                disasm_str = format!("STA ${:04X}", target_addr);
+                cycles = 4;
             },
             0x98 => {
                 self.reg_a = self.reg_y;
