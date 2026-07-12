@@ -57,7 +57,7 @@ impl CPU {
                 return false;
             },
             0x88 => {
-                self.reg_y = self.reg_y - 1;
+                self.reg_y = self.reg_y.wrapping_sub(1);
                 self.update_z_n_flags(self.reg_y);
                 println!("Ex: DEY");
                 return true;
@@ -96,19 +96,19 @@ impl CPU {
                 return true;
             },
             0xC8 => {
-                self.reg_y = self.reg_y + 1;
+                self.reg_y = self.reg_y.wrapping_add(1);
                 self.update_z_n_flags(self.reg_y);
                 println!("Ex: INY");
                 return true;
             },
             0xCA => {
-                self.reg_x = self.reg_x - 1;
+                self.reg_x = self.reg_x.wrapping_sub(1);
                 self.update_z_n_flags(self.reg_x);
                 println!("Ex: DEX");
                 return true;
             },
             0xE8 => {
-                self.reg_x = self.reg_x + 1;
+                self.reg_x = self.reg_x.wrapping_add(1);
                 self.update_z_n_flags(self.reg_x);
                 println!("Ex: INX");
                 return true;
