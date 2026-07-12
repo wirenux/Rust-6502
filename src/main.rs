@@ -13,19 +13,21 @@ fn main() {
 
     // LDA #$42
     bus.write_ram(0x8000, 0xA9);
-    bus.write_ram(0x8001, 0x42); // 0x42 -> 66 (decimal)
+    bus.write_ram(0x8001, 0x42);
 
-    // LDA #$00
-    bus.write_ram(0x8002, 0xA9);
-    bus.write_ram(0x8003, 0x00);
+    // TAX
+    bus.write_ram(0x8002, 0xAA);
 
     // NOP
-    bus.write_ram(0x8004, 0xEA);
+    bus.write_ram(0x8003, 0xEA);
 
     cpu.reset_cpu(&bus);
-    println!("PC: {:#X} | SR: {:#X}\n", cpu.pc, cpu.sr);
 
     cpu.clock_tick(&bus);
     cpu.clock_tick(&bus);
     cpu.clock_tick(&bus);
+
+    println!("Reg A: {:#X}", cpu.reg_a);
+    println!("Reg X: {:#X}", cpu.reg_x);
+    println!("SR:    {:#X}", cpu.sr);
 }

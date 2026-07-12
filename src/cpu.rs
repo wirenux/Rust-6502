@@ -62,7 +62,7 @@ impl CPU {
                 println!("Ex: LDA {}", value);
             },
             0xAA => {
-                self.reg_a = self.reg_x;
+                self.reg_x = self.reg_a;
                 self.update_z_n_flags(self.reg_y);
                 println!("Ex: TAX")
             },
