@@ -61,6 +61,11 @@ impl CPU {
                 self.update_z_n_flags(value);
                 println!("Ex: LDA {}", value);
             },
+            0xAA => {
+                self.reg_a = self.reg_x;
+                self.update_z_n_flags(self.reg_y);
+                println!("Ex: TAX")
+            },
             _ => {
                 panic!("Unknow opcode: {:#X} @ {:#X}", opcode, self.pc - 1);
             }
