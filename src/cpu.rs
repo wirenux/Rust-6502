@@ -1,3 +1,5 @@
+use core::panic;
+
 use crate::bus::Bus;
 
 pub struct CPU {
@@ -7,6 +9,13 @@ pub struct CPU {
     pub sp: u8,
     pub pc: u16,
     pub sr: u8,
+}
+
+pub enum AddressingMode {
+    Immediate,
+    ZeroPage,
+    Absolute,
+    Implied
 }
 
 impl CPU {
@@ -44,6 +53,30 @@ impl CPU {
             self.sr = self.sr | 0x80;
         } else {
             self.sr = self.sr & 0x7F;
+        }
+    }
+
+    fn get_operand_address(&mut self, mode: &AddressingMode, bus: &Bus) -> u16 {
+        match mode {
+            AddressingMode::Immediate => {
+                let addr = self.pc;
+                self.pc = self.pc + 1;
+                addr
+            },
+            AddressingMode::ZeroPage => {
+                let addr = bus.read_ram(self.pc) as u16;
+                self.pc = self.pc + 1;
+                addr
+            },
+            AddressingMode::Absolute => {
+                let low = bus.read_ram(self.pc) as u16;
+                let high = bus.read_ram(self.pc + 1) as u16;
+                self.pc = self.pc + 2;
+                (high << 8) | low
+            },
+            AddressingMode::Implied => {
+                0
+            }
         }
     }
 
@@ -85,6 +118,17 @@ impl CPU {
                 disasm_str = "TYA".to_string();
                 cycles = 2;
             },
+            0xA5 => {
+                let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+                let value = bus.read_ram(addr);
+
+                self.reg_a = value;
+                self.update_z_n_flags(value);
+                let op_byte = bus.read_ram(initial_pc + 1);
+                instr_bytes = format!("{:02X} {:02X}", opcode, op_byte);
+                disasm_str = format!("LDA ${:02X}", op_byte);
+                cycles = 3;
+            },
             0xA8 => {
                 self.reg_y = self.reg_a;
                 self.update_z_n_flags(self.reg_y);
@@ -93,8 +137,8 @@ impl CPU {
                 cycles = 2;
             },
             0xA9 => {
-                let value = bus.read_ram(self.pc);
-                self.pc = self.pc + 1;
+                let addr = self.get_operand_address(&AddressingMode::Immediate, bus);
+                let value = bus.read_ram(addr);
 
                 self.reg_a = value;
                 self.update_z_n_flags(value);
@@ -109,6 +153,18 @@ impl CPU {
                 disasm_str = "TAX".to_string();
                 cycles = 2;
             },
+            0xAD => {
+                let addr = self.get_operand_address(&AddressingMode::Absolute, bus);
+                let value = bus.read_ram(addr);
+
+                self.reg_a = value;
+                self.update_z_n_flags(value);
+                let low = bus.read_ram(initial_pc + 1);
+                let high = bus.read_ram(initial_pc + 2);
+                instr_bytes = format!("{:02X} {:02X} {:02X}", opcode, low, high);
+                disasm_str = format!("LDA ${:04X}", addr);
+                cycles = 4;
+            }
             0xC8 => {
                 self.reg_y = self.reg_y.wrapping_add(1);
                 self.update_z_n_flags(self.reg_y);
