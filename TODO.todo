@@ -1,0 +1,12 @@
+- [ ] refractor every opcode into function like this : ```rust
+fn finish_instr(&self, opcode: u8, instr_bytes: String, disasm: String, cycles: u8) {
+
+}
+
+match opcode {
+    0x69 => self.adc_immediate(bus, opcode),
+    0x65 => self.adc_zeropage(bus, opcode),
+    0x4C => self.jmp_absolute(bus, opcode),
+    // ...
+}
+```

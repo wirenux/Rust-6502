@@ -1,6 +1,6 @@
 use core::panic;
 
-use crate::bus::Bus;
+use crate::bus::{self, Bus};
 
 pub struct CPU {
     pub reg_a: u8,
@@ -21,6 +21,11 @@ pub enum AddressingMode {
 }
 
 impl CPU {
+    pub const ZERO_FLAG: u8 = 0x02;
+    pub const CARRY_FLAG: u8 = 0x01;
+    pub const NEGATIVE_FLAG: u8 = 0x80;
+    pub const OVERFLOW_FLAG: u8 = 0x40;
+
     pub fn new() -> Self {
         CPU {
             reg_a: 0,
@@ -99,6 +104,10 @@ impl CPU {
         self.sp  = self.sp.wrapping_sub(1);
     }
 
+    fn get_flag(&self, mask: u8) -> bool {
+        (self.sr & mask) != 0
+    }
+
     fn adc(&mut self, value: u8) {
         let carry = (self.sr & 0x01) as u16;
         let a_u16 = self.reg_a as u16;
@@ -124,6 +133,18 @@ impl CPU {
 
         self.reg_a = result;
         self.update_z_n_flags(self.reg_a);
+    }
+
+    fn adc_immediate(&mut self, bus: &mut Bus, opcode: u8) -> (String, String, u8) {
+        let value = bus.read_ram(self.pc);
+        self.pc += 1;
+        self.adc(value);
+
+        let instr_bytes = format!("{:02X} {:02X}", opcode, value);
+        let disasm_str = format!("ADC #${:02X}", value);
+        let cycles = 2;
+
+        (instr_bytes, disasm_str, cycles)
     }
 
     fn sbc(&mut self, value: u8) {
@@ -195,13 +216,10 @@ impl CPU {
                 cycles = 2;
             },
             0x69 => {
-                let value = bus.read_ram(self.pc);
-                self.pc += 1;
-                self.adc(value);
-
-                instr_bytes = format!("{:02X} {:02X}", opcode, value);
-                disasm_str = format!("ADC #${:02X}", value);
-                cycles = 2;
+                let (ib, ds, cyc) = self.adc_immediate(bus, opcode);
+                instr_bytes = ib;
+                disasm_str = ds;
+                cycles = cyc;
             },
             0x6C => {
                 let target_addr = self.get_operand_address(&AddressingMode::Indirect, bus);
@@ -406,6 +424,18 @@ impl CPU {
                 disasm_str = "DEX".to_string();
                 cycles = 2;
             },
+            0xD0 => {
+                let offset = bus.read_ram(self.pc) as i8;
+                self.pc += 1;
+
+                if !self.get_flag(CPU::ZERO_FLAG) {
+                    self.pc = (self.pc as i16 + offset as i16) as u16;
+                }
+                cycles = 2;
+
+                instr_bytes = format!("{:02X}", opcode);
+                disasm_str = format!("BNE");
+            },
             0xE5 => {
                 let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
                 let value = bus.read_ram(addr);
@@ -435,6 +465,18 @@ impl CPU {
                 instr_bytes = format!("{:02X}", opcode);
                 disasm_str = "NOP".to_string();
                 cycles = 2;
+            },
+            0xF0 => {
+                let offset = bus.read_ram(self.pc) as i8;
+                self.pc += 1;
+
+                if self.get_flag(CPU::ZERO_FLAG) {
+                    self.pc = (self.pc as i16 + offset as i16) as u16;
+                }
+                cycles = 2;
+
+                instr_bytes = format!("{:02X}", opcode);
+                disasm_str = format!("BEQ");
             },
             _ => {
                 panic!("Unknow opcode: {:#X} @ {:#X}", opcode, self.pc - 1);
