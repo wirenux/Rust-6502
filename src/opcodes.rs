@@ -266,7 +266,7 @@ pub fn nop(cpu: &mut CPU, opcode: u8) {
     cpu.set_instr(format!("{:02X}", opcode), "NOP".to_string(), 2);
 }
 
-pub fn rst(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+pub fn rts(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let low = cpu.pop_stack(bus) as u16;
     let high = cpu.pop_stack(bus) as u16;
 

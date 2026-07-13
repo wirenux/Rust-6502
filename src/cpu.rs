@@ -170,7 +170,7 @@ impl CPU {
             },
             0x38 => opcodes::sec(self, opcode),
             0x4C => opcodes::jmp_absolute(self, bus, opcode),
-            0x60 => opcodes::rst(self, bus, opcode),
+            0x60 => opcodes::rts(self, bus, opcode),
             0x65 => opcodes::adc_zeropage(self, bus, opcode),
             0x69 => opcodes::adc_immediate(self, bus, opcode),
             0x6C => opcodes::jmp_indirect(self, bus, opcode),
