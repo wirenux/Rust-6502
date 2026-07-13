@@ -183,19 +183,27 @@ impl CPU {
                 opcodes::brk(self, bus, opcode);
                 keep_running = false;
             },
+            0x06 => opcodes::asl_memory(self, bus, &AddressingMode::ZeroPage, opcode),
             0x09 => opcodes::ora_immediate(self, bus, opcode),
             0x0A => opcodes::asl_accumulator(self, opcode),
+            0x0E => opcodes::asl_memory(self, bus, &AddressingMode::Absolute, opcode),
+            0x16 => opcodes::asl_memory(self, bus, &AddressingMode::ZeroPageX, opcode),
             0x18 => opcodes::clc(self, opcode),
+            0x1E => opcodes::asl_memory(self, bus, &AddressingMode::AbsoluteX, opcode),
             0x20 => {
                 let addr = self.get_operand_address(&AddressingMode::Absolute, bus);
                 opcodes::jsr(self, bus, opcode, addr);
             },
             0x29 => opcodes::and_immediate(self, bus, opcode),
             0x38 => opcodes::sec(self, opcode),
+            0x46 => opcodes::lsr_memory(self, bus, &AddressingMode::ZeroPage, opcode),
             0x48 => opcodes::pha(self, bus, opcode),
             0x49 => opcodes::eor_immediate(self, bus, opcode),
-            0x4C => opcodes::jmp_absolute(self, bus, opcode),
             0x4A => opcodes::lsr_accumulator(self, opcode),
+            0x4C => opcodes::jmp_absolute(self, bus, opcode),
+            0x4E => opcodes::lsr_memory(self, bus, &AddressingMode::Absolute, opcode),
+            0x56 => opcodes::lsr_memory(self, bus, &AddressingMode::ZeroPageX, opcode),
+            0x5E => opcodes::lsr_memory(self, bus, &AddressingMode::AbsoluteX, opcode),
             0x60 => opcodes::rts(self, bus, opcode),
             0x65 => opcodes::adc_zeropage(self, bus, opcode),
             0x68 => opcodes::pla(self, bus, opcode),

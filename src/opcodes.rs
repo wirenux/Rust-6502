@@ -44,6 +44,25 @@ pub fn asl_accumulator(cpu: &mut CPU, opcode: u8) {
     cpu.set_instr(format!("{:02X}", opcode), "ASL A".to_string(), 2);
 }
 
+pub fn asl_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u8) {
+    let addr = cpu.get_operand_address(mode, bus);
+    let mut value = bus.read_ram(addr);
+
+    if (value & 0x80) != 0 {
+        cpu.sr |= CPU::CARRY_FLAG; // set CARRY_FLAG to 1
+    } else {
+        cpu.sr &= !CPU::CARRY_FLAG;
+    }
+
+    value = value << 1; // shit to left
+
+    bus.write_ram(addr, value);
+
+    cpu.update_z_n_flags(value);
+
+    cpu.set_instr(format!("{:02X}", opcode), "ASL".to_string(), 5);
+}
+
 pub fn beq(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let offset = bus.read_ram(cpu.pc) as i8;
     cpu.pc += 1;
@@ -321,11 +340,30 @@ pub fn lsr_accumulator(cpu: &mut CPU, opcode: u8) {
         cpu.sr &= !CPU::CARRY_FLAG;
     }
 
-    cpu.reg_a = cpu.reg_a >> 1; // shift to the left
+    cpu.reg_a = cpu.reg_a >> 1; // shift to the right
 
     cpu.update_z_n_flags(cpu.reg_a);
 
     cpu.set_instr(format!("{:02X}", opcode), "LSR A".to_string(), 2);
+}
+
+pub fn lsr_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u8) {
+    let addr = cpu.get_operand_address(mode, bus);
+    let mut value = bus.read_ram(addr);
+
+    if (value & 0x01) != 0 {
+        cpu.sr |= CPU::CARRY_FLAG;
+    } else {
+        cpu.sr &= !CPU::CARRY_FLAG;
+    }
+
+    value = value >> 1; // shift to the right
+
+    bus.write_ram(addr, value);
+
+    cpu.update_z_n_flags(value);
+
+    cpu.set_instr(format!("{:02X}", opcode), "LSR".to_string(), 5);
 }
 
 pub fn nop(cpu: &mut CPU, opcode: u8) {
