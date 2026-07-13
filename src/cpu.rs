@@ -104,6 +104,11 @@ impl CPU {
         self.sp  = self.sp.wrapping_sub(1);
     }
 
+    pub(crate) fn pop_stack(&mut self, bus: &Bus) -> u8 {
+        self.sp = self.sp.wrapping_add(1);
+        bus.read_ram(0x0100 + self.sp as u16)
+    }
+
     pub(crate) fn get_flag(&self, mask: u8) -> bool {
         (self.sr & mask) != 0
     }
@@ -159,8 +164,13 @@ impl CPU {
                 keep_running = false;
             },
             0x18 => opcodes::clc(self, opcode),
+            0x20 => {
+                let addr = self.get_operand_address(&AddressingMode::Absolute, bus);
+                opcodes::jsr(self, bus, opcode, addr);
+            },
             0x38 => opcodes::sec(self, opcode),
             0x4C => opcodes::jmp_absolute(self, bus, opcode),
+            0x60 => opcodes::rst(self, bus, opcode),
             0x65 => opcodes::adc_zeropage(self, bus, opcode),
             0x69 => opcodes::adc_immediate(self, bus, opcode),
             0x6C => opcodes::jmp_indirect(self, bus, opcode),

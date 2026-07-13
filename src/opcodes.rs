@@ -144,6 +144,19 @@ pub fn jmp_indirect(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, ptr_low, ptr_high), format!("JMP (${:04X})", ptr), 5);
 }
 
+pub fn jsr(cpu: &mut CPU, bus: &mut Bus, opcode: u8, target_addr: u16) {
+    let return_addr = cpu.pc.wrapping_sub(1);
+
+    cpu.push_stack(bus, (return_addr >> 8) as u8);
+    cpu.push_stack(bus, (return_addr & 0xFF) as u8);
+
+    cpu.pc = target_addr;
+
+    let low = (target_addr & 0xFF) as u8;
+    let high = (target_addr >> 8) as u8;
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("JSR ${:04X}", target_addr), 6);
+}
+
 pub fn lda_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::Absolute, bus);
     let value = bus.read_ram(addr);
@@ -251,6 +264,17 @@ pub fn ldy_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
 pub fn nop(cpu: &mut CPU, opcode: u8) {
     cpu.set_instr(format!("{:02X}", opcode), "NOP".to_string(), 2);
+}
+
+pub fn rst(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let low = cpu.pop_stack(bus) as u16;
+    let high = cpu.pop_stack(bus) as u16;
+
+    let return_addr = (high << 8) | low;
+
+    cpu.pc = return_addr + 1;
+
+    cpu.set_instr(format!("{:02X}", opcode), "RTS".to_string(), 6);
 }
 
 pub fn sbc_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
