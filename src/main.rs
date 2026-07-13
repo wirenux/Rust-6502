@@ -1,5 +1,6 @@
 mod bus;
 mod cpu;
+mod opcodes;
 
 use bus::Bus;
 use cpu::CPU;

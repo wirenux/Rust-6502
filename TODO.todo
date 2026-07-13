@@ -11,4 +11,4 @@ match opcode {
 }
 ``
 
-- [ ] move all opcode to opcode.rs
+- [x] move all opcode to opcode.rs
