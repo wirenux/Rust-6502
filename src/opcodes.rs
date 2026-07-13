@@ -234,7 +234,7 @@ pub fn lda_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.reg_a = value;
     cpu.update_z_n_flags(value);
 
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("LDA #${:04X}", addr), 2);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("LDA #${:02X}", value), 2);
 }
 
 pub fn lda_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -281,7 +281,7 @@ pub fn ldx_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.reg_x = value;
     cpu.update_z_n_flags(value);
 
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("LDX #${:04X}", addr), 2);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("LDX #${:02X}", value), 2);
 }
 
 pub fn ldx_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -316,7 +316,7 @@ pub fn ldy_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.reg_y = value;
     cpu.update_z_n_flags(value);
 
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("LDY #${:04X}", addr), 2);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("LDY #${:02X}", value), 2);
 }
 
 pub fn ldy_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
