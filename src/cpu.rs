@@ -18,7 +18,9 @@ pub struct CPU {
 pub enum AddressingMode {
     Immediate,
     ZeroPage,
+    ZeroPage_X,
     Absolute,
+    Absolute_X,
     Implied
 }
 
@@ -87,11 +89,29 @@ impl CPU {
                 self.pc = self.pc + 1;
                 addr
             },
+            AddressingMode::ZeroPage_X => {
+                let base = bus.read_ram(self.pc);
+
+                let addr = base.wrapping_add(self.reg_x) as u16;
+
+                self.pc = self.pc + 1;
+                addr
+            },
             AddressingMode::Absolute => {
                 let low = bus.read_ram(self.pc) as u16;
                 let high = bus.read_ram(self.pc + 1) as u16;
                 self.pc = self.pc + 2;
                 (high << 8) | low
+            },
+            AddressingMode::Absolute_X => {
+                let low = bus.read_ram(self.pc) as u16;
+                let high = bus.read_ram(self.pc + 1) as u16;
+                let base = (high << 8) | low;
+
+                let addr = base.wrapping_add(self.reg_x as u16);
+
+                self.pc = self.pc + 2;
+                addr
             },
             AddressingMode::Implied => {
                 0
@@ -195,6 +215,7 @@ impl CPU {
             0xAC => opcodes::ldy_absolute(self, bus, opcode),
             0xAD => opcodes::lda_absolute(self, bus, opcode),
             0xAE => opcodes::ldx_absolute(self, bus, opcode),
+            0xB5 => opcodes::lda_zeropage_x(self, bus, opcode),
             0xC0 => opcodes::cpy_immediate(self, bus, opcode),
             0xC8 => opcodes::iny(self, opcode),
             0xC9 => opcodes::cmp_immediate(self, bus, opcode),

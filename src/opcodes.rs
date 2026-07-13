@@ -216,6 +216,18 @@ pub fn lda_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("LDA ${:04X}", addr), 3);
 }
 
+pub fn lda_zeropage_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPage_X, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a = value;
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    let base_addr: u8 = bus.read_ram(cpu.pc - 1);
+
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, base_addr), format!("LDA ${:02X},X", base_addr), 4);
+}
+
 pub fn ldx_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::Absolute, bus);
     let value = bus.read_ram(addr);
