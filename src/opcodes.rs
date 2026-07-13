@@ -1,5 +1,5 @@
 use crate::bus::Bus;
-use crate::cpu::{self, AddressingMode, CPU};
+use crate::cpu::{ AddressingMode, CPU};
 
 pub fn adc_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let value = bus.read_ram(cpu.pc);
