@@ -312,6 +312,22 @@ pub fn ldy_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("LDY ${:04X}", addr), 3);
 }
 
+pub fn lsr_accumulator(cpu: &mut CPU, opcode: u8) {
+    let bit_0 = cpu.reg_a & 0x01;
+
+    if bit_0 == 1 {
+        cpu.sr |= CPU::CARRY_FLAG; // set CARRY_FLAG to 1
+    } else {
+        cpu.sr &= !CPU::CARRY_FLAG;
+    }
+
+    cpu.reg_a = cpu.reg_a >> 1; // shift to the left
+
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    cpu.set_instr(format!("{:02X}", opcode), "LSR A".to_string(), 2);
+}
+
 pub fn nop(cpu: &mut CPU, opcode: u8) {
     cpu.set_instr(format!("{:02X}", opcode), "NOP".to_string(), 2);
 }

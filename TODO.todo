@@ -12,7 +12,7 @@ match opcode {
 ``
 
 - [x] move all opcode to opcode.rs
-- [ ] add LSR
+- [x] add LSR
 
 - [ ] add use of AI -> make ASM program to test during the development period
 - [ ] add a UI (like Jira TUI)

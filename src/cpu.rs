@@ -195,6 +195,7 @@ impl CPU {
             0x48 => opcodes::pha(self, bus, opcode),
             0x49 => opcodes::eor_immediate(self, bus, opcode),
             0x4C => opcodes::jmp_absolute(self, bus, opcode),
+            0x4A => opcodes::lsr_accumulator(self, opcode),
             0x60 => opcodes::rts(self, bus, opcode),
             0x65 => opcodes::adc_zeropage(self, bus, opcode),
             0x68 => opcodes::pla(self, bus, opcode),
