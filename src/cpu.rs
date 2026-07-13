@@ -126,6 +126,11 @@ impl CPU {
         self.update_z_n_flags(self.reg_a);
     }
 
+    fn sbc(&mut self, value: u8) {
+        let inverted_value = value ^ 0xFF;
+        self.adc(inverted_value);
+    }
+
     pub fn clock_tick(&mut self, bus: &mut Bus) -> bool {
         let initial_pc = self.pc;
         let opcode = bus.read_ram(self.pc);
@@ -401,12 +406,30 @@ impl CPU {
                 disasm_str = "DEX".to_string();
                 cycles = 2;
             },
+            0xE5 => {
+                let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+                let value = bus.read_ram(addr);
+                self.sbc(value);
+
+                instr_bytes = format!("{:02X} {:02X}", opcode, value);
+                disasm_str = format!("SBC ${:02X}", value);
+                cycles = 2;
+            },
             0xE8 => {
                 self.reg_x = self.reg_x.wrapping_add(1);
                 self.update_z_n_flags(self.reg_x);
                 instr_bytes = format!("{:02X}", opcode);
                 disasm_str = "INX".to_string();
                 cycles = 2;
+            },
+            0xE9 => {
+                let value = bus.read_ram(self.pc);
+                self.pc = self.pc + 1;
+                self.sbc(value);
+                cycles = 2;
+
+                instr_bytes = format!("{:02X} {:02X}", opcode, value);
+                disasm_str = format!("SBC #${:02X}", value);
             },
             0xEA => {
                 instr_bytes = format!("{:02X}", opcode);
