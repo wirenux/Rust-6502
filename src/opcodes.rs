@@ -217,7 +217,7 @@ pub fn lda_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 }
 
 pub fn lda_zeropage_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
-    let addr = cpu.get_operand_address(&AddressingMode::ZeroPage_X, bus);
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPageX, bus);
     let value = bus.read_ram(addr);
 
     cpu.reg_a = value;
