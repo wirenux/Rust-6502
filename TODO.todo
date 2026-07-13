@@ -1,4 +1,4 @@
-- [ ] refractor every opcode into function like this : ```rust
+- [x] refractor every opcode into function like this : ``
 fn finish_instr(&self, opcode: u8, instr_bytes: String, disasm: String, cycles: u8) {
 
 }
@@ -9,4 +9,6 @@ match opcode {
     0x4C => self.jmp_absolute(bus, opcode),
     // ...
 }
-```
+``
+
+- [ ] move all opcode to opcode.rs

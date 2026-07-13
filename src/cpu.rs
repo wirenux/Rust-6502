@@ -1,6 +1,6 @@
 use core::panic;
 
-use crate::bus::{self, Bus};
+use crate::bus::Bus;
 
 pub struct CPU {
     pub reg_a: u8,
@@ -9,15 +9,17 @@ pub struct CPU {
     pub sp: u8,
     pub pc: u16,
     pub sr: u8,
+
+    pub last_instr_bytes: String,
+    pub last_disasm: String,
+    pub last_cycles: u8,
 }
 
 pub enum AddressingMode {
     Immediate,
     ZeroPage,
     Absolute,
-    #[allow(dead_code)]
-    Implied,
-    Indirect
+    Implied
 }
 
 impl CPU {
@@ -34,7 +36,17 @@ impl CPU {
             sp: 0,
             pc: 0,
             sr: 0,
+
+            last_instr_bytes: String::new(),
+            last_disasm: String::new(),
+            last_cycles: 0,
         }
+    }
+
+    fn set_instr(&mut self, bytes: String, disasm: String, cycles: u8) {
+        self.last_instr_bytes = bytes;
+        self.last_disasm = disasm;
+        self.last_cycles = cycles;
     }
 
     pub fn reset_cpu(&mut self, bus: &Bus) {
@@ -56,8 +68,8 @@ impl CPU {
             self.sr = self.sr & 0xFD;
         }
 
-        if (target_value & 0x80) != 0 {
-            self.sr = self.sr | 0x80;
+        if (target_value & CPU::NEGATIVE_FLAG) != 0 {
+            self.sr = self.sr | CPU::NEGATIVE_FLAG;
         } else {
             self.sr = self.sr & 0x7F;
         }
@@ -83,18 +95,6 @@ impl CPU {
             },
             AddressingMode::Implied => {
                 0
-            },
-            AddressingMode::Indirect => {
-                let ptr = self.get_operand_address(&AddressingMode::Absolute, bus);
-
-                let low = bus.read_ram(ptr) as u16;
-                let high = if (ptr & 0x00FF) == 0x00FF {
-                    bus.read_ram(ptr & 0xFF00) as u16
-                } else {
-                    bus.read_ram(ptr + 1) as u16
-                };
-
-                (high << 8) | low
             }
         }
     }
@@ -109,16 +109,16 @@ impl CPU {
     }
 
     fn adc(&mut self, value: u8) {
-        let carry = (self.sr & 0x01) as u16;
+        let carry = (self.sr & CPU::CARRY_FLAG) as u16;
         let a_u16 = self.reg_a as u16;
         let val_u16 = value as u16;
 
         let sum = a_u16 + val_u16 + carry;
 
         if sum > 0xFF {
-            self.sr |= 0x01;
+            self.sr |= CPU::CARRY_FLAG;
         } else {
-            self.sr &= !0x01;
+            self.sr &= !CPU::CARRY_FLAG;
         }
 
         let result = (sum & 0xFF) as u8;
@@ -126,30 +126,330 @@ impl CPU {
         let overflow = (!((self.reg_a ^ value) as u16) & ((self.reg_a as u16 ^ result as u16)) & 0x80) != 0;
 
         if overflow {
-            self.sr |= 0x40;
+            self.sr |= CPU::OVERFLOW_FLAG;
         } else {
-            self.sr &= !0x40;
+            self.sr &= !CPU::OVERFLOW_FLAG;
         }
 
         self.reg_a = result;
         self.update_z_n_flags(self.reg_a);
     }
 
-    fn adc_immediate(&mut self, bus: &mut Bus, opcode: u8) -> (String, String, u8) {
+    fn adc_immediate(&mut self, bus: &mut Bus, opcode: u8) {
         let value = bus.read_ram(self.pc);
         self.pc += 1;
         self.adc(value);
 
-        let instr_bytes = format!("{:02X} {:02X}", opcode, value);
-        let disasm_str = format!("ADC #${:02X}", value);
-        let cycles = 2;
-
-        (instr_bytes, disasm_str, cycles)
+        self.set_instr(format!("{:02X} {:02X}", opcode, value), format!("ADC #${:02X}", value), 2);
     }
 
-    fn sbc(&mut self, value: u8) {
+    fn adc_zeropage(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+        let value = bus.read_ram(addr);
+        self.adc(value);
+
+        self.set_instr(format!("{:02X} {:02X}", opcode, value), format!("ADC ${:02X}", value), 2);
+    }
+
+    fn beq(&mut self, bus: &mut Bus, opcode: u8) {
+        let offset = bus.read_ram(self.pc) as i8;
+        self.pc += 1;
+
+        if self.get_flag(CPU::ZERO_FLAG) {
+            self.pc = (self.pc as i16 + offset as i16) as u16;
+        }
+
+        self.set_instr(format!("{:02X}", opcode), format!("BEQ"), 2);
+    }
+
+    fn bne(&mut self, bus: &mut Bus, opcode: u8) {
+        let offset = bus.read_ram(self.pc) as i8;
+        self.pc += 1;
+
+        if !self.get_flag(CPU::ZERO_FLAG) {
+            self.pc = (self.pc as i16 + offset as i16) as u16;
+        }
+
+        self.set_instr(format!("{:02X}", opcode), format!("BNE"), 2);
+    }
+
+    fn brk(&mut self, bus: &mut Bus, opcode: u8) {
+        self.push_stack(bus, (self.pc >> 8) as u8);
+        self.push_stack(bus, (self.pc & 0xFF) as u8);
+
+        self.push_stack(bus, self.sr | 0x10);
+
+        self.sr = self.sr | 0x04;
+
+        let low = bus.read_ram(0xFFFE);
+        let high = bus.read_ram(0xFFFF);
+        self.pc = ((high as u16) << 8) | (low as u16);
+
+        self.set_instr(format!("{:02X}", opcode), "BRK".to_string(), 7);
+    }
+
+    fn clc(&mut self, opcode: u8) {
+        self.sr &= !CPU::CARRY_FLAG;
+
+        self.set_instr(format!("{:02X}", opcode), "CLC".to_string(), 2);
+    }
+
+    fn dex(&mut self, opcode: u8) {
+        self.reg_x = self.reg_x.wrapping_sub(1);
+        self.update_z_n_flags(self.reg_x);
+
+        self.set_instr(format!("{:02X}", opcode), "DEX".to_string(), 2);
+    }
+
+    fn dey(&mut self, opcode: u8) {
+        self.reg_y = self.reg_y.wrapping_sub(1);
+        self.update_z_n_flags(self.reg_y);
+
+        self.set_instr(format!("{:02X}", opcode), "DEY".to_string(), 2);
+    }
+
+    fn inx(&mut self, opcode: u8) {
+        self.reg_x = self.reg_x.wrapping_add(1);
+        self.update_z_n_flags(self.reg_x);
+        self.set_instr(format!("{:02X}", opcode), "INX".to_string(), 2);
+    }
+
+    fn iny(&mut self, opcode: u8) {
+        self.reg_y = self.reg_y.wrapping_add(1);
+        self.update_z_n_flags(self.reg_y);
+        self.set_instr(format!("{:02X}", opcode), "INY".to_string(), 2);
+    }
+
+    fn jmp_absolute(&mut self, bus: &mut Bus, opcode: u8) {
+        let target_addr = self.get_operand_address(&AddressingMode::Absolute, bus);
+
+        self.pc = target_addr;
+
+        let low = (target_addr & 0xFF) as u8;
+        let high = (target_addr >> 8) as u8;
+
+        self.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("JMP ${:04X}", target_addr), 3);
+    }
+
+    fn jmp_indirect(&mut self, bus: &mut Bus, opcode: u8) {
+        let ptr = self.get_operand_address(&AddressingMode::Absolute, bus);
+
+        let low = bus.read_ram(ptr) as u16;
+        let high = if (ptr & 0x00FF) == 0x00FF {
+            bus.read_ram(ptr & 0xFF00) as u16
+        } else {
+            bus.read_ram(ptr + 1) as u16
+        };
+
+        let target_addr = (high << 8) | low;
+
+        self.pc = target_addr; // do the jump
+
+        let ptr_low = (ptr & 0xFF) as u8;
+        let ptr_high = (ptr >> 8) as u8;
+
+        self.set_instr(format!("{:02X} {:02X} {:02X}", opcode, ptr_low, ptr_high), format!("JMP (${:04X})", ptr), 5);
+    }
+
+    fn lda_abosulte(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::Absolute, bus);
+        let value = bus.read_ram(addr);
+
+        self.reg_a = value;
+        self.update_z_n_flags(self.reg_a);
+
+        let low = (addr & 0xFF) as u8;
+        let high = (addr >> 8) as u8;
+
+        self.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("LDA ${:04X}", addr), 4);
+    }
+
+    fn lda_immediate(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::Immediate, bus);
+        let value = bus.read_ram(addr);
+
+        self.reg_a = value;
+        self.update_z_n_flags(value);
+
+        self.set_instr(format!("{:02X} {:02X}", opcode, value), format!("LDA #${:04X}", addr), 2);
+    }
+
+    fn lda_zeropage(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+        let value = bus.read_ram(addr);
+
+        self.reg_a = value;
+        self.update_z_n_flags(self.reg_a);
+
+        let op_byte = addr as u8;
+
+        self.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("LDA ${:04X}", addr), 3);
+    }
+
+    fn ldx_abosulte(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::Absolute, bus);
+        let value = bus.read_ram(addr);
+
+        self.reg_x = value;
+        self.update_z_n_flags(self.reg_x);
+
+        let low = (addr & 0xFF) as u8;
+        let high = (addr >> 8) as u8;
+
+        self.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("LDX ${:04X}", addr), 4);
+    }
+
+    fn ldx_immediate(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::Immediate, bus);
+        let value = bus.read_ram(addr);
+
+        self.reg_x = value;
+        self.update_z_n_flags(value);
+
+        self.set_instr(format!("{:02X} {:02X}", opcode, value), format!("LDX #${:04X}", addr), 2);
+    }
+
+    fn ldx_zeropage(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+        let value = bus.read_ram(addr);
+
+        self.reg_x = value;
+        self.update_z_n_flags(self.reg_x);
+
+        let op_byte = addr as u8;
+
+        self.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("LDX ${:04X}", addr), 3);
+    }
+
+    fn ldy_abosulte(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::Absolute, bus);
+        let value = bus.read_ram(addr);
+
+        self.reg_y = value;
+        self.update_z_n_flags(self.reg_y);
+
+        let low = (addr & 0xFF) as u8;
+        let high = (addr >> 8) as u8;
+
+        self.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("LDY ${:04X}", addr), 4);
+    }
+
+    fn ldy_immediate(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::Immediate, bus);
+        let value = bus.read_ram(addr);
+
+        self.reg_y = value;
+        self.update_z_n_flags(value);
+
+        self.set_instr(format!("{:02X} {:02X}", opcode, value), format!("LDY #${:04X}", addr), 2);
+    }
+
+    fn ldy_zeropage(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+        let value = bus.read_ram(addr);
+
+        self.reg_y = value;
+        self.update_z_n_flags(self.reg_y);
+
+        let op_byte = addr as u8;
+
+        self.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("LDY ${:04X}", addr), 3);
+    }
+
+    fn nop(&mut self, opcode: u8) {
+        self.set_instr(format!("{:02X}", opcode), "NOP".to_string(), 2);
+    }
+
+    fn sbc_immediate(&mut self, bus: &mut Bus, opcode: u8) {
+        let value = bus.read_ram(self.pc);
+        self.pc += 1;
         let inverted_value = value ^ 0xFF;
         self.adc(inverted_value);
+
+        self.set_instr(format!("{:02X} {:02X}", opcode, value), format!("SBC #${:02X}", value), 2);
+    }
+
+    fn sbc_zeropage(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+        let value = bus.read_ram(addr);
+        let inverted_value = value ^ 0xFF;
+        self.adc(inverted_value);
+
+        self.set_instr(format!("{:02X} {:02X}", opcode, value), format!("SBC ${:02X}", value), 2);
+    }
+
+    fn sec(&mut self, opcode: u8) {
+        self.sr |= CPU::CARRY_FLAG;
+        self.set_instr(format!("{:02X}", opcode), "SEC".to_string(), 2);
+    }
+
+    fn sta_absolute(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::Absolute, bus);
+        bus.write_ram(addr, self.reg_a);
+
+        let low = (addr & 0xFF) as u8;
+        let high = (addr >> 8) as u8;
+
+        self.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("STA ${:04X}", addr), 4);
+    }
+
+    fn sta_zeropage(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+        bus.write_ram(addr, self.reg_a);
+
+        let op_byte = addr as u8;
+
+        self.set_instr(
+            format!("{:02X} {:02X}", opcode, op_byte),
+            format!("STA ${:02X}", op_byte),
+            3
+        );
+    }
+
+    fn stx_zeropage(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+        bus.write_ram(addr, self.reg_x);
+
+        let op_byte = addr as u8;
+
+        self.set_instr(format!("{:02X} {:02X}", opcode, op_byte),format!("STX ${:02X}", op_byte),3);
+    }
+
+    fn sty_zeropage(&mut self, bus: &mut Bus, opcode: u8) {
+        let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
+        bus.write_ram(addr, self.reg_y);
+
+        let op_byte = addr as u8;
+
+        self.set_instr(format!("{:02X} {:02X}", opcode, op_byte),format!("STY ${:02X}", op_byte),3);
+    }
+
+    fn tax(&mut self, opcode: u8) {
+        self.reg_x = self.reg_a;
+        self.update_z_n_flags(self.reg_x);
+
+        self.set_instr(format!("{:02X}", opcode), "TAX".to_string(), 2);
+    }
+
+    fn tay(&mut self, opcode: u8) {
+        self.reg_y = self.reg_a;
+        self.update_z_n_flags(self.reg_y);
+
+        self.set_instr(format!("{:02X}", opcode), "TAY".to_string(), 2);
+    }
+
+    fn txa(&mut self, opcode: u8) {
+        self.reg_a = self.reg_x;
+        self.update_z_n_flags(self.reg_a);
+
+        self.set_instr(format!("{:02X}", opcode), "TXA".to_string(), 2);
+    }
+
+    fn tya(&mut self, opcode: u8) {
+        self.reg_a = self.reg_y;
+        self.update_z_n_flags(self.reg_a);
+
+        self.set_instr(format!("{:02X}", opcode), "TYA".to_string(), 2);
     }
 
     pub fn clock_tick(&mut self, bus: &mut Bus) -> bool {
@@ -158,326 +458,44 @@ impl CPU {
         self.pc = self.pc + 1;
 
         let mut keep_running = true;
-        let instr_bytes: String;
-        let disasm_str: String;
-        let cycles: u8;
 
         match opcode {
             0x00 => {
-                instr_bytes = format!("{:02X}", opcode);
-                disasm_str = "BRK".to_string();
-                cycles = 7;
-
-                self.push_stack(bus, (self.pc >> 8) as u8);
-                self.push_stack(bus, (self.pc & 0xFF) as u8);
-
-                self.push_stack(bus, self.sr | 0x10);
-
-                self.sr = self.sr | 0x04;
-
-                let low = bus.read_ram(0xFFFE);
-                let high = bus.read_ram(0xFFFF);
-                self.pc = ((high as u16) << 8) | (low as u16);
-
-                keep_running = false;
+                self.brk(bus, opcode);
+                keep_running = false
             },
-            0x18 => {
-                self.sr &= !0x01;
-
-                instr_bytes = format!("{:02X}", opcode);
-                disasm_str = "CLC".to_string();
-                cycles = 2;
-            },
-            0x38 => {
-                self.sr |= 0x01;
-
-                instr_bytes = format!("{:02X}", opcode);
-                disasm_str = "SEC".to_string();
-                cycles = 2;
-            },
-            0x4C => {
-                let target_addr = self.get_operand_address(&AddressingMode::Absolute, bus);
-
-                self.pc = target_addr;
-
-                let low = bus.read_ram(initial_pc + 1);
-                let high = bus.read_ram(initial_pc + 2);
-                instr_bytes = format!("{:02X} {:02X} {:02X}", opcode, low, high);
-                disasm_str = format!("JMP ${:04X}", target_addr);
-                cycles = 3;
-            },
-            0x65 => {
-                let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
-                let value = bus.read_ram(addr);
-                self.adc(value);
-
-                instr_bytes = format!("{:02X} {:02X}", opcode, value);
-                disasm_str = format!("ADC ${:02X}", value);
-                cycles = 2;
-            },
-            0x69 => {
-                let (ib, ds, cyc) = self.adc_immediate(bus, opcode);
-                instr_bytes = ib;
-                disasm_str = ds;
-                cycles = cyc;
-            },
-            0x6C => {
-                let target_addr = self.get_operand_address(&AddressingMode::Indirect, bus);
-
-                self.pc = target_addr;
-
-                let low = bus.read_ram(initial_pc + 1);
-                let high = bus.read_ram(initial_pc + 2);
-                instr_bytes = format!("{:02X} {:02X} {:02X}", opcode, low, high);
-                disasm_str = format!("JMP (${:02X}{:02X})", high, low);
-                cycles = 5;
-            },
-            0x84 => {
-                let target_addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
-                bus.write_ram(target_addr, self.reg_y);
-
-                let op_byte = bus.read_ram(initial_pc + 1);
-                instr_bytes = format!("{:02X} {:02X}", opcode, op_byte);
-                disasm_str = format!("STY ${:02X}", op_byte);
-                cycles = 3;
-            },
-            0x85 => {
-                let target_addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
-                bus.write_ram(target_addr, self.reg_a);
-
-                let op_byte = bus.read_ram(initial_pc + 1);
-                instr_bytes = format!("{:02X} {:02X}", opcode, op_byte);
-                disasm_str = format!("STA ${:02X}", op_byte);
-                cycles = 3;
-            },
-            0x86 => {
-                let target_addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
-                bus.write_ram(target_addr, self.reg_x);
-
-                let op_byte = bus.read_ram(initial_pc + 1);
-                instr_bytes = format!("{:02X} {:02X}", opcode, op_byte);
-                disasm_str = format!("STX ${:02X}", op_byte);
-                cycles = 3;
-            },
-            0x88 => {
-                self.reg_y = self.reg_y.wrapping_sub(1);
-                self.update_z_n_flags(self.reg_y);
-                instr_bytes = format!("{:02X}", opcode);
-                disasm_str = "DEY".to_string();
-                cycles = 2;
-            },
-            0x8A => {
-                self.reg_a = self.reg_x;
-                self.update_z_n_flags(self.reg_a);
-                instr_bytes = format!("{:02X}", opcode);
-                disasm_str = "TXA".to_string();
-                cycles = 2;
-            },
-            0x8D => {
-                let target_addr = self.get_operand_address(&AddressingMode::Absolute, bus);
-                bus.write_ram(target_addr, self.reg_a);
-
-                let low = bus.read_ram(initial_pc + 1);
-                let high = bus.read_ram(initial_pc + 2);
-
-                instr_bytes = format!("{:02X} {:02X} {:02X}", opcode, low, high);
-                disasm_str = format!("STA ${:04X}", target_addr);
-                cycles = 4;
-            },
-            0x98 => {
-                self.reg_a = self.reg_y;
-                self.update_z_n_flags(self.reg_a);
-                instr_bytes = format!("{:02X}", opcode);
-                disasm_str = "TYA".to_string();
-                cycles = 2;
-            },
-            0xA0 => {
-                let addr = self.get_operand_address(&AddressingMode::Immediate, bus);
-                let value = bus.read_ram(addr);
-
-                self.reg_y = value;
-                self.update_z_n_flags(self.reg_y);
-
-                instr_bytes = format!("{:02X} {:02X}", opcode, value);
-                disasm_str = format!("LDY #${:02X}", value);
-                cycles = 2;
-            },
-            0xA2 => {
-                let addr = self.get_operand_address(&AddressingMode::Immediate, bus);
-                let value = bus.read_ram(addr);
-
-                self.reg_x = value;
-                self.update_z_n_flags(self.reg_x);
-
-                instr_bytes = format!("{:02X} {:02X}", opcode, value);
-                disasm_str = format!("LDX #${:02X}", value);
-                cycles = 2;
-            },
-            0xA4 => {
-                let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
-                let value = bus.read_ram(addr);
-
-                self.reg_y = value;
-                self.update_z_n_flags(self.reg_y);
-                let op_byte = bus.read_ram(initial_pc + 1);
-
-                instr_bytes = format!("{:02X} {:02X}", opcode, op_byte);
-                disasm_str = format!("LDY ${:02X}", op_byte);
-                cycles = 3;
-            },
-            0xA5 => {
-                let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
-                let value = bus.read_ram(addr);
-
-                self.reg_a = value;
-                self.update_z_n_flags(value);
-                let op_byte = bus.read_ram(initial_pc + 1);
-                instr_bytes = format!("{:02X} {:02X}", opcode, op_byte);
-                disasm_str = format!("LDA ${:02X}", op_byte);
-                cycles = 3;
-            },
-            0xA6 => {
-                let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
-                let value = bus.read_ram(addr);
-
-                self.reg_x = value;
-                self.update_z_n_flags(self.reg_x);
-                let op_byte = bus.read_ram(initial_pc + 1);
-
-                instr_bytes = format!("{:02X} {:02X}", opcode, op_byte);
-                disasm_str = format!("LDX ${:02X}", op_byte);
-                cycles = 3;
-            },
-            0xA8 => {
-                self.reg_y = self.reg_a;
-                self.update_z_n_flags(self.reg_y);
-                instr_bytes = format!("{:02X}", opcode);
-                disasm_str = "TAY".to_string();
-                cycles = 2;
-            },
-            0xA9 => {
-                let addr = self.get_operand_address(&AddressingMode::Immediate, bus);
-                let value = bus.read_ram(addr);
-
-                self.reg_a = value;
-                self.update_z_n_flags(value);
-                instr_bytes = format!("{:02X} {:02X}", opcode, value);
-                disasm_str = format!("LDA #${:02X}", value);
-                cycles = 2;
-            },
-            0xAA => {
-                self.reg_x = self.reg_a;
-                self.update_z_n_flags(self.reg_x);
-                instr_bytes = format!("{:02X}", opcode);
-                disasm_str = "TAX".to_string();
-                cycles = 2;
-            },
-            0xAC => {
-                let addr = self.get_operand_address(&AddressingMode::Absolute, bus);
-                let value = bus.read_ram(addr);
-
-                self.reg_y = value;
-                self.update_z_n_flags(self.reg_y);
-                let low = bus.read_ram(initial_pc + 1);
-                let high = bus.read_ram(initial_pc + 2);
-
-                instr_bytes = format!("{:02X} {:02X} {:02X}", opcode, low, high);
-                disasm_str = format!("LDY ${:04X}", addr);
-                cycles = 4;
-            },
-            0xAD => {
-                let addr = self.get_operand_address(&AddressingMode::Absolute, bus);
-                let value = bus.read_ram(addr);
-
-                self.reg_a = value;
-                self.update_z_n_flags(value);
-                let low = bus.read_ram(initial_pc + 1);
-                let high = bus.read_ram(initial_pc + 2);
-                instr_bytes = format!("{:02X} {:02X} {:02X}", opcode, low, high);
-                disasm_str = format!("LDA ${:04X}", addr);
-                cycles = 4;
-            },
-            0xAE => {
-                let addr = self.get_operand_address(&AddressingMode::Absolute, bus);
-                let value = bus.read_ram(addr);
-
-                self.reg_x = value;
-                self.update_z_n_flags(self.reg_x);
-                let low = bus.read_ram(initial_pc + 1);
-                let high = bus.read_ram(initial_pc + 2);
-
-                instr_bytes = format!("{:02X} {:02X} {:02X}", opcode, low, high);
-                disasm_str = format!("LDX ${:04X}", addr);
-                cycles = 4;
-            },
-            0xC8 => {
-                self.reg_y = self.reg_y.wrapping_add(1);
-                self.update_z_n_flags(self.reg_y);
-                instr_bytes = format!("{:02X}", opcode);
-                disasm_str = "INY".to_string();
-                cycles = 2;
-            },
-            0xCA => {
-                self.reg_x = self.reg_x.wrapping_sub(1);
-                self.update_z_n_flags(self.reg_x);
-                instr_bytes = format!("{:02X}", opcode);
-                disasm_str = "DEX".to_string();
-                cycles = 2;
-            },
-            0xD0 => {
-                let offset = bus.read_ram(self.pc) as i8;
-                self.pc += 1;
-
-                if !self.get_flag(CPU::ZERO_FLAG) {
-                    self.pc = (self.pc as i16 + offset as i16) as u16;
-                }
-                cycles = 2;
-
-                instr_bytes = format!("{:02X}", opcode);
-                disasm_str = format!("BNE");
-            },
-            0xE5 => {
-                let addr = self.get_operand_address(&AddressingMode::ZeroPage, bus);
-                let value = bus.read_ram(addr);
-                self.sbc(value);
-
-                instr_bytes = format!("{:02X} {:02X}", opcode, value);
-                disasm_str = format!("SBC ${:02X}", value);
-                cycles = 2;
-            },
-            0xE8 => {
-                self.reg_x = self.reg_x.wrapping_add(1);
-                self.update_z_n_flags(self.reg_x);
-                instr_bytes = format!("{:02X}", opcode);
-                disasm_str = "INX".to_string();
-                cycles = 2;
-            },
-            0xE9 => {
-                let value = bus.read_ram(self.pc);
-                self.pc = self.pc + 1;
-                self.sbc(value);
-                cycles = 2;
-
-                instr_bytes = format!("{:02X} {:02X}", opcode, value);
-                disasm_str = format!("SBC #${:02X}", value);
-            },
-            0xEA => {
-                instr_bytes = format!("{:02X}", opcode);
-                disasm_str = "NOP".to_string();
-                cycles = 2;
-            },
-            0xF0 => {
-                let offset = bus.read_ram(self.pc) as i8;
-                self.pc += 1;
-
-                if self.get_flag(CPU::ZERO_FLAG) {
-                    self.pc = (self.pc as i16 + offset as i16) as u16;
-                }
-                cycles = 2;
-
-                instr_bytes = format!("{:02X}", opcode);
-                disasm_str = format!("BEQ");
-            },
+            0x18 => self.clc(opcode),
+            0x38 => self.sec(opcode),
+            0x4C => self.jmp_absolute(bus, opcode),
+            0x65 => self.adc_zeropage(bus, opcode),
+            0x69 => self.adc_immediate(bus, opcode),
+            0x6C => self.jmp_indirect(bus, opcode),
+            0x84 => self.sty_zeropage(bus, opcode),
+            0x85 => self.sta_zeropage(bus, opcode),
+            0x86 => self.stx_zeropage(bus, opcode),
+            0x88 => self.dey(opcode),
+            0x8A => self.txa(opcode),
+            0x8D => self.sta_absolute(bus, opcode),
+            0x98 => self.tya(opcode),
+            0xA0 => self.ldy_immediate(bus, opcode),
+            0xA2 => self.ldx_immediate(bus, opcode),
+            0xA4 => self.ldy_zeropage(bus, opcode),
+            0xA5 => self.lda_zeropage(bus, opcode),
+            0xA6 => self.ldx_zeropage(bus, opcode),
+            0xA8 => self.tay(opcode),
+            0xA9 => self.lda_immediate(bus, opcode),
+            0xAA => self.tax(opcode),
+            0xAC => self.ldy_abosulte(bus, opcode),
+            0xAD => self.lda_abosulte(bus, opcode),
+            0xAE => self.ldx_abosulte(bus, opcode),
+            0xC8 => self.iny(opcode),
+            0xCA => self.dex(opcode),
+            0xD0 => self.bne(bus, opcode),
+            0xE5 => self.sbc_zeropage(bus, opcode),
+            0xE8 => self.inx(opcode),
+            0xE9 => self.sbc_immediate(bus, opcode),
+            0xEA => self.nop(opcode),
+            0xF0 => self.beq(bus, opcode),
             _ => {
                 panic!("Unknow opcode: {:#X} @ {:#X}", opcode, self.pc - 1);
             }
@@ -494,11 +512,11 @@ impl CPU {
         println!(
             "{:04X}  {:<8}  {:<12} | {:02X} {:02X} {:02X} {:02X} | {} | {}",
             initial_pc,
-            instr_bytes,
-            disasm_str,
+            self.last_instr_bytes,
+            self.last_disasm,
             self.reg_a, self.reg_x, self.reg_y, self.sp,
             nvdizc_str,
-            cycles
+            self.last_cycles
         );
 
         keep_running
