@@ -1,7 +1,7 @@
 use std::ptr::addr_of;
 
 use crate::bus::Bus;
-use crate::cpu::{AddressingMode, CPU};
+use crate::cpu::{self, AddressingMode, CPU};
 
 pub fn adc_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let value = bus.read_ram(cpu.pc);
@@ -311,6 +311,20 @@ pub fn ora_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.update_z_n_flags(cpu.reg_a);
 
     cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("ORA #${:02X}", value), 2);
+}
+
+pub fn pha(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    cpu.push_stack(bus, cpu.reg_a);
+
+    cpu.set_instr(format!("{:02X}", opcode), "PHA".to_string(), 3);
+}
+
+pub fn pla(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    cpu.reg_a = cpu.pop_stack(bus);
+
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    cpu.set_instr(format!("{:02X}", opcode), "PLA".to_string(), 4);
 }
 
 pub fn rts(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
