@@ -184,6 +184,7 @@ impl CPU {
                 keep_running = false;
             },
             0x09 => opcodes::ora_immediate(self, bus, opcode),
+            0x0A => opcodes::asl_accumulator(self, opcode),
             0x18 => opcodes::clc(self, opcode),
             0x20 => {
                 let addr = self.get_operand_address(&AddressingMode::Absolute, bus);

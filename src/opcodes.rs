@@ -1,5 +1,3 @@
-use std::ptr::addr_of;
-
 use crate::bus::Bus;
 use crate::cpu::{self, AddressingMode, CPU};
 
@@ -28,6 +26,22 @@ pub fn and_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.update_z_n_flags(cpu.reg_a);
 
     cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("AND #${:02X}", value), 2);
+}
+
+pub fn asl_accumulator(cpu: &mut CPU, opcode: u8) {
+    let left_byte = (cpu.reg_a & 0x80) >> 7; // save the edge byte
+
+    if left_byte == 1 {
+        cpu.sr |= CPU::CARRY_FLAG; // set CARRY_FLAG to 1
+    } else {
+        cpu.sr &= !CPU::CARRY_FLAG;
+    }
+
+    cpu.reg_a = cpu.reg_a << 1; // shift to the left
+
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    cpu.set_instr(format!("{:02X}", opcode), "ASL A".to_string(), 2);
 }
 
 pub fn beq(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
