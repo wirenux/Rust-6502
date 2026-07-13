@@ -1,3 +1,5 @@
+use std::ptr::addr_of;
+
 use crate::bus::Bus;
 use crate::cpu::{AddressingMode, CPU};
 
@@ -15,6 +17,17 @@ pub fn adc_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.adc(value);
 
     cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("ADC ${:02X}", value), 2);
+}
+
+pub fn and_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::Immediate, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a = cpu.reg_a & value;
+
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("AND #${:02X}", value), 2);
 }
 
 pub fn beq(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -99,6 +112,17 @@ pub fn dey(cpu: &mut CPU, opcode: u8) {
     cpu.update_z_n_flags(cpu.reg_y);
 
     cpu.set_instr(format!("{:02X}", opcode), "DEY".to_string(), 2);
+}
+
+pub fn eor_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::Immediate, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a = cpu.reg_a ^ value;
+
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("EOR #${:02X}", value), 2);
 }
 
 pub fn inx(cpu: &mut CPU, opcode: u8) {
@@ -264,6 +288,17 @@ pub fn ldy_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
 pub fn nop(cpu: &mut CPU, opcode: u8) {
     cpu.set_instr(format!("{:02X}", opcode), "NOP".to_string(), 2);
+}
+
+pub fn ora_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::Immediate, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a = cpu.reg_a | value;
+
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("ORA #${:02X}", value), 2);
 }
 
 pub fn rts(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
