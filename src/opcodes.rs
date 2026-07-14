@@ -395,6 +395,84 @@ pub fn pla(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X}", opcode), "PLA".to_string(), 4);
 }
 
+pub fn rol_accumulator(cpu: &mut CPU, opcode: u8) {
+    let old_c_flag = if cpu.get_flag(CPU::CARRY_FLAG) { 1 } else { 0 } ;
+    let bit_7 = (cpu.reg_a & 0x80) >> 7;
+
+    if bit_7 == 1 {
+        cpu.sr |= CPU::CARRY_FLAG; // set CARRY_FLAG to 1
+    } else {
+        cpu.sr &= !CPU::CARRY_FLAG;
+    }
+
+    cpu.reg_a = cpu.reg_a << 1;
+    cpu.reg_a |= old_c_flag;
+
+    cpu.update_z_n_flags(cpu.reg_a);
+    cpu.set_instr(format!("{:02X}", opcode), "ROL A".to_string(), 2);
+}
+
+pub fn rol_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u8) {
+    let addr = cpu.get_operand_address(mode, bus);
+    let mut value = bus.read_ram(addr);
+
+    let old_c_flag = if cpu.get_flag(CPU::CARRY_FLAG) { 1 } else { 0 } ;
+
+    if (value & 0x80) != 0 {
+        cpu.sr |= CPU::CARRY_FLAG; // set CARRY_FLAG to 1
+    } else {
+        cpu.sr &= !CPU::CARRY_FLAG;
+    }
+
+    value = value << 1; // shit to left
+    value |= old_c_flag;
+
+    bus.write_ram(addr, value);
+
+    cpu.update_z_n_flags(value);
+
+    cpu.set_instr(format!("{:02X}", opcode), "ROL".to_string(), 5);
+}
+
+pub fn ror_accumulator(cpu: &mut CPU, opcode: u8) {
+    let old_c_flag = if cpu.get_flag(CPU::CARRY_FLAG) { 1 } else { 0 } ;
+    let bit_0 = cpu.reg_a & 0x01;
+
+    if bit_0 == 1 {
+        cpu.sr |= CPU::CARRY_FLAG; // set CARRY_FLAG to 1
+    } else {
+        cpu.sr &= !CPU::CARRY_FLAG;
+    }
+
+    cpu.reg_a = cpu.reg_a >> 1;
+    cpu.reg_a |= old_c_flag << 7;
+
+    cpu.update_z_n_flags(cpu.reg_a);
+    cpu.set_instr(format!("{:02X}", opcode), "ROR A".to_string(), 2);
+}
+
+pub fn ror_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u8) {
+    let addr = cpu.get_operand_address(mode, bus);
+    let mut value = bus.read_ram(addr);
+
+    let old_c_flag = if cpu.get_flag(CPU::CARRY_FLAG) { 1 } else { 0 } ;
+
+    if (value & 0x01) != 0 {
+        cpu.sr |= CPU::CARRY_FLAG; // set CARRY_FLAG to 1
+    } else {
+        cpu.sr &= !CPU::CARRY_FLAG;
+    }
+
+    value = value >> 1;
+    value |= old_c_flag << 7;
+
+    bus.write_ram(addr, value);
+
+    cpu.update_z_n_flags(value);
+
+    cpu.set_instr(format!("{:02X}", opcode), "ROR".to_string(), 5);
+}
+
 pub fn rts(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let low = cpu.pop_stack(bus) as u16;
     let high = cpu.pop_stack(bus) as u16;
