@@ -15,6 +15,9 @@ match opcode {
 - [x] add LSR
 
 - [ ] add a UI (like Jira TUI)
-    - [x] add a memory viewer
-        - [ ] (when in UI like Jira TUI) add scroll to mem viewer
+    - [ ] (when in UI like Jira TUI) add scroll to mem viewer
+- [x] add a memory viewer
+
+- [ ] set the speed like the real MOS 6502 speed
+
 - [ ] add use of AI -> make ASM program to test during the development period
