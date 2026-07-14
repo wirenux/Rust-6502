@@ -14,5 +14,7 @@ match opcode {
 - [x] move all opcode to opcode.rs
 - [x] add LSR
 
-- [ ] add use of AI -> make ASM program to test during the development period
 - [ ] add a UI (like Jira TUI)
+    - [x] add a memory viewer
+        - [ ] (when in UI like Jira TUI) add scroll to mem viewer
+- [ ] add use of AI -> make ASM program to test during the development period

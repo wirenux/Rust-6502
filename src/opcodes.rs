@@ -1,6 +1,4 @@
-use std::collections::btree_map::Values;
-
-use crate::bus::Bus;
+use crate::bus::{Bus};
 use crate::cpu::{ AddressingMode, CPU};
 
 pub fn adc_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -413,12 +411,27 @@ pub fn pha(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X}", opcode), "PHA".to_string(), 3);
 }
 
+pub fn php(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let status_to_push = cpu.sr | 0x30;
+    cpu.push_stack(bus, status_to_push);
+
+    cpu.set_instr(format!("{:02X}", opcode), "PHP".to_string(), 3);
+}
+
 pub fn pla(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.reg_a = cpu.pop_stack(bus);
 
     cpu.update_z_n_flags(cpu.reg_a);
 
     cpu.set_instr(format!("{:02X}", opcode), "PLA".to_string(), 4);
+}
+
+pub fn plp(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let pulled_status = cpu.pop_stack(bus);
+
+    cpu.sr = (pulled_status & 0xEF) | 0x20;
+
+    cpu.set_instr(format!("{:02X}", opcode), "PLP".to_string(), 4);
 }
 
 pub fn rol_accumulator(cpu: &mut CPU, opcode: u8) {

@@ -184,6 +184,7 @@ impl CPU {
                 keep_running = false;
             },
             0x06 => opcodes::asl_memory(self, bus, &AddressingMode::ZeroPage, opcode),
+            0x08 => opcodes::php(self, bus, opcode),
             0x09 => opcodes::ora_immediate(self, bus, opcode),
             0x0A => opcodes::asl_accumulator(self, opcode),
             0x0E => opcodes::asl_memory(self, bus, &AddressingMode::Absolute, opcode),
@@ -195,6 +196,7 @@ impl CPU {
                 opcodes::jsr(self, bus, opcode, addr);
             },
             0x26 => opcodes::rol_memory(self, bus, &AddressingMode::ZeroPage, opcode),
+            0x28 => opcodes::plp(self, bus, opcode),
             0x29 => opcodes::and_immediate(self, bus, opcode),
             0x2A => opcodes::rol_accumulator(self, opcode),
             0x2E => opcodes::rol_memory(self, bus, &AddressingMode::Absolute, opcode),
@@ -270,14 +272,18 @@ impl CPU {
         let c = (self.sr >> 0) & 1;
         let nvdizc_str = format!("{}{}{}{}{}{}", n, v, d, i, z, c);
 
+        let watch_addr = 0x0040;
+        let watch_val = bus.read_ram(watch_addr);
+
         println!(
-            "{:04X}  {:<8}  {:<12} | {:02X} {:02X} {:02X} {:02X} | {} | {}",
+            "{:04X}  {:<8}  {:<12} | {:02X} {:02X} {:02X} {:02X} | {} | {} | M[{:02X}]: {:02X}",
             initial_pc,
             self.last_instr_bytes,
             self.last_disasm,
             self.reg_a, self.reg_x, self.reg_y, self.sp,
             nvdizc_str,
-            self.last_cycles
+            self.last_cycles,
+            watch_addr, watch_val
         );
 
         keep_running
