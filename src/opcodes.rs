@@ -1,3 +1,5 @@
+use std::collections::btree_map::Values;
+
 use crate::bus::Bus;
 use crate::cpu::{ AddressingMode, CPU};
 
@@ -133,6 +135,18 @@ pub fn cpy_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("CPY #${:02X}", value), 2);
 }
 
+pub fn dec_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u8) {
+    let addr = cpu.get_operand_address(mode, bus);
+    let mut value = bus.read_ram(addr);
+
+    value = value.wrapping_sub(1);
+
+    bus.write_ram(addr, value);
+
+    cpu.update_z_n_flags(value);
+    cpu.set_instr(format!("{:02X}", opcode), "DEC".to_string(), 6);
+}
+
 pub fn dex(cpu: &mut CPU, opcode: u8) {
     cpu.reg_x = cpu.reg_x.wrapping_sub(1);
     cpu.update_z_n_flags(cpu.reg_x);
@@ -156,6 +170,18 @@ pub fn eor_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.update_z_n_flags(cpu.reg_a);
 
     cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("EOR #${:02X}", value), 2);
+}
+
+pub fn inc_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u8) {
+    let addr = cpu.get_operand_address(mode, bus);
+    let mut value = bus.read_ram(addr);
+
+    value = value.wrapping_add(1);
+
+    bus.write_ram(addr, value);
+
+    cpu.update_z_n_flags(value);
+    cpu.set_instr(format!("{:02X}", opcode), "INC".to_string(), 6);
 }
 
 pub fn inx(cpu: &mut CPU, opcode: u8) {
