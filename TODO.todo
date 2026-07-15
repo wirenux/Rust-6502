@@ -25,6 +25,8 @@ match opcode {
 
 - [ ] add use of AI -> make ASM program to test during the development period
 
+- [ ] check every print for each opcode
+
 - [ ] idea for readme https://github.com/mre/mos6502
     - [ ] copy folder structure
         - [ ] add the Klaus Dormann test

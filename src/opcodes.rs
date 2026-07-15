@@ -747,8 +747,8 @@ pub fn sta_absolute_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     bus.write_ram(addr, cpu.reg_a);
 
     cpu.set_instr(
-        format!("{:02X} {:02X} {:02X}", opcode, low, high), 
-        format!("STA ${:04X},X", (high as u16) << 8 | low as u16), 
+        format!("{:02X} {:02X} {:02X}", opcode, low, high),
+        format!("STA ${:04X},X", (high as u16) << 8 | low as u16),
         5
     );
 }
