@@ -29,10 +29,12 @@ pub enum AddressingMode {
 }
 
 impl CPU {
-    pub const ZERO_FLAG: u8 = 0x02;
     pub const CARRY_FLAG: u8 = 0x01;
+    pub const DECIMAL_FLAG: u8 = 0x08;
+    pub const INTERRUPT_FLAG: u8 = 0x04;
     pub const NEGATIVE_FLAG: u8 = 0x80;
     pub const OVERFLOW_FLAG: u8 = 0x40;
+    pub const ZERO_FLAG: u8 = 0x02;
 
     pub fn new() -> Self {
         CPU {
@@ -253,6 +255,7 @@ impl CPU {
             0x4E => opcodes::lsr_memory(self, bus, &AddressingMode::Absolute, opcode),
             // 0x5X
             0x56 => opcodes::lsr_memory(self, bus, &AddressingMode::ZeroPageX, opcode),
+            0x58 => opcodes::cli(self, opcode),
             0x5E => opcodes::lsr_memory(self, bus, &AddressingMode::AbsoluteX, opcode),
             // 0x6X
             0x60 => opcodes::rts(self, bus, opcode),
@@ -293,6 +296,7 @@ impl CPU {
             0xB1 => opcodes::lda_indirect_y(self, bus, opcode),
             0xB5 => opcodes::lda_zeropage_x(self, bus, opcode),
             0xB6 => opcodes::ldx_zeropage_y(self, bus, opcode),
+            0xB8 => opcodes::clv(self, opcode),
             0xBA => opcodes::tsx(self, opcode),
             0xBE => opcodes::ldx_absolute_y(self, bus, opcode),
             // 0xCX

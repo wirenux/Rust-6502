@@ -1,5 +1,5 @@
 use crate::bus::{Bus};
-use crate::cpu::{ self, AddressingMode, CPU};
+use crate::cpu::{AddressingMode, CPU};
 
 pub fn adc_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let value = bus.read_ram(cpu.pc);
@@ -104,6 +104,18 @@ pub fn clc(cpu: &mut CPU, opcode: u8) {
     cpu.sr &= !CPU::CARRY_FLAG;
 
     cpu.set_instr(format!("{:02X}", opcode), "CLC".to_string(), 2);
+}
+
+pub fn cli(cpu: &mut CPU, opcode: u8) {
+    cpu.sr &= !CPU::INTERRUPT_FLAG;
+
+    cpu.set_instr(format!("{:02X}", opcode), "CLI".to_string(), 2);
+}
+
+pub fn clv(cpu: &mut CPU, opcode: u8) {
+    cpu.sr &= !CPU::OVERFLOW_FLAG;
+
+    cpu.set_instr(format!("{:02X}", opcode), "CLV".to_string(), 2);
 }
 
 pub fn cmp_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
