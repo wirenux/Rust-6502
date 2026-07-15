@@ -1,5 +1,5 @@
 use crate::bus::{Bus};
-use crate::cpu::{ AddressingMode, CPU};
+use crate::cpu::{ self, AddressingMode, CPU};
 
 pub fn adc_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let value = bus.read_ram(cpu.pc);
@@ -298,6 +298,19 @@ pub fn ldx_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("LDX ${:04X}", addr), 4);
 }
 
+pub fn ldx_absolute_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::AbsoluteY, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_x = value;
+    cpu.update_z_n_flags(cpu.reg_x);
+
+    let low = (addr & 0xFF) as u8;
+    let high = (addr >> 8) as u8;
+
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("LDX ${:04X},Y", addr), 4);
+}
+
 pub fn ldx_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::Immediate, bus);
     let value = bus.read_ram(addr);
@@ -306,6 +319,30 @@ pub fn ldx_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.update_z_n_flags(value);
 
     cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("LDX #${:02X}", value), 2);
+}
+
+pub fn lda_indirect_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::IndirectX, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a = value;
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    let ptr = bus.read_ram(cpu.pc - 1);
+
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("LDA (${:02X},X)", ptr), 6);
+}
+
+pub fn lda_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::IndirectY, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a = value;
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    let ptr = bus.read_ram(cpu.pc - 1);
+
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("LDA (${:02X}),Y", ptr), 5);
 }
 
 pub fn ldx_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -318,6 +355,18 @@ pub fn ldx_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let op_byte = addr as u8;
 
     cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("LDX ${:04X}", addr), 3);
+}
+
+pub fn ldx_zeropage_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPageY, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_x = value;
+    cpu.update_z_n_flags(cpu.reg_x);
+
+    let base_addr: u8 = bus.read_ram(cpu.pc - 1);
+
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, base_addr), format!("LDX ${:02X},Y", base_addr), 4);
 }
 
 pub fn ldy_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -601,11 +650,22 @@ pub fn tay(cpu: &mut CPU, opcode: u8) {
     cpu.set_instr(format!("{:02X}", opcode), "TAY".to_string(), 2);
 }
 
+pub fn tsx(cpu: &mut CPU, opcode: u8) {
+    cpu.reg_x = cpu.sp;
+    cpu.update_z_n_flags(cpu.reg_x);
+    cpu.set_instr(format!("{:02X}", opcode), "TSX".to_string(), 2);
+}
+
 pub fn txa(cpu: &mut CPU, opcode: u8) {
     cpu.reg_a = cpu.reg_x;
     cpu.update_z_n_flags(cpu.reg_a);
 
     cpu.set_instr(format!("{:02X}", opcode), "TXA".to_string(), 2);
+}
+
+pub fn txs(cpu: &mut CPU, opcode: u8) {
+    cpu.sp = cpu.reg_x;
+    cpu.set_instr(format!("{:02X}", opcode), "TXS".to_string(), 2);
 }
 
 pub fn tya(cpu: &mut CPU, opcode: u8) {
