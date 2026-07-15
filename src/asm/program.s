@@ -1,13 +1,43 @@
-; test loop and DEC INC
-.org $8000
+* = $8000
 
 START:
-    LDA #$FF        ; 1. Load A with 3
-    STA $40         ; 2. Store it at Zero Page address $40 (our counter)
+    LDX #$42
+    TXS
+    LDX #$00
+    TSX
 
-LOOP:
-    DEC $40         ; 3. Decrement the value in memory $40 by 1
-    BNE LOOP        ; 4. If the Zero flag (Z) is 0 (meaning the counter isn't 0 yet),
-                    ;    branch back to LOOP.
+    LDA #$AA
+    STA $0050
+    LDA #$BB
+    STA $0055
 
-    BRK             ; 5. Stop once the counter hits 0!
+    LDA #$50
+    STA $0020
+    LDA #$00
+    STA $0021
+
+    LDA #$55
+    STA $0025
+    LDA #$00
+    STA $0026
+
+    LDA #$00
+    LDX #$05
+    LDA ($20,X)
+
+    LDA #$00
+    LDY #$05
+    LDA ($20),Y
+
+    LDX #$00
+    LDY #$10
+    LDX $45,Y
+
+    LDX #$00
+    LDY #$01
+    LDX DATA_BLOCK,Y
+
+    BRK
+
+DATA_BLOCK:
+    .byte $88, $99, $CC
