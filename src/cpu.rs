@@ -251,6 +251,7 @@ impl CPU {
             0x38 => opcodes::sec(self, opcode),
             0x3E => opcodes::rol_memory(self, bus, &AddressingMode::AbsoluteX, opcode),
             // 0x4X
+            0x40 => opcodes::rti(self, bus, opcode),
             0x46 => opcodes::lsr_memory(self, bus, &AddressingMode::ZeroPage, opcode),
             0x48 => opcodes::pha(self, bus, opcode),
             0x49 => opcodes::eor_immediate(self, bus, opcode),

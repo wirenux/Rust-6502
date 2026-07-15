@@ -677,6 +677,21 @@ pub fn ror_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u
     cpu.set_instr(format!("{:02X}", opcode), "ROR".to_string(), 5);
 }
 
+pub fn rti(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let pulled_status = cpu.pop_stack(bus);
+
+    cpu.sr = (pulled_status & 0xEF) | 0x20;
+
+    let low = cpu.pop_stack(bus) as u16;
+    let high = cpu.pop_stack(bus) as u16;
+
+    let return_addr = (high << 8) | low;
+
+    cpu.pc = return_addr;
+
+    cpu.set_instr(format!("{:02X}", opcode), "RTI".to_string(), 6);
+}
+
 pub fn rts(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let low = cpu.pop_stack(bus) as u16;
     let high = cpu.pop_stack(bus) as u16;
