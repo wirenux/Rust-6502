@@ -63,6 +63,28 @@ pub fn asl_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u
     cpu.set_instr(format!("{:02X}", opcode), "ASL".to_string(), 5);
 }
 
+pub fn bcc(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let offset = bus.read_ram(cpu.pc) as i8;
+    cpu.pc += 1;
+
+    if !cpu.get_flag(CPU::CARRY_FLAG) {
+        cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
+    }
+
+    cpu.set_instr(format!("{:02X}", opcode), format!("BCC"), 2);
+}
+
+pub fn bcs(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let offset = bus.read_ram(cpu.pc) as i8;
+    cpu.pc += 1;
+
+    if cpu.get_flag(CPU::CARRY_FLAG) {
+        cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
+    }
+
+    cpu.set_instr(format!("{:02X}", opcode), format!("BCS"), 2);
+}
+
 pub fn beq(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let offset = bus.read_ram(cpu.pc) as i8;
     cpu.pc += 1;
@@ -74,6 +96,43 @@ pub fn beq(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X}", opcode), format!("BEQ"), 2);
 }
 
+pub fn bit_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u8) {
+    let addr = cpu.get_operand_address(mode, bus);
+    let value = bus.read_ram(addr);
+
+    let and_result = cpu.reg_a & value;
+    if and_result == 0 {
+        cpu.sr |= CPU::ZERO_FLAG;
+    } else {
+        cpu.sr &= !CPU::ZERO_FLAG;
+    }
+
+    if (value & 0x80) != 0 {
+        cpu.sr |= CPU::OVERFLOW_FLAG;
+    } else {
+        cpu.sr &= !CPU::OVERFLOW_FLAG;
+    }
+
+    let cycles = match mode {
+        AddressingMode::ZeroPage => 3,
+        AddressingMode::Absolute => 4,
+        _ => 2
+    };
+
+    cpu.set_instr(format!("{:02X}", opcode), format!("BIT ${:04X}", addr), cycles);
+}
+
+pub fn bmi(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let offset = bus.read_ram(cpu.pc) as i8;
+    cpu.pc += 1;
+
+    if cpu.get_flag(CPU::NEGATIVE_FLAG) {
+        cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
+    }
+
+    cpu.set_instr(format!("{:02X}", opcode), format!("BMI"), 2);
+}
+
 pub fn bne(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let offset = bus.read_ram(cpu.pc) as i8;
     cpu.pc += 1;
@@ -83,6 +142,17 @@ pub fn bne(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     }
 
     cpu.set_instr(format!("{:02X}", opcode), format!("BNE"), 2);
+}
+
+pub fn bpl(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let offset = bus.read_ram(cpu.pc) as i8;
+    cpu.pc += 1;
+
+    if !cpu.get_flag(CPU::NEGATIVE_FLAG) {
+        cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
+    }
+
+    cpu.set_instr(format!("{:02X}", opcode), format!("BPL"), 2);
 }
 
 pub fn brk(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -98,6 +168,28 @@ pub fn brk(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.pc = ((high as u16) << 8) | (low as u16);
 
     cpu.set_instr(format!("{:02X}", opcode), "BRK".to_string(), 7);
+}
+
+pub fn bvc(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let offset = bus.read_ram(cpu.pc) as i8;
+    cpu.pc += 1;
+
+    if !cpu.get_flag(CPU::OVERFLOW_FLAG) {
+        cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
+    }
+
+    cpu.set_instr(format!("{:02X}", opcode), format!("BVC"), 2);
+}
+
+pub fn bvs(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let offset = bus.read_ram(cpu.pc) as i8;
+    cpu.pc += 1;
+
+    if cpu.get_flag(CPU::OVERFLOW_FLAG) {
+        cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
+    }
+
+    cpu.set_instr(format!("{:02X}", opcode), format!("BVS"), 2);
 }
 
 pub fn clc(cpu: &mut CPU, opcode: u8) {
