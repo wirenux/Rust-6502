@@ -739,6 +739,20 @@ pub fn sta_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("STA ${:04X}", addr), 4);
 }
 
+pub fn sta_absolute_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let low = bus.read_ram(cpu.pc);
+    let high = bus.read_ram(cpu.pc.wrapping_add(1));
+
+    let addr = cpu.get_operand_address(&AddressingMode::AbsoluteX, bus);
+    bus.write_ram(addr, cpu.reg_a);
+
+    cpu.set_instr(
+        format!("{:02X} {:02X} {:02X}", opcode, low, high), 
+        format!("STA ${:04X},X", (high as u16) << 8 | low as u16), 
+        5
+    );
+}
+
 pub fn sta_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::ZeroPage, bus);
     bus.write_ram(addr, cpu.reg_a);

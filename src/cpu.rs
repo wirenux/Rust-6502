@@ -286,6 +286,7 @@ impl CPU {
             0x90 => opcodes::bcc(self, bus, opcode),
             0x98 => opcodes::tya(self, opcode),
             0x9A => opcodes::txs(self, opcode),
+            0x9D => opcodes::sta_absolute_x(self, bus, opcode),
             // 0xAX
             0xA0 => opcodes::ldy_immediate(self, bus, opcode),
             0xA1 => opcodes::lda_indirect_x(self, bus, opcode),
