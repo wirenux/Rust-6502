@@ -26,6 +26,7 @@ impl Bus {
         }
     }
 
+    #[allow(dead_code)]
     pub fn memory_dump(&self, page: u8) {
         let start_addr = (page as u16) << 8;
 

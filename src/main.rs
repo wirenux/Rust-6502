@@ -25,6 +25,4 @@ fn main() {
             break;
         }
     }
-
-    bus.memory_dump(0x00);
 }

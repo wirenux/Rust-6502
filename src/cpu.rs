@@ -26,11 +26,13 @@ pub enum AddressingMode {
     AbsoluteY,
     IndirectX,
     IndirectY,
+    #[allow(dead_code)]
     Implied,
 }
 
 impl CPU {
     pub const CARRY_FLAG: u8 = 0x01;
+    #[allow(dead_code)]
     pub const DECIMAL_FLAG: u8 = 0x08;
     pub const INTERRUPT_FLAG: u8 = 0x04;
     pub const NEGATIVE_FLAG: u8 = 0x80;
@@ -212,12 +214,10 @@ impl CPU {
         self.update_z_n_flags(self.reg_a);
     }
 
-    pub fn clock_tick(&mut self, bus: &mut Bus) -> bool {
+    pub fn clock_tick(&mut self, bus: &mut Bus) {
         let initial_pc = self.pc;
         let opcode = bus.read_ram(self.pc);
         self.pc = self.pc + 1;
-
-        let mut keep_running = true;
 
         match opcode {
             // 0x0X
@@ -360,7 +360,5 @@ impl CPU {
             watch_addr,
             watch_val
         );
-
-        keep_running
     }
 }
