@@ -168,6 +168,8 @@ pub fn bpl(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 }
 
 pub fn brk(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    cpu.pc += 2;
+
     cpu.push_stack(bus, (cpu.pc >> 8) as u8);
     cpu.push_stack(bus, (cpu.pc & 0xFF) as u8);
 
@@ -180,6 +182,7 @@ pub fn brk(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.pc = ((high as u16) << 8) | (low as u16);
 
     cpu.set_instr(format!("{:02X}", opcode), "BRK".to_string(), 7);
+    cpu.halted = true;
 }
 
 pub fn bvc(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {

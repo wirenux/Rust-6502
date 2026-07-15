@@ -13,6 +13,7 @@ pub struct CPU {
     pub last_instr_bytes: String,
     pub last_disasm: String,
     pub last_cycles: u8,
+    pub halted: bool,
 }
 
 pub enum AddressingMode {
@@ -48,6 +49,7 @@ impl CPU {
             last_instr_bytes: String::new(),
             last_disasm: String::new(),
             last_cycles: 0,
+            halted: false,
         }
     }
 
@@ -219,10 +221,7 @@ impl CPU {
 
         match opcode {
             // 0x0X
-            0x00 => {
-                opcodes::brk(self, bus, opcode);
-                keep_running = false;
-            }
+            0x00 =>opcodes::brk(self, bus, opcode),
             0x06 => opcodes::asl_memory(self, bus, &AddressingMode::ZeroPage, opcode),
             0x08 => opcodes::php(self, bus, opcode),
             0x09 => opcodes::ora_immediate(self, bus, opcode),

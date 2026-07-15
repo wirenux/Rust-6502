@@ -13,16 +13,15 @@ fn main() {
 
     bus.load_program(0x8000, &file_byte);
 
-    bus.write_ram(0xFFFC, 0x00);
-    bus.write_ram(0xFFFD, 0x80);
-
     println!("ADDR  HEX       DISASM       | AC XR YR SP | NVDIZC | #");
     println!("-------------------------------------------------------");
 
     cpu.reset_cpu(&bus);
 
     loop {
-        if !cpu.clock_tick(&mut bus) {
+        cpu.clock_tick(&mut bus);
+
+        if cpu.halted {
             break;
         }
     }
