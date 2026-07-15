@@ -19,8 +19,10 @@ pub enum AddressingMode {
     Immediate,
     ZeroPage,
     ZeroPageX,
+    ZeroPageY,
     Absolute,
     AbsoluteX,
+    AbsoluteY,
     Implied
 }
 
@@ -97,6 +99,14 @@ impl CPU {
                 self.pc = self.pc + 1;
                 addr
             },
+            AddressingMode::ZeroPageY => {
+                let base = bus.read_ram(self.pc);
+
+                let addr = base.wrapping_add(self.reg_y) as u16;
+
+                self.pc = self.pc + 1;
+                addr
+            },
             AddressingMode::Absolute => {
                 let low = bus.read_ram(self.pc) as u16;
                 let high = bus.read_ram(self.pc + 1) as u16;
@@ -109,6 +119,16 @@ impl CPU {
                 let base = (high << 8) | low;
 
                 let addr = base.wrapping_add(self.reg_x as u16);
+
+                self.pc = self.pc + 2;
+                addr
+            },
+            AddressingMode::AbsoluteY => {
+                let low = bus.read_ram(self.pc) as u16;
+                let high = bus.read_ram(self.pc + 1) as u16;
+                let base = (high << 8) | low;
+
+                let addr = base.wrapping_add(self.reg_y as u16);
 
                 self.pc = self.pc + 2;
                 addr
