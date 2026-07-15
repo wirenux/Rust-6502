@@ -1,43 +1,65 @@
 * = $8000
 
 START:
-    LDX #$42
-    TXS
-    LDX #$00
-    TSX
+    CLC
+    BCC BCC_OK
+    JMP FAIL
+BCC_OK:
 
-    LDA #$AA
-    STA $0050
-    LDA #$BB
-    STA $0055
+    SEC
+    BCS BCS_OK
+    JMP FAIL
+BCS_OK:
 
-    LDA #$50
-    STA $0020
+    LDA #$10
+    BPL BPL_OK
+    JMP FAIL
+BPL_OK:
+
+    LDA #$80
+    BMI BMI_OK
+    JMP FAIL
+BMI_OK:
+
+    CLV
+    BVC BVC_OK
+    JMP FAIL
+BVC_OK:
+
+    LDA #$7F
+    CLC
+    ADC #$01
+    BVS BVS_OK
+    JMP FAIL
+BVS_OK:
+
+    LDA #$C0
+    STA $30
+
     LDA #$00
-    STA $0021
+    BIT $30
+    BNE FAIL
+    BPL FAIL
+    BVC FAIL
 
-    LDA #$55
-    STA $0025
+    LDA #$80
+    BIT $30
+    BEQ FAIL
+    BPL FAIL
+    BVC FAIL
+
     LDA #$00
-    STA $0026
+    BIT BIT_DATA
+    BNE FAIL
+    BMI FAIL
+    BVC FAIL
 
-    LDA #$00
-    LDX #$05
-    LDA ($20,X)
-
-    LDA #$00
-    LDY #$05
-    LDA ($20),Y
-
-    LDX #$00
-    LDY #$10
-    LDX $45,Y
-
-    LDX #$00
-    LDY #$01
-    LDX DATA_BLOCK,Y
-
+    LDX #$FF
     BRK
 
-DATA_BLOCK:
-    .byte $88, $99, $CC
+FAIL:
+    LDX #$EE
+    BRK
+
+BIT_DATA:
+    .byte $40

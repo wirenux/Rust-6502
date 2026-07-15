@@ -108,6 +108,12 @@ pub fn bit_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u
     }
 
     if (value & 0x80) != 0 {
+        cpu.sr |= CPU::NEGATIVE_FLAG;
+    } else {
+        cpu.sr &= !CPU::NEGATIVE_FLAG;
+    }
+
+    if (value & 0x40) != 0 {
         cpu.sr |= CPU::OVERFLOW_FLAG;
     } else {
         cpu.sr &= !CPU::OVERFLOW_FLAG;
@@ -119,7 +125,13 @@ pub fn bit_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u
         _ => 2
     };
 
-    cpu.set_instr(format!("{:02X}", opcode), format!("BIT ${:04X}", addr), cycles);
+    let disasm = match mode {
+        AddressingMode::ZeroPage => format!("BIT ${:02X}", addr),
+        AddressingMode::Absolute => format!("BIT ${:04X}", addr),
+        _ => format!("BIT ${:04X}", addr), // Fallback
+    };
+
+    cpu.set_instr(format!("{:02X}", opcode), disasm, cycles);
 }
 
 pub fn bmi(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
