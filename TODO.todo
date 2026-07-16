@@ -22,6 +22,8 @@ match opcode {
 - [ ] replace every cpu.pc = cpu.pc + 1 with : cpu.pc += 1
 
 - [ ] set the speed like the real MOS 6502 speed
+    - [ ] add parameter to change the speed
+        - [ ] later with ui
 
 - [ ] add use of AI -> make ASM program to test during the development period
 

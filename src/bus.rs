@@ -1,11 +1,15 @@
 pub struct Bus {
     pub ram: [u8; 65536],
+    pub irq_active: bool,
+    pub nmi_active: bool,
 }
 
 impl Bus {
     pub fn new() -> Self {
         Bus {
             ram: [0; 65536],
+            irq_active: false,
+            nmi_active: false,
         }
     }
 
@@ -14,15 +18,20 @@ impl Bus {
     }
 
     pub fn write_ram(&mut self, addr: u16, data: u8) {
+        if addr == 0xBFFC {
+            self.irq_active = (data & 0b0000_0001) != 0;
+            self.nmi_active = (data & 0b0000_0010) != 0;
+        }
+
         self.ram[addr as usize] = data;
     }
 
-    pub fn load_program(&mut self, start_addr: u16, data: &Vec<u8>) {
-        let mut current_addr = start_addr as usize;
-
-        for byte in data {
-            self.ram[current_addr] = *byte;
-            current_addr = current_addr + 1;
+    pub fn load_rom(&mut self, rom: &[u8], origin: u16) {
+        let start = origin as usize;
+        for (i, &byte) in rom.iter().enumerate() {
+            if start + i < 65536 {
+                self.ram[start + i] = byte;
+            }
         }
     }
 

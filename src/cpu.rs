@@ -70,6 +70,9 @@ impl CPU {
 
         let low_byte = bus.read_ram(0xFFFC);
         let high_byte = bus.read_ram(0xFFFD);
+
+        println!("DEBUG: Reset Vector read: {:02X}{:02X}", high_byte, low_byte);
+
         self.pc = ((high_byte as u16) << 8) | (low_byte as u16); // as u16 transform a u8 var into a u16
     }
 
@@ -166,6 +169,14 @@ impl CPU {
         self.sp = self.sp.wrapping_sub(1);
     }
 
+    pub(crate) fn push_stack_u16(&mut self, bus: &mut Bus, value: u16) {
+        let high = (value >> 8) as u8;
+        let low = (value & 0xFF) as u8;
+
+        self.push_stack(bus, high);
+        self.push_stack(bus, low);
+    }
+
     pub(crate) fn pop_stack(&mut self, bus: &Bus) -> u8 {
         self.sp = self.sp.wrapping_add(1);
         bus.read_ram(0x0100 + self.sp as u16)
@@ -214,7 +225,56 @@ impl CPU {
         self.update_z_n_flags(self.reg_a);
     }
 
+    pub fn nmi(&mut self, bus: &mut Bus) {
+        self.push_stack_u16(bus, self.pc);
+
+        let mut status = self.sr; // Use the 8-bit Status Register
+        status &= 0b1110_1111; // clear B flag
+        status |= 0b0010_0000; // set unused flag
+        self.push_stack(bus, status); // Push as a single 8-bit byte
+
+        self.sr |= CPU::INTERRUPT_FLAG;
+
+        let low = bus.read_ram(0xFFFA) as u16;
+        let high = bus.read_ram(0xFFFB) as u16;
+        self.pc = (high << 8) | low;
+
+        self.last_cycles = 7;
+        self.last_instr_bytes = String::from("INT");
+        self.last_disasm = String::from("NMI");
+    }
+
+    pub fn irq(&mut self, bus: &mut Bus) {
+        if (self.sr & CPU::INTERRUPT_FLAG) == 0 {
+            self.push_stack_u16(bus, self.pc);
+
+            let mut status = self.sp;
+            status &= 0b1110_1111; 
+            status |= 0b0010_0000; 
+            self.push_stack(bus, status);
+
+            self.sr |= CPU::INTERRUPT_FLAG;
+
+            let low = bus.read_ram(0xFFFE) as u16;
+            let high = bus.read_ram(0xFFFF) as u16;
+            self.pc = (high << 8) | low;
+
+            self.last_cycles = 7;
+            self.last_instr_bytes = String::from("INT");
+            self.last_disasm = String::from("IRQ");
+        }
+    }
+
     pub fn clock_tick(&mut self, bus: &mut Bus) {
+        if bus.nmi_active {
+            self.nmi(bus);
+            bus.nmi_active = false;
+            return;
+        } else if bus.irq_active && (self.sr & CPU::INTERRUPT_FLAG) == 0 {
+            self.irq(bus);
+            return;
+        }
+
         let initial_pc = self.pc;
         let opcode = bus.read_ram(self.pc);
         self.pc = self.pc + 1;
