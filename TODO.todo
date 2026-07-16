@@ -14,6 +14,76 @@ match opcode {
 - [x] move all opcode to opcode.rs
 - [x] add LSR
 
+- [ ] all opcodes
+    - [ ] ADC
+        - [ ] zpx
+        - [ ] abs
+        - [ ] absx
+        - [ ] absy
+        - [ ] indx
+        - [ ] indy
+    - [ ] AND
+        - [ ] zp
+        - [ ] zpx
+        - [ ] abs
+        - [ ] absx
+        - [ ] absy
+        - [ ] indx
+        - [ ] indy
+    - [ ] CMP
+        - [ ] zp
+        - [ ] zpx
+        - [ ] abs
+        - [ ] absx
+        - [ ] absy
+        - [ ] indx
+        - [ ] indy
+    - [ ] EOR
+        - [ ] zp
+        - [ ] zpx
+        - [ ] abs
+        - [ ] absx
+        - [ ] absy
+        - [ ] indx
+        - [ ] indy
+    - [ ] ORA
+        - [ ] zp
+        - [ ] zpx
+        - [ ] abs
+        - [ ] absx
+        - [ ] absy
+        - [ ] indx
+        - [ ] indy
+    - [ ] SBC
+        - [ ] zpx
+        - [ ] abs
+        - [ ] absx
+        - [ ] absy
+        - [ ] indx
+        - [ ] indy
+    - [ ] CPX
+        - [ ] zp
+        - [ ] abs
+    - [ ] CPY
+        - [ ] zp
+        - [ ] abs
+    - [ ] LDA
+        - [ ] absx
+        - [ ] absy
+    - [ ] LDY
+        - [ ] zpx
+    - [ ] STA
+        - [ ] zpx
+        - [ ] absy
+        - [ ] indx
+        - [ ] indy
+    - [ ] STX
+        - [ ] zpy
+        - [ ] abs
+    - [ ] STY
+        - [ ] zpx
+        - [ ] abs
+
 - [ ] add a UI (like Jira TUI)
     - [ ] (when in UI like Jira TUI) add scroll to mem viewer
 - [x] add a memory viewer
