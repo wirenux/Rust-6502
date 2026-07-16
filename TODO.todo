@@ -61,28 +61,28 @@ match opcode {
         - [ ] absy
         - [ ] indx
         - [ ] indy
-    - [ ] CPX
-        - [ ] zp
-        - [ ] abs
-    - [ ] CPY
-        - [ ] zp
-        - [ ] abs
+    - [x] CPX
+        - [x] zp
+        - [x] abs
+    - [x] CPY
+        - [x] zp
+        - [x] abs
     - [ ] LDA
         - [ ] absx
         - [ ] absy
-    - [ ] LDY
-        - [ ] zpx
-    - [ ] STA
-        - [ ] zpx
-        - [ ] absy
-        - [ ] indx
-        - [ ] indy
-    - [ ] STX
-        - [ ] zpy
-        - [ ] abs
-    - [ ] STY
-        - [ ] zpx
-        - [ ] abs
+    - [x] LDY
+        - [x] zpx
+    - [x] STA
+        - [x] zpx
+        - [x] absy
+        - [x] indx
+        - [x] indy
+    - [x] STX
+        - [x] zpy
+        - [x] abs
+    - [x] STY
+        - [x] zpx
+        - [x] abs
 
 - [ ] add a UI (like Jira TUI)
     - [ ] (when in UI like Jira TUI) add scroll to mem viewer

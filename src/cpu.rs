@@ -335,15 +335,23 @@ impl CPU {
             0x78 => opcodes::sei(self, opcode),
             0x7E => opcodes::ror_memory(self, bus, &AddressingMode::AbsoluteX, opcode),
             // 0x8X
+            0x81 => opcodes::sta_indirect_x(self, bus, opcode),
             0x84 => opcodes::sty_zeropage(self, bus, opcode),
             0x85 => opcodes::sta_zeropage(self, bus, opcode),
             0x86 => opcodes::stx_zeropage(self, bus, opcode),
             0x88 => opcodes::dey(self, opcode),
             0x8A => opcodes::txa(self, opcode),
+            0x8C => opcodes::sty_absolute(self, bus, opcode),
             0x8D => opcodes::sta_absolute(self, bus, opcode),
+            0x8E => opcodes::stx_absolute(self, bus, opcode),
             // 0x9X
             0x90 => opcodes::bcc(self, bus, opcode),
+            0x91 => opcodes::sta_indirect_y(self, bus, opcode),
+            0x95 => opcodes::sta_zeropage_x(self, bus, opcode),
+            0x94 => opcodes::sty_zeropage_x(self, bus, opcode),
+            0x96 => opcodes::stx_zeropage_y(self, bus, opcode),
             0x98 => opcodes::tya(self, opcode),
+            0x99 => opcodes::sta_absolute_y(self, bus, opcode),
             0x9A => opcodes::txs(self, opcode),
             0x9D => opcodes::sta_absolute_x(self, bus, opcode),
             // 0xAX
@@ -362,6 +370,7 @@ impl CPU {
             // 0xBX
             0xB0 => opcodes::bcs(self, bus, opcode),
             0xB1 => opcodes::lda_indirect_y(self, bus, opcode),
+            0xB4 => opcodes::ldy_zeropage_x(self, bus, opcode),
             0xB5 => opcodes::lda_zeropage_x(self, bus, opcode),
             0xB6 => opcodes::ldx_zeropage_y(self, bus, opcode),
             0xB8 => opcodes::clv(self, opcode),
@@ -369,10 +378,12 @@ impl CPU {
             0xBE => opcodes::ldx_absolute_y(self, bus, opcode),
             // 0xCX
             0xC0 => opcodes::cpy_immediate(self, bus, opcode),
+            0xC4 => opcodes::cpy_zeropage(self, bus, opcode),
             0xC6 => opcodes::dec_memory(self, bus, &AddressingMode::ZeroPage, opcode),
             0xC8 => opcodes::iny(self, opcode),
             0xC9 => opcodes::cmp_immediate(self, bus, opcode),
             0xCA => opcodes::dex(self, opcode),
+            0xCC => opcodes::cpy_absolute(self, bus, opcode),
             0xCE => opcodes::dec_memory(self, bus, &AddressingMode::Absolute, opcode),
             // 0xDX
             0xD0 => opcodes::bne(self, bus, opcode),
@@ -381,11 +392,13 @@ impl CPU {
             0xDE => opcodes::dec_memory(self, bus, &AddressingMode::AbsoluteX, opcode),
             // 0xEX
             0xE0 => opcodes::cpx_immediate(self, bus, opcode),
+            0xE4 => opcodes::cpx_zeropage(self, bus, opcode),
             0xE5 => opcodes::sbc_zeropage(self, bus, opcode),
             0xE6 => opcodes::inc_memory(self, bus, &AddressingMode::ZeroPage, opcode),
             0xE8 => opcodes::inx(self, opcode),
             0xE9 => opcodes::sbc_immediate(self, bus, opcode),
             0xEA => opcodes::nop(self, opcode),
+            0xEC => opcodes::cpx_absolute(self, bus, opcode),
             0xEE => opcodes::inc_memory(self, bus, &AddressingMode::Absolute, opcode),
             // 0xFX
             0xF0 => opcodes::beq(self, bus, opcode),

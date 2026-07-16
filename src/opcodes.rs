@@ -239,6 +239,18 @@ pub fn cmp_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("CMP #${:02X}", value), 2);
 }
 
+pub fn cpx_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::Absolute, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.compare_registers(cpu.reg_x, value);
+
+    let low = (addr & 0xFF) as u8;
+    let high = (addr >> 8) as u8;
+
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("CPX ${:04X}", addr), 4);
+}
+
 pub fn cpx_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::Immediate, bus);
     let value = bus.read_ram(addr);
@@ -248,6 +260,29 @@ pub fn cpx_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("CPX #${:02X}", value), 2);
 }
 
+pub fn cpx_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPage, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.compare_registers(cpu.reg_x, value);
+
+    let op_byte = addr as u8;
+
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("CPX #${:02X}", op_byte), 3);
+}
+
+pub fn cpy_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::Absolute, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.compare_registers(cpu.reg_y, value);
+
+    let low = (addr & 0xFF) as u8;
+    let high = (addr >> 8) as u8;
+
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("CPY ${:04X}", addr), 4);
+}
+
 pub fn cpy_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::Immediate, bus);
     let value = bus.read_ram(addr);
@@ -255,6 +290,17 @@ pub fn cpy_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.compare_registers(cpu.reg_y, value);
 
     cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("CPY #${:02X}", value), 2);
+}
+
+pub fn cpy_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPage, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.compare_registers(cpu.reg_y, value);
+
+    let op_byte = addr as u8;
+
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("CPY #${:02X}", op_byte), 3);
 }
 
 pub fn dec_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u8) {
@@ -528,6 +574,18 @@ pub fn ldy_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("LDY ${:04X}", addr), 3);
 }
 
+pub fn ldy_zeropage_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPageX, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_y = value;
+    cpu.update_z_n_flags(cpu.reg_y);
+
+    let base_addr = bus.read_ram(cpu.pc - 1);
+
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, base_addr), format!("LDY ${:04X},X", addr), 4);
+}
+
 pub fn lsr_accumulator(cpu: &mut CPU, opcode: u8) {
     let bit_0 = cpu.reg_a & 0x01;
 
@@ -768,6 +826,38 @@ pub fn sta_absolute_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     );
 }
 
+pub fn sta_absolute_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let low = bus.read_ram(cpu.pc);
+    let high = bus.read_ram(cpu.pc.wrapping_add(1));
+
+    let addr = cpu.get_operand_address(&AddressingMode::AbsoluteY, bus);
+    bus.write_ram(addr, cpu.reg_a);
+
+    cpu.set_instr(
+        format!("{:02X} {:02X} {:02X}", opcode, low, high),
+        format!("STA ${:04X},Y", (high as u16) << 8 | low as u16),
+        5
+    );
+}
+
+pub fn sta_indirect_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::IndirectX, bus);
+    bus.write_ram(addr, cpu.reg_a);
+
+    let ptr = bus.read_ram(cpu.pc - 1);
+
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("STA (${:02X},X)", ptr), 6);
+}
+
+pub fn sta_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::IndirectY, bus);
+    bus.write_ram(addr, cpu.reg_a);
+
+    let ptr = bus.read_ram(cpu.pc - 1);
+
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("STA (${:02X},Y)", ptr), 6);
+}
+
 pub fn sta_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::ZeroPage, bus);
     bus.write_ram(addr, cpu.reg_a);
@@ -781,6 +871,29 @@ pub fn sta_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     );
 }
 
+pub fn sta_zeropage_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPageX, bus);
+    bus.write_ram(addr, cpu.reg_a);
+
+    let base_addr = bus.read_ram(cpu.pc - 1);
+
+    cpu.set_instr(
+        format!("{:02X} {:02X}", opcode, base_addr),
+        format!("STA ${:02X}, X", base_addr),
+        4
+    );
+}
+
+pub fn stx_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::Absolute, bus);
+    bus.write_ram(addr, cpu.reg_x);
+
+    let low = (addr & 0xFF) as u8;
+    let high = (addr >> 8) as u8;
+
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("STX ${:04X}", addr), 4);
+}
+
 pub fn stx_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::ZeroPage, bus);
     bus.write_ram(addr, cpu.reg_x);
@@ -790,6 +903,26 @@ pub fn stx_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte),format!("STX ${:02X}", op_byte),3);
 }
 
+pub fn stx_zeropage_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPageY, bus);
+    bus.write_ram(addr, cpu.reg_x);
+
+    let base_addr = bus.read_ram(cpu.pc - 1);
+
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, base_addr),format!("STY ${:02X},X", base_addr),4);
+}
+
+pub fn sty_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::Absolute, bus);
+    bus.write_ram(addr, cpu.reg_y);
+
+    let low = (addr & 0xFF) as u8;
+    let high = (addr >> 8) as u8;
+
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("STY ${:04X}", addr), 4);
+}
+
+
 pub fn sty_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::ZeroPage, bus);
     bus.write_ram(addr, cpu.reg_y);
@@ -797,6 +930,15 @@ pub fn sty_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let op_byte = addr as u8;
 
     cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte),format!("STY ${:02X}", op_byte),3);
+}
+
+pub fn sty_zeropage_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPageX, bus);
+    bus.write_ram(addr, cpu.reg_y);
+
+    let base_addr = bus.read_ram(cpu.pc - 1);
+
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, base_addr),format!("STY ${:02X},X", base_addr),4);
 }
 
 pub fn tax(cpu: &mut CPU, opcode: u8) {
