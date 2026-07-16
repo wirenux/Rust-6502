@@ -71,8 +71,6 @@ impl CPU {
         let low_byte = bus.read_ram(0xFFFC);
         let high_byte = bus.read_ram(0xFFFD);
 
-        println!("DEBUG: Reset Vector read: {:02X}{:02X}", high_byte, low_byte);
-
         self.pc = ((high_byte as u16) << 8) | (low_byte as u16); // as u16 transform a u8 var into a u16
     }
 
