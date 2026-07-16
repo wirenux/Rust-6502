@@ -213,6 +213,11 @@ pub fn clc(cpu: &mut CPU, opcode: u8) {
     cpu.set_instr(format!("{:02X}", opcode), "CLC".to_string(), 2);
 }
 
+pub fn cld(cpu: &mut CPU, opcode: u8) {
+    cpu.sr |= !CPU::DECIMAL_FLAG;
+    cpu.set_instr(format!("{:02X}", opcode), "CLD".to_string(), 2);
+}
+
 pub fn cli(cpu: &mut CPU, opcode: u8) {
     cpu.sr &= !CPU::INTERRUPT_FLAG;
 
@@ -727,6 +732,16 @@ pub fn sbc_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 pub fn sec(cpu: &mut CPU, opcode: u8) {
     cpu.sr |= CPU::CARRY_FLAG;
     cpu.set_instr(format!("{:02X}", opcode), "SEC".to_string(), 2);
+}
+
+pub fn sed(cpu: &mut CPU, opcode: u8) {
+    cpu.sr |= CPU::DECIMAL_FLAG;
+    cpu.set_instr(format!("{:02X}", opcode), "SED".to_string(), 2);
+}
+
+pub fn sei(cpu: &mut CPU, opcode: u8) {
+    cpu.sr |= CPU::INTERRUPT_FLAG;
+    cpu.set_instr(format!("{:02X}", opcode), "SEI".to_string(), 2);
 }
 
 pub fn sta_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {

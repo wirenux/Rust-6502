@@ -332,6 +332,7 @@ impl CPU {
             // 0x7X
             0x70 => opcodes::bvs(self, bus, opcode),
             0x76 => opcodes::ror_memory(self, bus, &AddressingMode::ZeroPageX, opcode),
+            0x78 => opcodes::sei(self, opcode),
             0x7E => opcodes::ror_memory(self, bus, &AddressingMode::AbsoluteX, opcode),
             // 0x8X
             0x84 => opcodes::sty_zeropage(self, bus, opcode),
@@ -376,6 +377,7 @@ impl CPU {
             // 0xDX
             0xD0 => opcodes::bne(self, bus, opcode),
             0xD6 => opcodes::dec_memory(self, bus, &AddressingMode::ZeroPageX, opcode),
+            0xD8 => opcodes::cld(self, opcode),
             0xDE => opcodes::dec_memory(self, bus, &AddressingMode::AbsoluteX, opcode),
             // 0xEX
             0xE0 => opcodes::cpx_immediate(self, bus, opcode),
@@ -388,6 +390,7 @@ impl CPU {
             // 0xFX
             0xF0 => opcodes::beq(self, bus, opcode),
             0xF6 => opcodes::inc_memory(self, bus, &AddressingMode::ZeroPageX, opcode),
+            0xF8 => opcodes::sed(self, opcode),
             0xFE => opcodes::inc_memory(self, bus, &AddressingMode::AbsoluteX, opcode),
             _ => {
                 panic!("Unknown opcode: {:#X} @ {:#X}", opcode, self.pc - 1);
