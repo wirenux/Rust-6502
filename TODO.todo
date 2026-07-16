@@ -99,6 +99,12 @@ match opcode {
 
 - [ ] check every print for each opcode
 
+- [ ] add a screen
+
+- [ ] add test program
+    - [ ] hello world on screen
+    - [ ] rainbow
+
 - [ ] idea for readme https://github.com/mre/mos6502
     - [ ] copy folder structure
         - [ ] add the Klaus Dormann test
