@@ -921,7 +921,7 @@ pub fn ldy_zeropage_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
     let base_addr = bus.read_ram(cpu.pc - 1);
 
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, base_addr), format!("LDY ${:04X},X", base_addr), 4);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, base_addr), format!("LDY ${:02X},X", base_addr), 4);
 }
 
 pub fn lsr_accumulator(cpu: &mut CPU, opcode: u8) {
