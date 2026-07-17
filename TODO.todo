@@ -84,27 +84,29 @@ match opcode {
         - [x] zpx
         - [x] abs
 
-- [ ] add a UI (like Jira TUI)
-    - [ ] (when in UI like Jira TUI) add scroll to mem viewer
-- [x] add a memory viewer
-- [ ] add a stack viewer
-
 - [ ] replace every cpu.pc = cpu.pc + 1 with : cpu.pc += 1
+
+- [ ] check every print for each opcode
 
 - [ ] set the speed like the real MOS 6502 speed
     - [ ] add parameter to change the speed
         - [ ] later with ui
 
-- [ ] add use of AI -> make ASM program to test during the development period
-
-- [ ] check every print for each opcode
+- [ ] add a UI (like Jira TUI)
+    - [ ] (when in UI like Jira TUI) add scroll to mem viewer
+- [x] add a memory viewer
+- [ ] add a stack viewer
 
 - [ ] add a screen
 
 - [ ] add test program
-    - [ ] hello world on screen
-    - [ ] rainbow
+- [ ] hello world on screen
+- [ ] rainbow
 
 - [ ] idea for readme https://github.com/mre/mos6502
     - [ ] copy folder structure
         - [ ] add the Klaus Dormann test
+
+- [ ] say this project is to learn rust
+
+- [ ] add use of AI -> make ASM program to test during the development period
