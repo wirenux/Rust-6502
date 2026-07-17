@@ -246,9 +246,10 @@ impl CPU {
         if (self.sr & CPU::INTERRUPT_FLAG) == 0 {
             self.push_stack_u16(bus, self.pc);
 
-            let mut status = self.sp;
-            status &= 0b1110_1111; 
-            status |= 0b0010_0000; 
+            let mut status = self.sr;
+
+            status &= 0b1110_1111;
+            status |= 0b0010_0000;
             self.push_stack(bus, status);
 
             self.sr |= CPU::INTERRUPT_FLAG;
