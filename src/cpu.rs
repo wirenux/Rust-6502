@@ -316,16 +316,23 @@ impl CPU {
             0x3E => opcodes::rol_memory(self, bus, &AddressingMode::AbsoluteX, opcode),
             // 0x4X
             0x40 => opcodes::rti(self, bus, opcode),
+            0x41 => opcodes::eor_indirect_x(self, bus, opcode),
+            0x45 => opcodes::eor_zeropage(self, bus, opcode),
             0x46 => opcodes::lsr_memory(self, bus, &AddressingMode::ZeroPage, opcode),
             0x48 => opcodes::pha(self, bus, opcode),
             0x49 => opcodes::eor_immediate(self, bus, opcode),
             0x4A => opcodes::lsr_accumulator(self, opcode),
             0x4C => opcodes::jmp_absolute(self, bus, opcode),
+            0x4D => opcodes::eor_absolute(self, bus, opcode),
             0x4E => opcodes::lsr_memory(self, bus, &AddressingMode::Absolute, opcode),
             // 0x5X
             0x50 => opcodes::bvc(self, bus, opcode),
+            0x51 => opcodes::eor_indirect_y(self, bus, opcode),
+            0x55 => opcodes::eor_zeropage_x(self, bus, opcode),
             0x56 => opcodes::lsr_memory(self, bus, &AddressingMode::ZeroPageX, opcode),
             0x58 => opcodes::cli(self, opcode),
+            0x59 => opcodes::eor_absolute_y(self, bus, opcode),
+            0x5D => opcodes::eor_absolute_x(self, bus, opcode),
             0x5E => opcodes::lsr_memory(self, bus, &AddressingMode::AbsoluteX, opcode),
             // 0x6X
             0x60 => opcodes::rts(self, bus, opcode),
