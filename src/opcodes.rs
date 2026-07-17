@@ -1,6 +1,59 @@
 use crate::bus::{Bus};
 use crate::cpu::{AddressingMode, CPU};
 
+pub fn adc_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::Absolute, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.adc(value);
+
+    let low = (addr & 0xFF) as u8;
+    let high = (addr >> 8) as u8;
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("ADC ${:04X}", addr), 4);
+}
+
+pub fn adc_absolute_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::AbsoluteX, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.adc(value);
+
+    let low = bus.read_ram(cpu.pc - 2);
+    let high = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("ADC ${:04X},X", (high as u16) << 8 | low as u16), 4);
+}
+
+pub fn adc_absolute_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::AbsoluteY, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.adc(value);
+
+    let low = bus.read_ram(cpu.pc - 2);
+    let high = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("ADC ${:04X},Y", (high as u16) << 8 | low as u16), 4);
+}
+
+pub fn adc_indirect_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::IndirectX, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.adc(value);
+
+    let ptr = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("ADC (${:02X},X)", ptr), 6);
+}
+
+pub fn adc_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::IndirectY, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.adc(value);
+
+    let ptr = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("ADC (${:02X},Y)", ptr), 6);
+}
+
 pub fn adc_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let value = bus.read_ram(cpu.pc);
     cpu.pc += 1;
@@ -15,6 +68,15 @@ pub fn adc_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.adc(value);
 
     cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("ADC ${:02X}", value), 2);
+}
+
+pub fn adc_zeropage_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPageX, bus);
+    let value = bus.read_ram(addr);
+    cpu.adc(value);
+
+    let base_addr = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, base_addr), format!("ADC ${:02X},X", base_addr), 4);
 }
 
 pub fn and_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -419,6 +481,32 @@ pub fn lda_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let high = (addr >> 8) as u8;
 
     cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("LDA ${:04X}", addr), 4);
+}
+
+pub fn lda_absolute_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::AbsoluteX, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a = value;
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    let low = bus.read_ram(cpu.pc - 2);
+    let high = bus.read_ram(cpu.pc - 1);
+
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("LDA ${:04X},X", (high as u16) << 8 | low as u16), 4);
+}
+
+pub fn lda_absolute_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::AbsoluteY, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a = value;
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    let low = bus.read_ram(cpu.pc - 2);
+    let high = bus.read_ram(cpu.pc - 1);
+
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("LDA ${:04X},Y", (high as u16) << 8 | low as u16), 4);
 }
 
 pub fn lda_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {

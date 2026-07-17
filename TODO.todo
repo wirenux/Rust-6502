@@ -15,13 +15,13 @@ match opcode {
 - [x] add LSR
 
 - [ ] all opcodes
-    - [ ] ADC
-        - [ ] zpx
-        - [ ] abs
-        - [ ] absx
-        - [ ] absy
-        - [ ] indx
-        - [ ] indy
+    - [x] ADC
+        - [x] zpx
+        - [x] abs
+        - [x] absx
+        - [x] absy
+        - [x] indx
+        - [x] indy
     - [ ] AND
         - [ ] zp
         - [ ] zpx
@@ -67,9 +67,9 @@ match opcode {
     - [x] CPY
         - [x] zp
         - [x] abs
-    - [ ] LDA
-        - [ ] absx
-        - [ ] absy
+    - [x] LDA
+        - [x] absx
+        - [x] absy
     - [x] LDY
         - [x] zpx
     - [x] STA
