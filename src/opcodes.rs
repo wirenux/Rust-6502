@@ -1124,7 +1124,8 @@ pub fn sbc_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let inverted_value = value ^ 0xFF;
     cpu.adc(inverted_value);
 
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("SBC ${:02X}", value), 2);
+    let op_byte = addr as u8;
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("SBC ${:02X}", op_byte), 3);
 }
 
 pub fn sec(cpu: &mut CPU, opcode: u8) {
