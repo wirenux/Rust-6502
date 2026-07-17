@@ -32,7 +32,6 @@ pub enum AddressingMode {
 
 impl CPU {
     pub const CARRY_FLAG: u8 = 0x01;
-    #[allow(dead_code)]
     pub const DECIMAL_FLAG: u8 = 0x08;
     pub const INTERRUPT_FLAG: u8 = 0x04;
     pub const NEGATIVE_FLAG: u8 = 0x80;
