@@ -1,6 +1,4 @@
-use std::ptr::addr_of_mut;
-
-use crate::bus::{self, Bus};
+use crate::bus::{Bus};
 use crate::cpu::{AddressingMode, CPU};
 
 pub fn adc_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -839,10 +837,10 @@ pub fn ldx_absolute_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.reg_x = value;
     cpu.update_z_n_flags(cpu.reg_x);
 
-    let low = (addr & 0xFF) as u8;
-    let high = (addr >> 8) as u8;
+    let low = bus.read_ram(cpu.pc - 2);
+    let high = bus.read_ram(cpu.pc - 1);
 
-    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("LDX ${:04X},Y", addr), 4);
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("LDX ${:04X},Y", (high as u16) << 8 | low as u16), 4);
 }
 
 pub fn ldx_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
