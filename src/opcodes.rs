@@ -365,7 +365,7 @@ pub fn clc(cpu: &mut CPU, opcode: u8) {
 }
 
 pub fn cld(cpu: &mut CPU, opcode: u8) {
-    cpu.sr |= !CPU::DECIMAL_FLAG;
+    cpu.sr &= !CPU::DECIMAL_FLAG;
     cpu.set_instr(format!("{:02X}", opcode), "CLD".to_string(), 2);
 }
 
