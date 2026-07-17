@@ -69,7 +69,8 @@ pub fn adc_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let value = bus.read_ram(addr);
     cpu.adc(value);
 
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("ADC ${:02X}", value), 2);
+    let op_byte = addr as u8;
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("ADC ${:02X}", op_byte), 3);
 }
 
 pub fn adc_zeropage_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
