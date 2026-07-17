@@ -30,14 +30,14 @@ match opcode {
         - [x] absy
         - [x] indx
         - [x] indy
-    - [ ] CMP
-        - [ ] zp
-        - [ ] zpx
-        - [ ] abs
-        - [ ] absx
-        - [ ] absy
-        - [ ] indx
-        - [ ] indy
+    - [x] CMP
+        - [x] zp
+        - [x] zpx
+        - [x] abs
+        - [x] absx
+        - [x] absy
+        - [x] indx
+        - [x] indy
     - [ ] EOR
         - [ ] zp
         - [ ] zpx

@@ -381,6 +381,39 @@ pub fn clv(cpu: &mut CPU, opcode: u8) {
     cpu.set_instr(format!("{:02X}", opcode), "CLV".to_string(), 2);
 }
 
+pub fn cmp_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::Absolute, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.compare_registers(cpu.reg_a, value);
+
+    let low = (addr & 0xFF) as u8;
+    let high = (addr >> 8) as u8;
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("CMP ${:04X}", addr), 4);
+}
+
+pub fn cmp_absolute_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::AbsoluteX, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.compare_registers(cpu.reg_a, value);
+
+    let low = bus.read_ram(cpu.pc - 2);
+    let high = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("CMP ${:04X},X", (high as u16) << 8 | low as u16), 4);
+}
+
+pub fn cmp_absolute_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::AbsoluteY, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.compare_registers(cpu.reg_a, value);
+
+    let low = bus.read_ram(cpu.pc - 2);
+    let high = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("CMP ${:04X},Y", (high as u16) << 8 | low as u16), 4);
+}
+
 pub fn cmp_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::Immediate, bus);
     let value = bus.read_ram(addr);
@@ -389,6 +422,47 @@ pub fn cmp_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
     cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("CMP #${:02X}", value), 2);
 }
+
+pub fn cmp_indirect_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::IndirectX, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.compare_registers(cpu.reg_a, value);
+
+    let ptr = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("CMP (${:02X},X)", ptr), 6);
+}
+
+pub fn cmp_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::IndirectY, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.compare_registers(cpu.reg_a, value);
+
+    let ptr = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("CMP (${:02X},Y)", ptr), 6);
+}
+
+pub fn cmp_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPage, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.compare_registers(cpu.reg_a, value);
+
+    let op_byte = addr as u8;
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("CMP ${:02X}", op_byte), 3);
+}
+
+pub fn cmp_zeropage_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPageX, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.compare_registers(cpu.reg_a, value);
+
+    let base_addr = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, base_addr), format!("CMP ${:02X},X", base_addr), 4);
+}
+
 
 pub fn cpx_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::Absolute, bus);
