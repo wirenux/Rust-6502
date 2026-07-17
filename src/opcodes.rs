@@ -494,7 +494,7 @@ pub fn cpx_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
     let op_byte = addr as u8;
 
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("CPX #${:02X}", op_byte), 3);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("CPX ${:02X}", op_byte), 3);
 }
 
 pub fn cpy_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -526,7 +526,7 @@ pub fn cpy_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
     let op_byte = addr as u8;
 
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("CPY #${:02X}", op_byte), 3);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("CPY ${:02X}", op_byte), 3);
 }
 
 pub fn dec_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u8) {
@@ -1250,7 +1250,7 @@ pub fn stx_zeropage_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
     let base_addr = bus.read_ram(cpu.pc - 1);
 
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, base_addr),format!("STY ${:02X},X", base_addr),4);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, base_addr), format!("STX ${:02X},Y", base_addr), 4);
 }
 
 pub fn sty_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
