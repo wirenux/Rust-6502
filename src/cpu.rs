@@ -295,17 +295,24 @@ impl CPU {
                 let addr = self.get_operand_address(&AddressingMode::Absolute, bus);
                 opcodes::jsr(self, bus, opcode, addr);
             }
+            0x21 => opcodes::and_indirect_x(self, bus, opcode),
             0x24 => opcodes::bit_memory(self, bus, &AddressingMode::ZeroPage, opcode),
+            0x25 => opcodes::and_zeropage(self, bus, opcode),
             0x26 => opcodes::rol_memory(self, bus, &AddressingMode::ZeroPage, opcode),
             0x28 => opcodes::plp(self, bus, opcode),
             0x29 => opcodes::and_immediate(self, bus, opcode),
             0x2A => opcodes::rol_accumulator(self, opcode),
             0x2C => opcodes::bit_memory(self, bus, &AddressingMode::Absolute, opcode),
+            0x2D => opcodes::and_absolute(self, bus, opcode),
             0x2E => opcodes::rol_memory(self, bus, &AddressingMode::Absolute, opcode),
             // 0x3X
             0x30 => opcodes::bmi(self, bus, opcode),
+            0x31 => opcodes::and_indirect_y(self, bus, opcode),
+            0x35 => opcodes::and_zeropage_x(self, bus, opcode),
             0x36 => opcodes::rol_memory(self, bus, &AddressingMode::ZeroPageX, opcode),
             0x38 => opcodes::sec(self, opcode),
+            0x39 => opcodes::and_absolute_y(self, bus, opcode),
+            0x3D => opcodes::and_absolute_x(self, bus, opcode),
             0x3E => opcodes::rol_memory(self, bus, &AddressingMode::AbsoluteX, opcode),
             // 0x4X
             0x40 => opcodes::rti(self, bus, opcode),
