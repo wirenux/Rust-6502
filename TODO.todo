@@ -94,6 +94,7 @@ match opcode {
 
 - [ ] add a UI (like Jira TUI)
     - [ ] (when in UI like Jira TUI) add scroll to mem viewer
+    - [ ] add the flag viewer
 - [ ] add a memory viewer
 - [ ] add a stack viewer
 

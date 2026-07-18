@@ -1,10 +1,11 @@
 use ratatui::{
     Frame, Terminal, backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout},
+    layout::{Constraint, Direction, Layout, Rect},
+    text::{Line, Span}
 };
 
-use ratatui::widgets::{Table, Row, Block, TableState};
-use ratatui::style::{Style, Modifier};
+use ratatui::widgets::{Table, Row, Block, TableState, Paragraph};
+use ratatui::style::{Style, Modifier, Color};
 
 use crossterm::{
     event::{self, Event, KeyCode},
@@ -12,7 +13,7 @@ use crossterm::{
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 
-use std::io;
+use std::{io, iter::FlatMap};
 
 use crate::cpu::CPU;
 use crate::bus::Bus;
@@ -31,6 +32,32 @@ struct TuiState {
 
 const TARGET_HZ: u64 = 1_000_000; // 1 MHz
 const NS_PER_CYCLE: u64 = 1_000_000_000 / TARGET_HZ; // nanosecond per cycle
+
+fn flag_span(label: &str, set: bool) -> Span<'static> {
+    let style = if set {
+        Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default().fg(Color::DarkGray)
+    };
+
+    Span::styled(format!("{} ", label), style)
+}
+
+fn render_flags(frame: &mut Frame, area: Rect, cpu: &CPU) {
+    let flags_line = Line::from(vec![
+        flag_span("N", cpu.get_flag(CPU::NEGATIVE_FLAG)),
+        flag_span("V", cpu.get_flag(CPU::OVERFLOW_FLAG)),
+        flag_span("D", cpu.get_flag(CPU::DECIMAL_FLAG)),
+        flag_span("I", cpu.get_flag(CPU::INTERRUPT_FLAG)),
+        flag_span("Z", cpu.get_flag(CPU::ZERO_FLAG)),
+        flag_span("C", cpu.get_flag(CPU::CARRY_FLAG)),
+    ]);
+
+    let flag_widget = Paragraph::new(flags_line)
+        .block(Block::bordered().title("Flags"));
+
+    frame.render_widget(flag_widget, area);
+}
 
 pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &mut TuiState) {
     let outer_chunk = Layout::default()
@@ -94,7 +121,7 @@ pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &mut TuiSt
 
     frame.render_widget(Block::bordered().title("Register"), left_chunk[0]);
     frame.render_widget(Block::bordered().title("TODO"), left_chunk[1]);
-    frame.render_widget(Block::bordered().title("Flags"), right_chunk[0]);
+    render_flags(frame, right_chunk[0], cpu);
     frame.render_widget(Block::bordered().title("Memory"), right_chunk[1]);
     frame.render_widget(Block::bordered().title("Stack"), right_chunk[2]);
 }
