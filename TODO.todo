@@ -86,7 +86,7 @@ match opcode {
 
 - [x] replace every cpu.pc = cpu.pc + 1 with : cpu.pc = cpu.pc.wrapping_add(1)
 
-- [ ] check every print for each opcode
+- [x] check every print for each opcode
 
 - [x] set the speed like the real MOS 6502 speed
     - [ ] add parameter to change the speed
