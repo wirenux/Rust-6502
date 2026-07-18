@@ -3,7 +3,6 @@ use crate::cpu::AddressingMode;
 
 pub struct DisasmLine {
     pub addr: u16,
-    pub bytes_hex: String,
     pub text: String
 }
 
@@ -198,10 +197,9 @@ pub fn disassemble_range(bus: &Bus, start_addr: u16, count: usize) -> Vec<Disasm
             raw_bytes.push(bus.read_ram(addr.wrapping_add(i as u16)));
         }
 
-        let bytes_hex = raw_bytes.iter().map(|b| format!("{:02X}", b)).collect::<Vec<_>>().join(" ");
         let text = format_operand(mnemonic, &mode, &raw_bytes);
 
-        lines.push(DisasmLine { addr, bytes_hex, text });
+        lines.push(DisasmLine { addr, text });
 
         addr = addr.wrapping_add(length as u16);
     }

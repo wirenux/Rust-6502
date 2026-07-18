@@ -1,19 +1,15 @@
 use ratatui::{
-    Frame, Terminal, backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout, Rect},
-    text::{Line, Span}
+    Frame, Terminal, backend::CrosstermBackend, layout::{Constraint, Direction, Layout, Rect}, style::Styled, text::{Line, Span}
 };
 
 use ratatui::widgets::{Table, Row, Block, TableState, Paragraph};
 use ratatui::style::{Style, Modifier, Color};
 
 use crossterm::{
-    event::{self, Event, KeyCode},
-    execute,
-    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    event::{self, Event, KeyCode::{self, Null}}, execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 
-use std::{io, iter::FlatMap};
+use std::{collections::{HashMap, HashSet}, io, iter::FlatMap};
 
 use crate::cpu::CPU;
 use crate::bus::Bus;
@@ -28,10 +24,58 @@ struct TuiState {
     disasm_start: u16,
     opcode_table_state: TableState,
     disasm_lines: Vec<DisasmLine>,
+    manual_selection: Option<usize>
 }
 
 const TARGET_HZ: u64 = 1_000_000; // 1 MHz
 const NS_PER_CYCLE: u64 = 1_000_000_000 / TARGET_HZ; // nanosecond per cycle
+
+fn find_label_addr(lines: &[DisasmLine]) -> HashSet<u16> {
+    let mut labels = HashSet::new();
+
+    for line in lines {
+        if let Some(addr_str) = line.text.split('$').nth(1) {
+            let addr_str: String = addr_str.chars().take(4).collect();
+            if let Ok(addr) = u16::from_str_radix(&addr_str, 16) {
+                if line.text.starts_with("JSR")
+                    || line.text.starts_with("JMP")
+                    || line.text.starts_with('B') // BEQ, BNE, BCC, BCS, BMI, BPL, BVC, BVS
+                {
+                    labels.insert(addr);
+                }
+            }
+        }
+    }
+
+    labels
+}
+
+fn build_opcode_rows<'a>(lines: &'a [DisasmLine], labels: &HashSet<u16>) -> (Vec<Row<'a>>, HashMap<u16, usize>) {
+    let mut rows = Vec::new();
+    let mut addr_to_row = HashMap::new();
+    let mut indented = false;
+
+    for line in lines {
+        if labels.contains(&line.addr) {
+            rows.push(Row::new(vec![
+                Span::styled(format!("${:04X}:", line.addr), Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD)),
+                Span::raw(""),
+            ]));
+            indented = true;
+        }
+
+        let indent = if indented { "    " } else { "" };
+
+        addr_to_row.insert(line.addr, rows.len());
+
+        rows.push(Row::new(vec![
+            Span::styled(format!("{}${:04X}", indent, line.addr), Style::default().fg(Color::DarkGray)),
+            Span::raw(format!("{}{}", indent, line.text)),
+        ]));
+    }
+
+    (rows, addr_to_row)
+}
 
 fn flag_span(label: &str, set: bool) -> Span<'static> {
     let style = if set {
@@ -122,22 +166,25 @@ pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &mut TuiSt
         ])
         .split(main_chunk[1]);
 
-    let selected_index = state.disasm_lines.iter().position(|l| l.addr == cpu.pc);
-    state.opcode_table_state.select(selected_index);
-
-    let header = Row::new(vec!["ADDR", "BYTES", "INSTRUCTION"])
+    let header = Row::new(vec!["ADDR", "INSTRUCTION"])
         .style(Style::default().add_modifier(Modifier::BOLD));
 
-    let rows: Vec<Row> = state.disasm_lines.iter().map(|l| {
-        Row::new(vec![
-            format!("{:04X}", l.addr),
-            l.bytes_hex.clone(),
-            l.text.clone(),
-        ])
-    }).collect();
+    let labels = find_label_addr(&state.disasm_lines);
+    let (rows, addr_to_row) = build_opcode_rows(&state.disasm_lines, &labels);
+
+    let selected_index = match state.manual_selection {
+        Some(idx) => Some(idx),
+        None => addr_to_row.get(&cpu.pc).copied(),
+    };
+    state.opcode_table_state.select(selected_index);
+
+    if state.manual_selection.is_none() {
+        if let Some(idx) = selected_index {
+            *state.opcode_table_state.offset_mut() = idx.saturating_sub(5);
+        }
+    }
 
     let opcode_table = Table::new(rows, [
-        Constraint::Length(6),
         Constraint::Length(9),
         Constraint::Min(10),
     ])
@@ -149,7 +196,6 @@ pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &mut TuiSt
     frame.render_stateful_widget(opcode_table, main_chunk[0], &mut state.opcode_table_state);
 
     render_register(frame, left_chunk[1], cpu);
-    // frame.render_widget(Block::bordered().title("TODO"), left_chunk[1]);
     render_flags(frame, left_chunk[0], cpu);
     frame.render_widget(Block::bordered().title("Memory"), right_chunk[1]);
     frame.render_widget(Block::bordered().title("Stack"), right_chunk[2]);
@@ -172,6 +218,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
         disasm_start,
         opcode_table_state: TableState::default(),
         disasm_lines,
+        manual_selection: None,
     };
 
     loop {
@@ -181,8 +228,27 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Char('q') => break,
-                    KeyCode::Char('n') => cpu.clock_tick(bus),
-                    KeyCode::Char('r') => state.running = !state.running,
+                    KeyCode::Char('n') => {
+                        cpu.clock_tick(bus);
+                        state.manual_selection = None;
+                    },
+                    KeyCode::Char('r') => {
+                        state.running = !state.running;
+                        state.manual_selection = None;
+                    },
+                    KeyCode::Up => {
+                        let current = state.manual_selection.unwrap_or_else(|| {
+                            state.opcode_table_state.selected().unwrap_or(0)
+                        });
+                        state.manual_selection = Some(current.saturating_sub(1));
+                    }
+                    KeyCode::Down => {
+                        let current = state.manual_selection.unwrap_or_else(|| {
+                            state.opcode_table_state.selected().unwrap_or(0)
+                        });
+                        let max = state.disasm_lines.len().saturating_sub(1); // rough bound, see note below
+                        state.manual_selection = Some((current + 1).min(max));
+                    },
                     _ => {}
                 }
             }
@@ -192,6 +258,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
             let delay_ns = NS_PER_CYCLE * cpu.last_cycles as u64;
             thread::sleep(Duration::from_nanos(delay_ns));
             cpu.clock_tick(bus);
+            state.manual_selection = None;
         }
     }
 
