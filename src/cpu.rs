@@ -273,7 +273,6 @@ impl CPU {
             return;
         }
 
-        let initial_pc = self.pc;
         let opcode = bus.read_ram(self.pc);
         self.pc = self.pc + 1;
 

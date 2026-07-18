@@ -18,10 +18,7 @@ use crate::disasm::{disassemble_range, DisasmLine};
 use std::{thread, time::Duration};
 
 struct TuiState {
-    memory_scroll: usize,
-    stack_scroll: usize,
     running: bool,
-    disasm_start: u16,
     opcode_table_state: TableState,
     disasm_lines: Vec<DisasmLine>,
     manual_selection: Option<usize>,
@@ -147,7 +144,7 @@ fn render_register(frame: &mut Frame, area: Rect, cpu: &CPU) {
     frame.render_widget(register_table, area);
 }
 
-pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &mut TuiState) {
+pub fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState) {
     let outer_chunk = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
@@ -234,10 +231,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
     let disasm_lines = disassemble_range(bus, disasm_start, 2000); // make cache
 
     let mut state = TuiState {
-        memory_scroll: 0,
-        stack_scroll: 0,
         running: false,
-        disasm_start,
         opcode_table_state: TableState::default(),
         disasm_lines,
         manual_selection: None,
@@ -245,7 +239,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
     };
 
     loop {
-        terminal.draw(|frame| render(frame, cpu, bus, &mut state))?;
+        terminal.draw(|frame| render(frame, cpu, &mut state))?;
 
         if event::poll(Duration::from_millis(16))? {
             if let Event::Key(key) = event::read()? {
