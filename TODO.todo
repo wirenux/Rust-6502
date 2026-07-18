@@ -88,7 +88,7 @@ match opcode {
 
 - [ ] check every print for each opcode
 
-- [ ] set the speed like the real MOS 6502 speed
+- [x] set the speed like the real MOS 6502 speed
     - [ ] add parameter to change the speed
         - [ ] later with ui
 

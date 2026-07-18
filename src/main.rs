@@ -8,6 +8,9 @@ mod opcodes;
 use bus::Bus;
 use cpu::CPU;
 
+const TARGET_HZ: u64 = 1_000_000; // 1 MHz
+const NS_PER_CYCLE: u64 = 1_000_000_000 / TARGET_HZ; // nanosecond per cycle
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let file_path = args.get(1).expect("Usage: rust6502 <file> [origin]");
@@ -28,7 +31,9 @@ fn main() {
 
     loop {
         cpu.clock_tick(&mut bus);
-        thread::sleep(Duration::from_millis(500));
+
+        let delay_ns = NS_PER_CYCLE * cpu.last_cycles as u64;
+        thread::sleep(Duration::from_nanos(delay_ns));
 
         if cpu.halted {
             break;
