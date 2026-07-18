@@ -66,9 +66,6 @@ pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &mut TuiSt
         ])
         .split(main_chunk[1]);
 
-    let visible_rows = main_chunk[0].height.saturating_sub(3) as usize;
-    let lines = disassemble_range(bus, state.disasm_start, visible_rows + 10);
-
     let selected_index = state.disasm_lines.iter().position(|l| l.addr == cpu.pc);
     state.opcode_table_state.select(selected_index);
 
