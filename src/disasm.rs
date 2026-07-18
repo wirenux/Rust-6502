@@ -1,3 +1,5 @@
+use std::fmt::format;
+
 use crate::bus::Bus;
 use crate::cpu::AddressingMode;
 
@@ -181,6 +183,31 @@ fn format_operand(mnemonic: &str, mode: &AddressingMode, bytes: &[u8]) -> String
     }
 }
 
-pub fn disassemble_range() {
+pub fn disassemble_range(bus: &Bus, start_addr: u16, count: usize) -> Vec<DisasmLine> {
+    let mut lines = Vec::with_capacity(count);
+    let mut addr = start_addr;
 
+    for _ in 0..count {
+        let opcode = bus.read_ram(addr);
+
+        let (mnemonic, mode, length) = match decode_opcode(opcode) {
+            Some(info) => info,
+            None => ("???", AddressingMode::Implied, 1)
+        };
+
+        let mut raw_bytes = vec![opcode];
+        for i in 1..length {
+            raw_bytes.push(bus.read_ram(addr.wrapping_add(i as u16)));
+        }
+
+        let bytes_hex = raw_bytes.iter().map(|b| format!("{:02X}", b)).collect::<Vec<_>>().join(" ");
+        let text = format_operand(mnemonic, &mode, &raw_bytes);
+
+        lines.push(DisasmLine { addr, bytes_hex, text });
+
+        addr = addr.wrapping_add(length as u16);
+    }
+
+
+    lines
 }

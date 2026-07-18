@@ -4,6 +4,7 @@ mod bus;
 mod cpu;
 mod opcodes;
 mod tui;
+mod disasm;
 
 use bus::Bus;
 use cpu::CPU;

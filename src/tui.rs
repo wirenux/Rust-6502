@@ -1,18 +1,23 @@
 use ratatui::{
-    Frame, Terminal, backend::CrosstermBackend, layout::{Constraint::{self}, Direction::{self, Vertical}, Layout},
+    Frame, Terminal, backend::CrosstermBackend,
+    layout::{Constraint, Direction, Layout},
 };
 
-use ratatui::widgets::{Table, Row, Cell, Block};
+use ratatui::widgets::{Table, Row, Block, TableState};
 use ratatui::style::{Style, Modifier};
 
 use crossterm::{
-    event::{self, Event, KeyCode}, execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    event::{self, Event, KeyCode},
+    execute,
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 
 use std::io;
 
 use crate::cpu::CPU;
 use crate::bus::Bus;
+
+use crate::disasm::disassemble_range;
 
 use std::{thread, time::Duration};
 
