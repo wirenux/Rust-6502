@@ -46,14 +46,14 @@ match opcode {
         - [x] absy
         - [x] indx
         - [x] indy
-    - [ ] ORA
-        - [ ] zp
-        - [ ] zpx
-        - [ ] abs
-        - [ ] absx
-        - [ ] absy
-        - [ ] indx
-        - [ ] indy
+    - [x] ORA
+        - [x] zp
+        - [x] zpx
+        - [x] abs
+        - [x] absx
+        - [x] absy
+        - [x] indx
+        - [x] indy
     - [ ] SBC
         - [ ] zpx
         - [ ] abs

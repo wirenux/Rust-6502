@@ -963,6 +963,45 @@ pub fn nop(cpu: &mut CPU, opcode: u8) {
     cpu.set_instr(format!("{:02X}", opcode), "NOP".to_string(), 2);
 }
 
+pub fn ora_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::Absolute, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a = cpu.reg_a | value;
+
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    let low = (addr & 0xFF) as u8;
+    let high = (addr >> 8) as u8;
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("ORA ${:04X}", addr), 4);
+}
+
+pub fn ora_absolute_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::AbsoluteX, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a = cpu.reg_a | value;
+
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    let low = bus.read_ram(cpu.pc - 2);
+    let high = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("ORA ${:04X},X", (high as u16) << 8 | low as u16), 4);
+}
+
+pub fn ora_absolute_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::AbsoluteY, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a = cpu.reg_a | value;
+
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    let low = bus.read_ram(cpu.pc - 2);
+    let high = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("ORA ${:04X},Y", (high as u16) << 8 | low as u16), 4);
+}
+
 pub fn ora_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::Immediate, bus);
     let value = bus.read_ram(addr);
@@ -972,6 +1011,54 @@ pub fn ora_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.update_z_n_flags(cpu.reg_a);
 
     cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("ORA #${:02X}", value), 2);
+}
+
+pub fn ora_indirect_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::IndirectX, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a |= value;
+
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    let ptr = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("ORA (${:02X},X)", ptr), 6);
+}
+
+pub fn ora_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::IndirectY, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a |= value;
+
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    let ptr = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("ORA (${:02X}),Y", ptr), 5);
+}
+
+pub fn ora_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPage, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a = cpu.reg_a | value;
+
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    let op_byte = addr as u8;
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("ORA ${:02X}", op_byte), 3);
+}
+
+pub fn ora_zeropage_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPageX, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_a = cpu.reg_a | value;
+
+    cpu.update_z_n_flags(cpu.reg_a);
+
+    let base_addr = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, base_addr), format!("ORA ${:02X},X", base_addr), 4);
 }
 
 pub fn pha(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
