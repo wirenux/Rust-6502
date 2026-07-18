@@ -98,6 +98,12 @@ match opcode {
 - [ ] add a memory viewer
 - [ ] add a stack viewer
 
+- [ ] add a file selector
+    - [ ] if demo program are selected no need to enter the start point
+- [ ] add a popup to select the start point
+
+- [ ] add key binds at the bottom
+
 - [x] add opcode disasm
     - [x] print the whole program in the tui
 
