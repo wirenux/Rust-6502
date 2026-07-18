@@ -178,9 +178,13 @@ pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &mut TuiSt
     };
     state.opcode_table_state.select(selected_index);
 
+    let visible_height = main_chunk[0].height.saturating_sub(3) as usize;
+    let max_offset = rows.len().saturating_sub(visible_height);
+
     if state.manual_selection.is_none() {
         if let Some(idx) = selected_index {
-            *state.opcode_table_state.offset_mut() = idx.saturating_sub(5);
+            let desired_offset = idx.saturating_sub(5);
+            *state.opcode_table_state.offset_mut() = desired_offset.min(max_offset);
         }
     }
 

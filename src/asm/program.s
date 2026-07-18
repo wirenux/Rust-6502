@@ -188,6 +188,7 @@ start:
     stx $95,Y            ; expect mem[$009A] = $99
 
 done:
+    inx
     jmp done
 
 .segment "VECTORS"
