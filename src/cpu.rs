@@ -288,11 +288,11 @@ impl CPU {
             0x0A => opcodes::asl_accumulator(self, opcode),
             0x0D => opcodes::ora_absolute(self, bus, opcode),
             0x0E => opcodes::asl_memory(self, bus, &AddressingMode::Absolute, opcode),
+            // 0x1X
             0x10 => opcodes::bpl(self, bus, opcode),
+            0x11 => opcodes::ora_indirect_y(self, bus, opcode),
             0x15 => opcodes::ora_zeropage_x(self, bus, opcode),
             0x16 => opcodes::asl_memory(self, bus, &AddressingMode::ZeroPageX, opcode),
-            // 0x1X
-            0x11 => opcodes::ora_indirect_y(self, bus, opcode),
             0x18 => opcodes::clc(self, opcode),
             0x19 => opcodes::ora_absolute_y(self, bus, opcode),
             0x1D => opcodes::ora_absolute_x(self, bus, opcode),
