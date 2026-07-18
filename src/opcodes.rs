@@ -1239,7 +1239,7 @@ pub fn sbc_indirect_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.adc(value ^ 0xFF);
 
     let ptr = bus.read_ram(cpu.pc - 1);
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("SBC (${:02X},X)", ptr), 6);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("SBC (${:02X}),X", ptr), 6);
 }
 
 pub fn sbc_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -1248,7 +1248,7 @@ pub fn sbc_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.adc(value ^ 0xFF);
 
     let ptr = bus.read_ram(cpu.pc - 1);
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("SBC (${:02X},Y)", ptr), 6);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("SBC (${:02X}),Y", ptr), 6);
 }
 
 pub fn sbc_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
