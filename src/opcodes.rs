@@ -49,7 +49,7 @@ pub fn adc_indirect_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.adc(value);
 
     let ptr = bus.read_ram(cpu.pc - 1);
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("ADC (${:02X},X)", ptr), 6);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("ADC (${:02X}),X", ptr), 6);
 }
 
 pub fn adc_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -59,7 +59,7 @@ pub fn adc_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.adc(value);
 
     let ptr = bus.read_ram(cpu.pc - 1);
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("ADC (${:02X},Y)", ptr), 6);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("ADC (${:02X}),Y", ptr), 6);
 }
 
 pub fn adc_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -429,7 +429,7 @@ pub fn cmp_indirect_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.compare_registers(cpu.reg_a, value);
 
     let ptr = bus.read_ram(cpu.pc - 1);
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("CMP (${:02X},X)", ptr), 6);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("CMP (${:02X}),X", ptr), 6);
 }
 
 pub fn cmp_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -439,7 +439,7 @@ pub fn cmp_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.compare_registers(cpu.reg_a, value);
 
     let ptr = bus.read_ram(cpu.pc - 1);
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("CMP (${:02X},Y)", ptr), 6);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("CMP (${:02X}),Y", ptr), 6);
 }
 
 pub fn cmp_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -1330,7 +1330,7 @@ pub fn sta_indirect_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
     let ptr = bus.read_ram(cpu.pc - 1);
 
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("STA (${:02X},X)", ptr), 6);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("STA (${:02X}),X", ptr), 6);
 }
 
 pub fn sta_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -1339,7 +1339,7 @@ pub fn sta_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
     let ptr = bus.read_ram(cpu.pc - 1);
 
-    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("STA (${:02X},Y)", ptr), 6);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("STA (${:02X}),Y", ptr), 6);
 }
 
 pub fn sta_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
