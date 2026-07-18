@@ -24,7 +24,8 @@ struct TuiState {
     disasm_start: u16,
     opcode_table_state: TableState,
     disasm_lines: Vec<DisasmLine>,
-    manual_selection: Option<usize>
+    manual_selection: Option<usize>,
+    total_rows: usize,
 }
 
 const TARGET_HZ: u64 = 1_000_000; // 1 MHz
@@ -171,6 +172,7 @@ pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &mut TuiSt
 
     let labels = find_label_addr(&state.disasm_lines);
     let (rows, addr_to_row) = build_opcode_rows(&state.disasm_lines, &labels);
+    state.total_rows = rows.len();
 
     let selected_index = match state.manual_selection {
         Some(idx) => Some(idx),
@@ -223,6 +225,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
         opcode_table_state: TableState::default(),
         disasm_lines,
         manual_selection: None,
+        total_rows: 0,
     };
 
     loop {
@@ -250,7 +253,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
                         let current = state.manual_selection.unwrap_or_else(|| {
                             state.opcode_table_state.selected().unwrap_or(0)
                         });
-                        let max = state.disasm_lines.len().saturating_sub(1); // rough bound, see note below
+                        let max = state.total_rows.saturating_sub(1);
                         state.manual_selection = Some((current + 1).min(max));
                     },
                     _ => {}
