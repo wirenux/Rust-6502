@@ -110,7 +110,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let disasm_lines = disassemble_range(bus, disasm_start, 2000);
+    let disasm_lines = disassemble_range(bus, disasm_start, 2000); // make cache
 
     let mut state = TuiState {
         memory_scroll: 0,
