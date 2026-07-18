@@ -452,31 +452,5 @@ impl CPU {
                 panic!("Unknown opcode: {:#X} @ {:#X}", opcode, self.pc - 1);
             }
         }
-
-        let n = (self.sr >> 7) & 1;
-        let v = (self.sr >> 6) & 1;
-        let d = (self.sr >> 3) & 1;
-        let i = (self.sr >> 2) & 1;
-        let z = (self.sr >> 1) & 1;
-        let c = (self.sr >> 0) & 1;
-        let nvdizc_str = format!("{}{}{}{}{}{}", n, v, d, i, z, c);
-
-        let watch_addr = 0x0040;
-        let watch_val = bus.read_ram(watch_addr);
-
-        // println!(
-        //     "{:04X}  {:<8}  {:<12} | {:02X} {:02X} {:02X} {:02X} | {} | {} | M[{:02X}]: {:02X}",
-        //     initial_pc,
-        //     self.last_instr_bytes,
-        //     self.last_disasm,
-        //     self.reg_a,
-        //     self.reg_x,
-        //     self.reg_y,
-        //     self.sp,
-        //     nvdizc_str,
-        //     self.last_cycles,
-        //     watch_addr,
-        //     watch_val
-        // );
     }
 }

@@ -1,15 +1,15 @@
 use ratatui::{
-    Frame, Terminal, backend::CrosstermBackend, layout::{Constraint, Direction, Layout, Rect}, style::Styled, text::{Line, Span}
+    Frame, Terminal, backend::CrosstermBackend, layout::{Constraint, Direction, Layout, Rect}, text::{Line, Span}
 };
 
 use ratatui::widgets::{Table, Row, Block, TableState, Paragraph};
 use ratatui::style::{Style, Modifier, Color};
 
 use crossterm::{
-    event::{self, Event, KeyCode::{self, Null}}, execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    event::{self, Event, KeyCode::{self}}, execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 
-use std::{collections::{HashMap, HashSet}, io, iter::FlatMap};
+use std::{collections::{HashMap, HashSet}, io};
 
 use crate::cpu::CPU;
 use crate::bus::Bus;
