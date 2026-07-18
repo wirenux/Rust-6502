@@ -1194,6 +1194,36 @@ pub fn rts(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X}", opcode), "RTS".to_string(), 6);
 }
 
+pub fn sbc_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::Absolute, bus);
+    let value = bus.read_ram(addr);
+    cpu.adc(value ^ 0xFF);
+
+    let low = (addr & 0xFF) as u8;
+    let high = (addr >> 8) as u8;
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("SBC ${:04X}", addr), 4);
+}
+
+pub fn sbc_absolute_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::AbsoluteX, bus);
+    let value = bus.read_ram(addr);
+    cpu.adc(value ^ 0xFF);
+
+    let low = bus.read_ram(cpu.pc - 2);
+    let high = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("SBC ${:04X},X", (high as u16) << 8 | low as u16), 4);
+}
+
+pub fn sbc_absolute_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::AbsoluteY, bus);
+    let value = bus.read_ram(addr);
+    cpu.adc(value ^ 0xFF);
+
+    let low = bus.read_ram(cpu.pc - 2);
+    let high = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("SBC ${:04X},Y", (high as u16) << 8 | low as u16), 4);
+}
+
 pub fn sbc_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let value = bus.read_ram(cpu.pc);
     cpu.pc += 1;
@@ -1201,6 +1231,24 @@ pub fn sbc_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.adc(inverted_value);
 
     cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("SBC #${:02X}", value), 2);
+}
+
+pub fn sbc_indirect_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::IndirectX, bus);
+    let value = bus.read_ram(addr);
+    cpu.adc(value ^ 0xFF);
+
+    let ptr = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("SBC (${:02X},X)", ptr), 6);
+}
+
+pub fn sbc_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::IndirectY, bus);
+    let value = bus.read_ram(addr);
+    cpu.adc(value ^ 0xFF);
+
+    let ptr = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, ptr), format!("SBC (${:02X},Y)", ptr), 6);
 }
 
 pub fn sbc_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -1211,6 +1259,16 @@ pub fn sbc_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
     let op_byte = addr as u8;
     cpu.set_instr(format!("{:02X} {:02X}", opcode, op_byte), format!("SBC ${:02X}", op_byte), 3);
+}
+
+pub fn sbc_zeropage_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::ZeroPageX, bus);
+    let value = bus.read_ram(addr);
+    let inverted_value = value ^ 0xFF;
+    cpu.adc(inverted_value);
+
+    let base_addr = bus.read_ram(cpu.pc - 1);
+    cpu.set_instr(format!("{:02X} {:02X}", opcode, base_addr), format!("SBC ${:02X},X", base_addr), 4);
 }
 
 pub fn sec(cpu: &mut CPU, opcode: u8) {

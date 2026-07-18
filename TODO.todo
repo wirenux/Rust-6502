@@ -54,13 +54,13 @@ match opcode {
         - [x] absy
         - [x] indx
         - [x] indy
-    - [ ] SBC
-        - [ ] zpx
-        - [ ] abs
-        - [ ] absx
-        - [ ] absy
-        - [ ] indx
-        - [ ] indy
+    - [x] SBC
+        - [x] zpx
+        - [x] abs
+        - [x] absx
+        - [x] absy
+        - [x] indx
+        - [x] indy
     - [x] CPX
         - [x] zp
         - [x] abs

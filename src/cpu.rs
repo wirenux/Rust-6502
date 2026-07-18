@@ -428,6 +428,7 @@ impl CPU {
             0xDE => opcodes::dec_memory(self, bus, &AddressingMode::AbsoluteX, opcode),
             // 0xEX
             0xE0 => opcodes::cpx_immediate(self, bus, opcode),
+            0xE1 => opcodes::sbc_indirect_x(self, bus, opcode),
             0xE4 => opcodes::cpx_zeropage(self, bus, opcode),
             0xE5 => opcodes::sbc_zeropage(self, bus, opcode),
             0xE6 => opcodes::inc_memory(self, bus, &AddressingMode::ZeroPage, opcode),
@@ -435,11 +436,16 @@ impl CPU {
             0xE9 => opcodes::sbc_immediate(self, bus, opcode),
             0xEA => opcodes::nop(self, opcode),
             0xEC => opcodes::cpx_absolute(self, bus, opcode),
+            0xED => opcodes::sbc_absolute(self, bus, opcode),
             0xEE => opcodes::inc_memory(self, bus, &AddressingMode::Absolute, opcode),
             // 0xFX
             0xF0 => opcodes::beq(self, bus, opcode),
+            0xF1 => opcodes::sbc_indirect_y(self, bus, opcode),
+            0xF5 => opcodes::sbc_zeropage_x(self, bus, opcode),
             0xF6 => opcodes::inc_memory(self, bus, &AddressingMode::ZeroPageX, opcode),
             0xF8 => opcodes::sed(self, opcode),
+            0xF9 => opcodes::sbc_absolute_y(self, bus, opcode),
+            0xFD => opcodes::sbc_absolute_x(self, bus, opcode),
             0xFE => opcodes::inc_memory(self, bus, &AddressingMode::AbsoluteX, opcode),
             _ => {
                 panic!("Unknown opcode: {:#X} @ {:#X}", opcode, self.pc - 1);
