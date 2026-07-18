@@ -59,6 +59,33 @@ fn render_flags(frame: &mut Frame, area: Rect, cpu: &CPU) {
     frame.render_widget(flag_widget, area);
 }
 
+fn render_register(frame: &mut Frame, area: Rect, cpu: &CPU) {
+    let header = Row::new(vec!["AC", "XR", "YR", "SP"])
+        .style(Style::default().add_modifier(Modifier::BOLD));
+
+    let values_row = Row::new(vec![
+        format!("{:02X}", cpu.reg_a),
+        format!("{:02X}", cpu.reg_x),
+        format!("{:02X}", cpu.reg_y),
+        format!("{:02X}", cpu.sp),
+    ]);
+
+    let register_table = Table::new(
+        vec![values_row],
+        [
+            Constraint::Length(4),
+            Constraint::Length(4),
+            Constraint::Length(4),
+            Constraint::Length(4),
+        ],
+    )
+        .column_spacing(1)
+        .header(header)
+        .block(Block::bordered().title("Register"));
+
+    frame.render_widget(register_table, area);
+}
+
 pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &mut TuiState) {
     let outer_chunk = Layout::default()
         .direction(Direction::Horizontal)
@@ -71,6 +98,8 @@ pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &mut TuiSt
     let left_chunk = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
+            Constraint::Length(3),
+            Constraint::Length(4),
             Constraint::Percentage(50),
             Constraint::Percentage(50),
         ])
@@ -119,9 +148,9 @@ pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &mut TuiSt
 
     frame.render_stateful_widget(opcode_table, main_chunk[0], &mut state.opcode_table_state);
 
-    frame.render_widget(Block::bordered().title("Register"), left_chunk[0]);
-    frame.render_widget(Block::bordered().title("TODO"), left_chunk[1]);
-    render_flags(frame, right_chunk[0], cpu);
+    render_register(frame, left_chunk[1], cpu);
+    // frame.render_widget(Block::bordered().title("TODO"), left_chunk[1]);
+    render_flags(frame, left_chunk[0], cpu);
     frame.render_widget(Block::bordered().title("Memory"), right_chunk[1]);
     frame.render_widget(Block::bordered().title("Stack"), right_chunk[2]);
 }
