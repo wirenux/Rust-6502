@@ -84,7 +84,7 @@ match opcode {
         - [x] zpx
         - [x] abs
 
-- [ ] replace every cpu.pc = cpu.pc + 1 with : cpu.pc = cpu.pc.wrapping_add(1)
+- [x] replace every cpu.pc = cpu.pc + 1 with : cpu.pc = cpu.pc.wrapping_add(1)
 
 - [ ] check every print for each opcode
 

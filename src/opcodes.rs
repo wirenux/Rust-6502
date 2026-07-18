@@ -36,7 +36,7 @@ pub fn adc_absolute_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
 pub fn adc_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let value = bus.read_ram(cpu.pc);
-    cpu.pc += 1;
+    cpu.pc = cpu.pc.wrapping_add(1);
     cpu.adc(value);
 
     cpu.set_instr(format!("{:02X} {:02X}", opcode, value), format!("ADC #${:02X}", value), 2);
@@ -215,7 +215,7 @@ pub fn asl_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u
 
 pub fn bcc(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let offset = bus.read_ram(cpu.pc) as i8;
-    cpu.pc += 1;
+    cpu.pc = cpu.pc.wrapping_add(1);
 
     if !cpu.get_flag(CPU::CARRY_FLAG) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
@@ -226,7 +226,7 @@ pub fn bcc(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
 pub fn bcs(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let offset = bus.read_ram(cpu.pc) as i8;
-    cpu.pc += 1;
+    cpu.pc = cpu.pc.wrapping_add(1);
 
     if cpu.get_flag(CPU::CARRY_FLAG) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
@@ -237,7 +237,7 @@ pub fn bcs(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
 pub fn beq(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let offset = bus.read_ram(cpu.pc) as i8;
-    cpu.pc += 1;
+    cpu.pc = cpu.pc.wrapping_add(1);
 
     if cpu.get_flag(CPU::ZERO_FLAG) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
@@ -286,7 +286,7 @@ pub fn bit_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u
 
 pub fn bmi(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let offset = bus.read_ram(cpu.pc) as i8;
-    cpu.pc += 1;
+    cpu.pc = cpu.pc.wrapping_add(1);
 
     if cpu.get_flag(CPU::NEGATIVE_FLAG) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
@@ -297,7 +297,7 @@ pub fn bmi(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
 pub fn bne(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let offset = bus.read_ram(cpu.pc) as i8;
-    cpu.pc += 1;
+    cpu.pc = cpu.pc.wrapping_add(1);
 
     if !cpu.get_flag(CPU::ZERO_FLAG) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
@@ -308,7 +308,7 @@ pub fn bne(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
 pub fn bpl(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let offset = bus.read_ram(cpu.pc) as i8;
-    cpu.pc += 1;
+    cpu.pc = cpu.pc.wrapping_add(1);
 
     if !cpu.get_flag(CPU::NEGATIVE_FLAG) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
@@ -318,7 +318,7 @@ pub fn bpl(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 }
 
 pub fn brk(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
-    cpu.pc += 2;
+    cpu.pc = cpu.pc.wrapping_add(2);
 
     cpu.push_stack(bus, (cpu.pc >> 8) as u8);
     cpu.push_stack(bus, (cpu.pc & 0xFF) as u8);
@@ -337,7 +337,7 @@ pub fn brk(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
 pub fn bvc(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let offset = bus.read_ram(cpu.pc) as i8;
-    cpu.pc += 1;
+    cpu.pc = cpu.pc.wrapping_add(1);
 
     if !cpu.get_flag(CPU::OVERFLOW_FLAG) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
@@ -348,7 +348,7 @@ pub fn bvc(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
 pub fn bvs(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let offset = bus.read_ram(cpu.pc) as i8;
-    cpu.pc += 1;
+    cpu.pc = cpu.pc.wrapping_add(1);
 
     if cpu.get_flag(CPU::OVERFLOW_FLAG) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
@@ -1239,7 +1239,7 @@ pub fn sbc_absolute_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
 pub fn sbc_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let value = bus.read_ram(cpu.pc);
-    cpu.pc += 1;
+    cpu.pc = cpu.pc.wrapping_add(1);
     let inverted_value = value ^ 0xFF;
     cpu.adc(inverted_value);
 
