@@ -104,6 +104,8 @@ match opcode {
 
 - [ ] add key binds at the bottom
 
+- [ ] add indicator of running or not
+
 - [x] add opcode disasm
     - [x] print the whole program in the tui
 
