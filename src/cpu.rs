@@ -464,19 +464,19 @@ impl CPU {
         let watch_addr = 0x0040;
         let watch_val = bus.read_ram(watch_addr);
 
-        println!(
-            "{:04X}  {:<8}  {:<12} | {:02X} {:02X} {:02X} {:02X} | {} | {} | M[{:02X}]: {:02X}",
-            initial_pc,
-            self.last_instr_bytes,
-            self.last_disasm,
-            self.reg_a,
-            self.reg_x,
-            self.reg_y,
-            self.sp,
-            nvdizc_str,
-            self.last_cycles,
-            watch_addr,
-            watch_val
-        );
+        // println!(
+        //     "{:04X}  {:<8}  {:<12} | {:02X} {:02X} {:02X} {:02X} | {} | {} | M[{:02X}]: {:02X}",
+        //     initial_pc,
+        //     self.last_instr_bytes,
+        //     self.last_disasm,
+        //     self.reg_a,
+        //     self.reg_x,
+        //     self.reg_y,
+        //     self.sp,
+        //     nvdizc_str,
+        //     self.last_cycles,
+        //     watch_addr,
+        //     watch_val
+        // );
     }
 }
