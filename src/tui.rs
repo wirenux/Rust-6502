@@ -144,7 +144,7 @@ fn render_register(frame: &mut Frame, area: Rect, cpu: &CPU) {
     frame.render_widget(register_table, area);
 }
 
-pub fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState) {
+fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState) {
     let outer_chunk = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
