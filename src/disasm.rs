@@ -1,12 +1,10 @@
-use std::fmt::format;
-
 use crate::bus::Bus;
 use crate::cpu::AddressingMode;
 
-struct DisasmLine {
-    addr: u16,
-    bytes_hex: String,
-    text: String
+pub struct DisasmLine {
+    pub addr: u16,
+    pub bytes_hex: String,
+    pub text: String
 }
 
 fn decode_opcode(opcode: u8) -> Option<(&'static str, AddressingMode, u8)> {

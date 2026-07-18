@@ -16,22 +16,23 @@ use std::io;
 
 use crate::cpu::CPU;
 use crate::bus::Bus;
-
-use crate::disasm::disassemble_range;
+use crate::disasm::{disassemble_range, DisasmLine};
 
 use std::{thread, time::Duration};
 
 struct TuiState {
-    opcode_list_scroll: usize,
     memory_scroll: usize,
     stack_scroll: usize,
-    running: bool
+    running: bool,
+    disasm_start: u16,
+    opcode_table_state: TableState,
+    disasm_lines: Vec<DisasmLine>,
 }
 
 const TARGET_HZ: u64 = 1_000_000; // 1 MHz
 const NS_PER_CYCLE: u64 = 1_000_000_000 / TARGET_HZ; // nanosecond per cycle
 
-pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &TuiState) {
+pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &mut TuiState) {
     let outer_chunk = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
@@ -65,32 +66,43 @@ pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &TuiState)
         ])
         .split(main_chunk[1]);
 
-    let header = Row::new(vec!["ADDR", "INSTRUCTION"])
+    let visible_rows = main_chunk[0].height.saturating_sub(3) as usize;
+    let lines = disassemble_range(bus, state.disasm_start, visible_rows + 10);
+
+    let selected_index = state.disasm_lines.iter().position(|l| l.addr == cpu.pc);
+    state.opcode_table_state.select(selected_index);
+
+    let header = Row::new(vec!["ADDR", "BYTES", "INSTRUCTION"])
         .style(Style::default().add_modifier(Modifier::BOLD));
 
-    let current_row = Row::new(vec![
-        format!("{:04X}", cpu.pc),
-        cpu.last_disasm.clone(),
-    ]);
+    let rows: Vec<Row> = state.disasm_lines.iter().map(|l| {
+        Row::new(vec![
+            format!("{:04X}", l.addr),
+            l.bytes_hex.clone(),
+            l.text.clone(),
+        ])
+    }).collect();
 
-
-    let opcode_table = Table::new(
-        vec![current_row],
-        [Constraint::Length(7), Constraint::Min(10)],
-    )
+    let opcode_table = Table::new(rows, [
+        Constraint::Length(6),
+        Constraint::Length(9),
+        Constraint::Min(10),
+    ])
         .column_spacing(1)
         .header(header)
+        .row_highlight_style(Style::default().add_modifier(Modifier::REVERSED))
         .block(Block::bordered().title("Opcodes"));
+
+    frame.render_stateful_widget(opcode_table, main_chunk[0], &mut state.opcode_table_state);
 
     frame.render_widget(Block::bordered().title("Register"), left_chunk[0]);
     frame.render_widget(Block::bordered().title("TODO"), left_chunk[1]);
-    frame.render_widget(opcode_table, main_chunk[0]);
     frame.render_widget(Block::bordered().title("Flags"), right_chunk[0]);
     frame.render_widget(Block::bordered().title("Memory"), right_chunk[1]);
     frame.render_widget(Block::bordered().title("Stack"), right_chunk[2]);
 }
 
-pub fn run(cpu: &mut CPU, bus: &mut Bus) -> io::Result<()> {
+pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
     let _ = enable_raw_mode();
 
     let mut stdout = io::stdout();
@@ -98,17 +110,21 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus) -> io::Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
+    let disasm_lines = disassemble_range(bus, disasm_start, 2000);
+
     let mut state = TuiState {
-        opcode_list_scroll: 0,
         memory_scroll: 0,
         stack_scroll: 0,
-        running: false
+        running: false,
+        disasm_start,
+        opcode_table_state: TableState::default(),
+        disasm_lines,
     };
 
     loop {
-        terminal.draw(|frame| render(frame, &mut *cpu, &mut *bus, &state))?;
+        terminal.draw(|frame| render(frame, cpu, bus, &mut state))?;
 
-        if event::poll(std::time::Duration::from_millis(16))? {
+        if event::poll(Duration::from_millis(16))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Char('q') => break,
@@ -122,7 +138,6 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus) -> io::Result<()> {
         if state.running && !cpu.halted {
             let delay_ns = NS_PER_CYCLE * cpu.last_cycles as u64;
             thread::sleep(Duration::from_nanos(delay_ns));
-
             cpu.clock_tick(bus);
         }
     }

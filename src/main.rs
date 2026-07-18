@@ -24,5 +24,5 @@ fn main() {
 
     cpu.reset_cpu(&bus);
 
-    let _ = tui::run(&mut cpu, &mut bus);
+    let _ = tui::run(&mut cpu, &mut bus, origin);
 }
