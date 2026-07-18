@@ -106,6 +106,9 @@ match opcode {
 
 - [ ] add indicator of running or not
 
+- [ ] add B flag
+- [ ] add U flag
+
 - [x] add opcode disasm
     - [x] print the whole program in the tui
 
