@@ -88,15 +88,31 @@ fn flag_span(label: &str, set: bool) -> Span<'static> {
     Span::styled(format!("{} ", label), style)
 }
 
-fn render_flags(frame: &mut Frame, area: Rect, cpu: &CPU) {
-    let flags_line = Line::from(vec![
+fn render_flags(frame: &mut Frame, area: Rect, cpu: &CPU, state: &TuiState) {
+    let status_span = if state.running {
+        Span::styled("RUN", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD))
+    } else {
+        Span::styled("HALT", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD))
+    };
+
+    let flag_spans_width = 6 * 2;
+    let status_width = status_span.content.len();
+    let inner_width = area.width.saturating_sub(2) as usize;
+    let padding = inner_width.saturating_sub(flag_spans_width + status_width);
+
+    let mut spans = vec![
         flag_span("N", cpu.get_flag(CPU::NEGATIVE_FLAG)),
         flag_span("V", cpu.get_flag(CPU::OVERFLOW_FLAG)),
         flag_span("D", cpu.get_flag(CPU::DECIMAL_FLAG)),
         flag_span("I", cpu.get_flag(CPU::INTERRUPT_FLAG)),
         flag_span("Z", cpu.get_flag(CPU::ZERO_FLAG)),
         flag_span("C", cpu.get_flag(CPU::CARRY_FLAG)),
-    ]);
+    ];
+
+    spans.push(Span::raw(" ".repeat(padding)));
+    spans.push(status_span);
+
+    let flags_line = Line::from(spans);
 
     let flag_widget = Paragraph::new(flags_line)
         .block(Block::bordered().title("Flags"));
@@ -202,7 +218,7 @@ pub fn render(frame: &mut Frame, cpu: &mut CPU, bus: &mut Bus, state: &mut TuiSt
     frame.render_stateful_widget(opcode_table, main_chunk[0], &mut state.opcode_table_state);
 
     render_register(frame, left_chunk[1], cpu);
-    render_flags(frame, left_chunk[0], cpu);
+    render_flags(frame, left_chunk[0], cpu, state);
     frame.render_widget(Block::bordered().title("Memory"), right_chunk[1]);
     frame.render_widget(Block::bordered().title("Stack"), right_chunk[2]);
 }
