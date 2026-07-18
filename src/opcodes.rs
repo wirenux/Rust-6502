@@ -890,6 +890,19 @@ pub fn ldy_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("LDY ${:04X}", addr), 4);
 }
 
+pub fn ldy_absolute_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
+    let addr = cpu.get_operand_address(&AddressingMode::AbsoluteX, bus);
+    let value = bus.read_ram(addr);
+
+    cpu.reg_y = value;
+    cpu.update_z_n_flags(cpu.reg_y);
+
+    let low = bus.read_ram(cpu.pc - 2);
+    let high = bus.read_ram(cpu.pc - 1);
+
+    cpu.set_instr(format!("{:02X} {:02X} {:02X}", opcode, low, high), format!("LDY ${:04X},X", (high as u16) << 8 | low as u16), 4);
+}
+
 pub fn ldy_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::Immediate, bus);
     let value = bus.read_ram(addr);

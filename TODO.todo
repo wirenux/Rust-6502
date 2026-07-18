@@ -14,7 +14,7 @@ match opcode {
 - [x] move all opcode to opcode.rs
 - [x] add LSR
 
-- [ ] all opcodes
+- [x] all opcodes
     - [x] ADC
         - [x] zpx
         - [x] abs

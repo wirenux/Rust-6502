@@ -403,6 +403,7 @@ impl CPU {
             0xB8 => opcodes::clv(self, opcode),
             0xB9 => opcodes::lda_absolute_y(self, bus, opcode),
             0xBA => opcodes::tsx(self, opcode),
+            0xBC => opcodes::ldy_absolute_x(self, bus, opcode),
             0xBD => opcodes::lda_absolute_x(self, bus, opcode),
             0xBE => opcodes::ldx_absolute_y(self, bus, opcode),
             // 0xCX
