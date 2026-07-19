@@ -23,6 +23,7 @@ struct TuiState {
     disasm_lines: Vec<DisasmLine>,
     manual_selection: Option<usize>,
     total_rows: usize,
+    stack_table_state: TableState,
 }
 
 const TARGET_HZ: u64 = 1_000_000; // 1 MHz
@@ -125,7 +126,7 @@ fn render_register(frame: &mut Frame, area: Rect, cpu: &CPU) {
         format!("{:02X}", cpu.reg_a),
         format!("{:02X}", cpu.reg_x),
         format!("{:02X}", cpu.reg_y),
-        format!("{:02X}", cpu.sp),
+        format!("$01{:02X}", cpu.sp),
     ]);
 
     let register_table = Table::new(
@@ -134,7 +135,7 @@ fn render_register(frame: &mut Frame, area: Rect, cpu: &CPU) {
             Constraint::Length(4),
             Constraint::Length(4),
             Constraint::Length(4),
-            Constraint::Length(4),
+            Constraint::Length(5),
         ],
     )
         .column_spacing(1)
@@ -144,7 +145,43 @@ fn render_register(frame: &mut Frame, area: Rect, cpu: &CPU) {
     frame.render_widget(register_table, area);
 }
 
-fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState) {
+fn render_stack(frame: &mut Frame, area: Rect, cpu: &CPU, bus: &Bus, table_state: &mut TableState) {
+    let header = Row::new(vec!["ADDR", "VALUE"])
+        .style(Style::default().add_modifier(Modifier::BOLD));
+
+    let rows: Vec<Row> = (0x00..=0xFF).rev().map(|offset: u8| {
+        let addr =  0x0100u16 + offset as u16;
+        let value = bus.read_ram(addr);
+        let is_top = offset == cpu.sp;
+
+        let style = if is_top {
+            Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
+        } else {
+            Style::default()
+        };
+
+        Row::new(vec![
+            Span::styled(format!("${:04X}", addr), Style::default().fg(Color::DarkGray)),
+            Span::styled(format!("{:02X}", value), style),
+        ])
+    }).collect();
+
+    let sp_row_index = (0xFFu16 - cpu.sp as u16) as usize;
+    table_state.select(Some(sp_row_index));
+
+    let stack_table = Table::new(rows, [
+        Constraint::Length(7),
+        Constraint::Length(5),
+    ])
+        .column_spacing(1)
+        .header(header)
+        .row_highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+        .block(Block::bordered().title("Stack"));
+
+    frame.render_stateful_widget(stack_table, area, table_state);
+}
+
+fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus) {
     let outer_chunk = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
@@ -158,8 +195,7 @@ fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState) {
         .constraints([
             Constraint::Length(3),
             Constraint::Length(4),
-            Constraint::Percentage(50),
-            Constraint::Percentage(50),
+            Constraint::Percentage(100),
         ])
         .split(outer_chunk[0]);
 
@@ -217,7 +253,7 @@ fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState) {
     render_register(frame, left_chunk[1], cpu);
     render_flags(frame, left_chunk[0], cpu, state);
     frame.render_widget(Block::bordered().title("Memory"), right_chunk[1]);
-    frame.render_widget(Block::bordered().title("Stack"), right_chunk[2]);
+    render_stack(frame, left_chunk[2], cpu, bus, &mut state.stack_table_state);
 }
 
 pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
@@ -236,10 +272,11 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
         disasm_lines,
         manual_selection: None,
         total_rows: 0,
+        stack_table_state: TableState::default(),
     };
 
     loop {
-        terminal.draw(|frame| render(frame, cpu, &mut state))?;
+        terminal.draw(|frame| render(frame, cpu, &mut state, bus))?;
 
         if event::poll(Duration::from_millis(16))? {
             if let Event::Key(key) = event::read()? {

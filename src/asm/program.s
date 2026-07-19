@@ -186,9 +186,13 @@ start:
     ldx #$99
     ldy #$05
     stx $95,Y            ; expect mem[$009A] = $99
+    lda #$00
+    tax
 
 done:
+    pha
     inx
+    txa
     jmp done
 
 .segment "VECTORS"

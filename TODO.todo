@@ -96,7 +96,8 @@ match opcode {
     - [ ] (when in UI like Jira TUI) add scroll to mem viewer
     - [x] add the flag viewer
 - [ ] add a memory viewer
-- [ ] add a stack viewer
+- [x] add a stack viewer
+    - [ ] add scrolling
 
 - [ ] add a file selector
     - [ ] if demo program are selected no need to enter the start point
