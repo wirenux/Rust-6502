@@ -96,6 +96,7 @@ match opcode {
     - [x] (when in UI like Jira TUI) add scroll to mem viewer
     - [x] add the flag viewer
 - [x] add a memory viewer
+    - [ ] add top row/bar to the memory viewer with 00-FF
     - [x] add scrolling
 - [x] add a stack viewer
     - [x] add scrolling
