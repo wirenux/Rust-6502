@@ -425,7 +425,6 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
                                 let current = state.manual_selection.unwrap_or_else(|| {
                                     state.opcode_table_state.selected().unwrap_or(0)
                                 });
-                                let max = state.total_rows.saturating_sub(1);
                                 state.manual_selection = Some(current.saturating_sub(3));
                             }
                         }
