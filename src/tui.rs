@@ -401,19 +401,19 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
     let disasm_lines = disassemble_range(bus, disasm_start, 2000); // make cache
 
     let mut state = TuiState {
-        running: false,
         disasm_lines,
+        instructions_per_second: 100,
         manual_selection: None,
-        total_rows: 0,
-        stack_table_state: TableState::default(),
         memory_scroll_row: 0,
         memory_table_state: TableState::default(),
-        stack_manual_scroll: None,
         memory_area: Rect::default(),
-        stack_area: Rect::default(),
         opcode_area: Rect::default(),
         opcode_table_state: TableState::default(),
-        instructions_per_second: 100,
+        running: false,
+        stack_area: Rect::default(),
+        stack_manual_scroll: None,
+        stack_table_state: TableState::default(),
+        total_rows: 0,
     };
 
     let mut should_quit = false;
