@@ -88,6 +88,31 @@ struct TuiState {
     total_rows: usize,
 }
 
+const SCREEN_ADDR: u16 = 0x0200;
+const SCREEN_WIDTH: usize = 32;
+const SCREEN_HEIGHT: usize = 32;
+
+fn palette_color(index: u8) -> Color {
+    match index & 0x0F {
+        0 => Color::Black,
+        1 => Color::White,
+        2 => Color::Red,
+        3 => Color::Cyan,
+        4 => Color::Magenta,
+        5 => Color::Green,
+        6 => Color::Blue,
+        7 => Color::Yellow,
+        8 => Color::Rgb(255, 165, 0), // Orange
+        9 => Color::Rgb(153, 76, 0), // Brown
+        10 => Color::DarkGray,
+        11 => Color::Gray,
+        12 => Color::LightRed,
+        13 => Color::LightBlue,
+        14 => Color::LightGreen,
+        _ => Color::White, // 15
+    }
+}
+
 fn find_label_addr(lines: &[DisasmLine]) -> HashSet<u16> {
     let mut labels = HashSet::new();
 
@@ -345,6 +370,57 @@ fn render_opcodes(frame: &mut Frame, area: Rect, cpu: &mut CPU, state: &mut TuiS
     frame.render_stateful_widget(scrollbar, area, &mut scrollbar_state);
 }
 
+fn render_screen(frame: &mut Frame, area: Rect, bus: &Bus) {
+    let block = Block::bordered().title("Screen");
+    let inner = block.inner(area);
+
+    frame.render_widget(block, area);
+
+    if inner.width == 0 || inner.height == 0 {
+        return;
+    }
+
+    let cell_cols = SCREEN_WIDTH;
+    let cell_rows = SCREEN_HEIGHT / 2; // div by 2 because i use the unicode half block char
+
+    let render_width = cell_cols.min(inner.width as usize);
+    let render_height = cell_rows.min(inner.height as usize);
+
+    let x_offset = (inner.width as usize).saturating_sub(cell_cols) / 2;
+    let y_offset = (inner.height as usize).saturating_sub(cell_rows) / 2;
+
+    let mut lines = Vec::with_capacity(render_height);
+
+    for row in 0..render_height {
+        let mut spans = Vec::with_capacity(render_width);
+        let top_pixel_row = row * 2;
+        let bottom_pixel_row = row * 2 + 1;
+
+        for col in 0..render_width {
+            let top_addr = SCREEN_ADDR + (top_pixel_row * SCREEN_WIDTH + col) as u16;
+            let bottom_addr = SCREEN_ADDR + (bottom_pixel_row * SCREEN_HEIGHT + col) as u16;
+
+            let top_color = palette_color(bus.read_ram(top_addr));
+            let bottom_color = palette_color(bus.read_ram(bottom_addr));
+
+            spans.push(Span::styled("▀", Style::default().fg(top_color).bg(bottom_color)));
+        }
+
+        lines.push(Line::from(spans));
+    }
+
+    let screen_widget = Paragraph::new(lines);
+
+    let screen_area = Rect {
+        x: inner.x + x_offset as u16,
+        y: inner.y + y_offset as u16,
+        width: render_width as u16,
+        height: render_height as u16,
+    };
+
+    frame.render_widget(screen_widget, screen_area);
+}
+
 fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus) {
     let outer_chunk = Layout::default()
         .direction(Direction::Horizontal)
@@ -380,10 +456,11 @@ fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus)
         .split(main_chunk[1]);
 
     render_flags(frame, left_chunk[0], cpu, state);
-    render_memory(frame, right_chunk[0], bus, state);
-    render_opcodes(frame, main_chunk[0], cpu, state);
-    render_register(frame, left_chunk[1], cpu);
     render_stack(frame, left_chunk[2], cpu, bus, state);
+    render_register(frame, left_chunk[1], cpu);
+    render_opcodes(frame, main_chunk[0], cpu, state);
+    render_memory(frame, right_chunk[0], bus, state);
+    render_screen(frame, right_chunk[1], bus);
 
     state.memory_area = right_chunk[0];
     state.stack_area = left_chunk[2];

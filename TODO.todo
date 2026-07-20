@@ -126,11 +126,13 @@ match opcode {
 
 - [ ] add color to the TUI
 
-- [ ] add a screen
+- [x] add a screen
 
 - [ ] add test program
 - [ ] hello world on screen
 - [ ] rainbow
+
+- [ ] create a doc to write data to screen
 
 - [ ] publish to cargo
 
