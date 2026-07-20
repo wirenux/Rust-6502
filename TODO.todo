@@ -103,6 +103,13 @@ match opcode {
 - [x] add a stack viewer
     - [x] add scrolling
 
+- [ ] add home screen
+    - [ ] logo on middle top (in ascii)
+    - [ ] enter file path / select file
+    - [ ] start addr
+    - [ ] speed (slider)
+    - [ ] Start button with "3D" effect
+
 - [x] reorganize code in tui.rs
 
 - [ ] add a file selector
