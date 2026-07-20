@@ -111,7 +111,7 @@ fn palette_color(index: u8) -> Color {
         12 => Color::LightRed,
         13 => Color::LightBlue,
         14 => Color::LightGreen,
-        _ => Color::White, // 15
+        _ => Color::Reset, // 15 transparent
     }
 }
 
