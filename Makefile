@@ -4,3 +4,4 @@ asm:
 		-C src/asm/linker.cfg \
 		build/asm/program.o \
 		-o build/asm/program.bin
+	rm build/asm/program.o
