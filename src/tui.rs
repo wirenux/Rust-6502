@@ -408,6 +408,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
             thread::sleep(Duration::from_nanos(delay_ns));
             cpu.clock_tick(bus);
             state.manual_selection = None;
+            state.stack_manual_scroll = None;
         }
     }
 
