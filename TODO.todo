@@ -90,7 +90,8 @@ match opcode {
 
 - [x] set the speed like the real MOS 6502 speed
     - [ ] add parameter to change the speed
-        - [ ] later with ui
+        - [ ] with a slider & w/ mouse &| keyboard
+
 
 - [ ] add a UI (like Jira TUI)
     - [x] (when in UI like Jira TUI) add scroll to mem viewer
