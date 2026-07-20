@@ -199,7 +199,7 @@ pub fn disassemble_range(bus: &Bus, start_addr: u16, count: usize) -> Vec<Disasm
 
         let text = format_operand(mnemonic, &mode, &raw_bytes);
 
-        let is_terminal_jump = mnemonic == "JMP" && {
+        let is_terminal = mnemonic == "BRK" || (mnemonic == "JMP" && {
             if let Some(target_str) = text.split('$').nth(1) {
                 let target_str: String = target_str.chars().take(4).collect();
                 u16::from_str_radix(&target_str, 16)
@@ -208,11 +208,11 @@ pub fn disassemble_range(bus: &Bus, start_addr: u16, count: usize) -> Vec<Disasm
             } else {
                 false
             }
-        };
+        });
 
         lines.push(DisasmLine { addr, text });
 
-        if is_terminal_jump {
+        if is_terminal {
             break;
         }
 

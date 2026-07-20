@@ -92,6 +92,8 @@ const SCREEN_ADDR: u16 = 0x0200;
 const SCREEN_WIDTH: usize = 32;
 const SCREEN_HEIGHT: usize = 32;
 
+const IPS: u32 = 7000; // instruction per second
+
 fn palette_color(index: u8) -> Color {
     match index & 0x0F {
         0 => Color::Black,
@@ -479,7 +481,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
 
     let mut state = TuiState {
         disasm_lines,
-        instructions_per_second: 100,
+        instructions_per_second: IPS,
         manual_selection: None,
         memory_scroll_row: 0,
         memory_table_state: TableState::default(),
@@ -493,6 +495,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
         total_rows: 0,
     };
 
+    let mut last_frame_time = std::time::Instant::now();
     let mut should_quit = false;
 
     loop {
@@ -575,12 +578,22 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
         }
 
         if state.running && !cpu.halted {
-            let delay_ms = 1000 / state.instructions_per_second.max(1);
-            thread::sleep(Duration::from_millis(delay_ms as u64));
-            cpu.clock_tick(bus);
+            let elapsed = last_frame_time.elapsed();
+            last_frame_time = std::time::Instant::now();
+            let instructions_to_run = (elapsed.as_secs_f64() * state.instructions_per_second as f64) as u32;
+
+            for _ in 0..instructions_to_run {
+                if cpu.halted { break; }
+                cpu.clock_tick(bus);
+            }
+
             state.manual_selection = None;
             state.stack_manual_scroll = None;
+        } else {
+            last_frame_time = std::time::Instant::now();
         }
+
+        thread::sleep(Duration::from_millis(16));
     }
 
     disable_raw_mode()?;

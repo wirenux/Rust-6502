@@ -22,8 +22,7 @@ fill_loop:
     inx
     bne fill_loop
 
-done:
-    jmp done
+    brk
 
 .segment "VECTORS"
     .word start     ; NMI
