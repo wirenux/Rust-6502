@@ -127,6 +127,7 @@ match opcode {
 - [ ] add color to the TUI
 
 - [x] add a screen
+    - [ ] make the screen grow
 
 - [ ] add test program
 - [ ] hello world on screen
