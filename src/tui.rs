@@ -122,9 +122,7 @@ fn find_label_addr(lines: &[DisasmLine]) -> HashSet<u16> {
         if let Some(addr_str) = line.text.split('$').nth(1) {
             let clean_str: String = addr_str.chars().filter(|c| c.is_ascii_hexdigit()).collect();
             if let Ok(val) = u16::from_str_radix(&clean_str, 16) {
-                if line.text.starts_with("JSR")
-                    || line.text.starts_with("JMP")
-                {
+                if line.text.starts_with("JSR") || line.text.starts_with("JMP") {
                     labels.insert(val);
                 } else if line.text.starts_with('B') { // BEQ, BNE, BCC, BCS, BMI, BPL, BVC, BVS
                     if clean_str.len() <= 2 {
