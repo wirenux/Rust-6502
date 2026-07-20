@@ -1,5 +1,5 @@
 use ratatui::{
-    Frame, Terminal, backend::CrosstermBackend, layout::{Constraint, Direction, Layout, Rect}, symbols::scrollbar, text::{Line, Span}, widgets::ScrollbarState
+    Frame, Terminal, backend::CrosstermBackend, layout::{Constraint, Direction, Layout, Rect}, text::{Line, Span}, widgets::ScrollbarState
 };
 
 use ratatui::widgets::{Table, Row, Block, TableState, Paragraph, Scrollbar, ScrollbarOrientation};
@@ -30,7 +30,6 @@ struct TuiState {
     stack_manual_scroll: Option<usize>,
     opcode_area: Rect,
     opcode_table_state: TableState,
-    opcode_scroll_row: usize,
     instructions_per_second: u32,
 }
 
@@ -186,7 +185,11 @@ fn render_stack(frame: &mut Frame, area: Rect, cpu: &CPU, bus: &Bus, state: &mut
 
     frame.render_stateful_widget(stack_table, area, &mut state.stack_table_state);
 
-    let mut scrollbar_state = ScrollbarState::new(256).position(state.stack_table_state.offset());
+    let visible_height = area.height.saturating_sub(3) as usize;
+    let max_offset = 256usize.saturating_sub(visible_height);
+
+    let mut scrollbar_state = ScrollbarState::new(max_offset).position(state.stack_table_state.offset());
+
     let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight);
     frame.render_stateful_widget(scrollbar, area, &mut scrollbar_state);
 }
@@ -213,7 +216,6 @@ fn render_memory(frame: &mut Frame, area: Rect, bus: &Bus, state: &mut TuiState)
     let start_row = state.memory_scroll_row;
 
     let rows = build_memory_rows(bus, start_row, visible_count);
-    let total_rows = 4096;
 
     *state.memory_table_state.offset_mut() = 0;
 
@@ -235,7 +237,9 @@ fn render_memory(frame: &mut Frame, area: Rect, bus: &Bus, state: &mut TuiState)
 
     frame.render_stateful_widget(memory_table, area, &mut state.memory_table_state);
 
-    let mut scrollbar_state = ScrollbarState::new(total_rows)
+    let max_offset = 4096usize.saturating_sub(visible_count);
+
+    let mut scrollbar_state = ScrollbarState::new(max_offset)
         .position(state.memory_scroll_row);
 
     let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight);
@@ -245,7 +249,6 @@ fn render_memory(frame: &mut Frame, area: Rect, bus: &Bus, state: &mut TuiState)
 
 fn render_opcodes(frame: &mut Frame, area: Rect, cpu: &mut CPU, state: &mut TuiState) {
     let visible_height = area.height.saturating_sub(3) as usize;
-    let max_offset = state.total_rows.saturating_sub(visible_height);
 
     let header = Row::new(vec!["ADDR", "INSTRUCTION"])
         .style(Style::default().add_modifier(Modifier::BOLD));
@@ -254,6 +257,7 @@ fn render_opcodes(frame: &mut Frame, area: Rect, cpu: &mut CPU, state: &mut TuiS
 
     let (rows, addr_to_row) = build_opcode_rows(&state.disasm_lines, &labels);
     state.total_rows = rows.len();
+    let max_offset = state.total_rows.saturating_sub(visible_height);
 
     let selected_index = match state.manual_selection {
         Some(idx) => Some(idx),
@@ -354,7 +358,6 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
         stack_area: Rect::default(),
         opcode_area: Rect::default(),
         opcode_table_state: TableState::default(),
-        opcode_scroll_row: 0,
         instructions_per_second: 100,
     };
 
