@@ -93,19 +93,21 @@ match opcode {
         - [ ] later with ui
 
 - [ ] add a UI (like Jira TUI)
-    - [ ] (when in UI like Jira TUI) add scroll to mem viewer
+    - [x] (when in UI like Jira TUI) add scroll to mem viewer
     - [x] add the flag viewer
-- [ ] add a memory viewer
+- [x] add a memory viewer
+    - [x] add scrolling
 - [x] add a stack viewer
-    - [ ] add scrolling
+    - [x] add scrolling
 
 - [ ] add a file selector
     - [ ] if demo program are selected no need to enter the start point
 - [ ] add a popup to select the start point
 
 - [ ] add key binds at the bottom
+- [ ] map `?` to open settings panel/popup
 
-- [ ] add indicator of running or not
+- [x] add indicator of running or not
 
 - [x] add opcode disasm
     - [x] print the whole program in the tui

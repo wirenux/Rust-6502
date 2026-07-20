@@ -6,7 +6,7 @@ use ratatui::widgets::{Table, Row, Block, TableState, Paragraph, Scrollbar, Scro
 use ratatui::style::{Style, Modifier, Color};
 
 use crossterm::{
-    event::{self, Event, KeyCode::{self}}, execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event::{self, Mouse}, KeyCode::{self}, MouseEventKind}, execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 
 use std::{collections::{HashMap, HashSet}, io};
@@ -27,6 +27,8 @@ struct TuiState {
     memory_scroll_row: usize,
     memory_table_state: TableState,
     stack_manual_scroll: Option<usize>,
+    memory_area: Rect,
+    stack_area: Rect,
 }
 
 const TARGET_HZ: u64 = 1_000_000; // 1 MHz
@@ -172,6 +174,7 @@ fn render_stack(frame: &mut Frame, area: Rect, cpu: &CPU, bus: &Bus, state: &mut
     if state.stack_manual_scroll.is_none() {
         state.stack_table_state.select(Some(sp_row_index));
     } else {
+        state.stack_table_state.select(None);
         *state.stack_table_state.offset_mut() = state.stack_manual_scroll.unwrap();
     }
 
@@ -188,8 +191,8 @@ fn render_stack(frame: &mut Frame, area: Rect, cpu: &CPU, bus: &Bus, state: &mut
     frame.render_stateful_widget(scrollbar, area, &mut scrollbar_state);
 }
 
-fn build_memory_rows(bus: &Bus) -> Vec<Row<'static>> {
-    (0u32..4096).map(|row_idx| {
+fn build_memory_rows(bus: &Bus, start_row: usize, visible_count: usize) -> Vec<Row<'static>> {
+    (start_row..(start_row + visible_count).min(4096)).map(|row_idx| {
         let addr = (row_idx * 16) as u16;
         let mut hex_bytes = String::new();
 
@@ -206,10 +209,13 @@ fn build_memory_rows(bus: &Bus) -> Vec<Row<'static>> {
 
 
 fn render_memory(frame: &mut Frame, area: Rect, bus: &Bus, state: &mut TuiState) {
-    let rows = build_memory_rows(bus);
-    let total_rows = rows.len();
+    let visible_count = area.height.saturating_sub(3) as usize;
+    let start_row = state.memory_scroll_row;
 
-    *state.memory_table_state.offset_mut() = state.memory_scroll_row;
+    let rows = build_memory_rows(bus, start_row, visible_count);
+    let total_rows = 4096;
+
+    *state.memory_table_state.offset_mut() = 0;
 
     let header = Row::new(vec!["ADDR", "BYTES"])
         .style(Style::default().add_modifier(Modifier::BOLD));
@@ -253,8 +259,8 @@ fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus)
     let main_chunk = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
-            Constraint::Percentage(65),
-            Constraint::Percentage(35),
+            Constraint::Percentage(50),
+            Constraint::Percentage(50),
         ])
         .split(outer_chunk[1]);
 
@@ -304,13 +310,16 @@ fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus)
     render_flags(frame, left_chunk[0], cpu, state);
     render_memory(frame, right_chunk[0], bus, state);
     render_stack(frame, left_chunk[2], cpu, bus, state);
+
+    state.memory_area = right_chunk[0];
+    state.stack_area = left_chunk[2];
 }
 
 pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
     let _ = enable_raw_mode();
 
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen)?;
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
@@ -326,38 +335,71 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
         memory_scroll_row: 0,
         memory_table_state: TableState::default(),
         stack_manual_scroll: None,
+        memory_area: Rect::default(),
+        stack_area: Rect::default(),
     };
 
     loop {
         terminal.draw(|frame| render(frame, cpu, &mut state, bus))?;
 
         if event::poll(Duration::from_millis(16))? {
-            if let Event::Key(key) = event::read()? {
-                match key.code {
-                    KeyCode::Char('q') => break,
-                    KeyCode::Char('n') => {
-                        cpu.clock_tick(bus);
-                        state.manual_selection = None;
-                    },
-                    KeyCode::Char('r') => {
-                        state.running = !state.running;
-                        state.manual_selection = None;
-                    },
-                    KeyCode::Up => {
-                        let current = state.manual_selection.unwrap_or_else(|| {
-                            state.opcode_table_state.selected().unwrap_or(0)
-                        });
-                        state.manual_selection = Some(current.saturating_sub(1));
+            match event::read()? {
+                Event::Key(key) => {
+                    match key.code {
+                        KeyCode::Char('q') => break,
+                        KeyCode::Char('n') => {
+                            cpu.clock_tick(bus);
+                            state.manual_selection = None;
+                            state.stack_manual_scroll = None;
+                        },
+                        KeyCode::Char('r') => {
+                            state.running = !state.running;
+                            state.manual_selection = None;
+                            state.stack_manual_scroll = None;
+                        },
+                        KeyCode::Up => {
+                            let current = state.manual_selection.unwrap_or_else(|| {
+                                state.opcode_table_state.selected().unwrap_or(0)
+                            });
+                            state.manual_selection = Some(current.saturating_sub(1));
+                        }
+                        KeyCode::Down => {
+                            let current = state.manual_selection.unwrap_or_else(|| {
+                                state.opcode_table_state.selected().unwrap_or(0)
+                            });
+                            let max = state.total_rows.saturating_sub(1);
+                            state.manual_selection = Some((current + 1).min(max));
+                        },
+                        _ => {}
                     }
-                    KeyCode::Down => {
-                        let current = state.manual_selection.unwrap_or_else(|| {
-                            state.opcode_table_state.selected().unwrap_or(0)
-                        });
-                        let max = state.total_rows.saturating_sub(1);
-                        state.manual_selection = Some((current + 1).min(max));
-                    },
-                    _ => {}
                 }
+                Event::Mouse(mouse) => {
+                    let hit = |area: Rect| {
+                        mouse.column >= area.x && mouse.column < area.x + area.width
+                            && mouse.row >= area.y && mouse.row < area.y + area.height
+                    };
+
+                    match mouse.kind {
+                        MouseEventKind::ScrollDown => {
+                            if hit(state.memory_area) {
+                                state.memory_scroll_row = (state.memory_scroll_row + 3).min(4096usize.saturating_sub(1));
+                            } else if hit(state.stack_area) {
+                                let cur = state.stack_manual_scroll.unwrap_or(state.stack_table_state.offset());
+                                state.stack_manual_scroll = Some((cur + 3).min(255));
+                            }
+                        }
+                        MouseEventKind::ScrollUp => {
+                            if hit(state.memory_area) {
+                                state.memory_scroll_row = state.memory_scroll_row.saturating_sub(3);
+                            } else if hit(state.stack_area) {
+                                let cur = state.stack_manual_scroll.unwrap_or(state.stack_table_state.offset());
+                                state.stack_manual_scroll = Some(cur.saturating_sub(3));
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                _ => {}
             }
         }
 
@@ -370,7 +412,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
     }
 
     disable_raw_mode()?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
     let _ = terminal.show_cursor();
 
     Ok(())
