@@ -215,8 +215,13 @@ fn render_memory(frame: &mut Frame, area: Rect, bus: &Bus, state: &mut TuiState)
 
     *state.memory_table_state.offset_mut() = 0;
 
-    let header = Row::new(vec!["ADDR", "BYTES"])
-        .style(Style::default().add_modifier(Modifier::BOLD));
+    let column_labels: String = (0..16).map(|col| format!("{:02X} ", col)).collect();
+
+    let header = Row::new(vec![
+        Span::raw(""),
+        Span::styled(column_labels, Style::default().add_modifier(Modifier::BOLD)),
+    ])
+        .style(Style::default().add_modifier(Modifier::BOLD).fg(Color::DarkGray));
 
     let memory_table = Table::new(rows, [
         Constraint::Length(7),
