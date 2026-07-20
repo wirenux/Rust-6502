@@ -1,5 +1,5 @@
 use ratatui::{
-    Frame, Terminal, backend::CrosstermBackend, layout::{Constraint, Direction, Layout, Rect}, text::{Line, Span}, widgets::ScrollbarState
+    Frame, Terminal, backend::CrosstermBackend, layout::{Constraint, Direction, Layout, Rect}, symbols::scrollbar, text::{Line, Span}, widgets::ScrollbarState
 };
 
 use ratatui::widgets::{Table, Row, Block, TableState, Paragraph, Scrollbar, ScrollbarOrientation};
@@ -19,16 +19,18 @@ use std::{thread, time::Duration};
 
 struct TuiState {
     running: bool,
-    opcode_table_state: TableState,
     disasm_lines: Vec<DisasmLine>,
     manual_selection: Option<usize>,
     total_rows: usize,
-    stack_table_state: TableState,
-    memory_scroll_row: usize,
-    memory_table_state: TableState,
-    stack_manual_scroll: Option<usize>,
     memory_area: Rect,
+    memory_table_state: TableState,
+    memory_scroll_row: usize,
     stack_area: Rect,
+    stack_table_state: TableState,
+    stack_manual_scroll: Option<usize>,
+    opcode_area: Rect,
+    opcode_table_state: TableState,
+    opcode_scroll_row: usize,
     instructions_per_second: u32,
 }
 
@@ -241,6 +243,49 @@ fn render_memory(frame: &mut Frame, area: Rect, bus: &Bus, state: &mut TuiState)
 
 }
 
+fn render_opcodes(frame: &mut Frame, area: Rect, cpu: &mut CPU, state: &mut TuiState) {
+    let visible_height = area.height.saturating_sub(3) as usize;
+    let max_offset = state.total_rows.saturating_sub(visible_height);
+
+    let header = Row::new(vec!["ADDR", "INSTRUCTION"])
+        .style(Style::default().add_modifier(Modifier::BOLD));
+
+    let labels = find_label_addr(&state.disasm_lines);
+
+    let (rows, addr_to_row) = build_opcode_rows(&state.disasm_lines, &labels);
+    state.total_rows = rows.len();
+
+    let selected_index = match state.manual_selection {
+        Some(idx) => Some(idx),
+        None => addr_to_row.get(&cpu.pc).copied(),
+    };
+    state.opcode_table_state.select(selected_index);
+
+    if state.manual_selection.is_none() {
+        if let Some(idx) = selected_index {
+            let desired_offset = idx.saturating_sub(5);
+            *state.opcode_table_state.offset_mut() = desired_offset.min(max_offset);
+        }
+    }
+
+    let opcode_table = Table::new(rows, [
+        Constraint::Length(9),
+        Constraint::Min(10),
+    ])
+        .column_spacing(1)
+        .header(header)
+        .row_highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+        .block(Block::bordered().title("Opcodes"));
+
+    frame.render_stateful_widget(opcode_table, area, &mut state.opcode_table_state);
+
+    let mut scrollbar_state = ScrollbarState::new(max_offset)
+        .position(state.opcode_table_state.offset());
+
+    let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight);
+    frame.render_stateful_widget(scrollbar, area, &mut scrollbar_state);
+}
+
 fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus) {
     let outer_chunk = Layout::default()
         .direction(Direction::Horizontal)
@@ -275,47 +320,15 @@ fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus)
         ])
         .split(main_chunk[1]);
 
-    let header = Row::new(vec!["ADDR", "INSTRUCTION"])
-        .style(Style::default().add_modifier(Modifier::BOLD));
-
-    let labels = find_label_addr(&state.disasm_lines);
-    let (rows, addr_to_row) = build_opcode_rows(&state.disasm_lines, &labels);
-    state.total_rows = rows.len();
-
-    let selected_index = match state.manual_selection {
-        Some(idx) => Some(idx),
-        None => addr_to_row.get(&cpu.pc).copied(),
-    };
-    state.opcode_table_state.select(selected_index);
-
-    let visible_height = main_chunk[0].height.saturating_sub(3) as usize;
-    let max_offset = rows.len().saturating_sub(visible_height);
-
-    if state.manual_selection.is_none() {
-        if let Some(idx) = selected_index {
-            let desired_offset = idx.saturating_sub(5);
-            *state.opcode_table_state.offset_mut() = desired_offset.min(max_offset);
-        }
-    }
-
-    let opcode_table = Table::new(rows, [
-        Constraint::Length(9),
-        Constraint::Min(10),
-    ])
-        .column_spacing(1)
-        .header(header)
-        .row_highlight_style(Style::default().add_modifier(Modifier::REVERSED))
-        .block(Block::bordered().title("Opcodes"));
-
-    frame.render_stateful_widget(opcode_table, main_chunk[0], &mut state.opcode_table_state);
-
-    render_register(frame, left_chunk[1], cpu);
     render_flags(frame, left_chunk[0], cpu, state);
     render_memory(frame, right_chunk[0], bus, state);
+    render_opcodes(frame, main_chunk[0], cpu, state);
+    render_register(frame, left_chunk[1], cpu);
     render_stack(frame, left_chunk[2], cpu, bus, state);
 
     state.memory_area = right_chunk[0];
     state.stack_area = left_chunk[2];
+    state.opcode_area = main_chunk[0];
 }
 
 pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
@@ -330,7 +343,6 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
 
     let mut state = TuiState {
         running: false,
-        opcode_table_state: TableState::default(),
         disasm_lines,
         manual_selection: None,
         total_rows: 0,
@@ -340,6 +352,9 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
         stack_manual_scroll: None,
         memory_area: Rect::default(),
         stack_area: Rect::default(),
+        opcode_area: Rect::default(),
+        opcode_table_state: TableState::default(),
+        opcode_scroll_row: 0,
         instructions_per_second: 100,
     };
 
@@ -392,6 +407,12 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
                             } else if hit(state.stack_area) {
                                 let cur = state.stack_manual_scroll.unwrap_or(state.stack_table_state.offset());
                                 state.stack_manual_scroll = Some((cur + 3).min(255));
+                            } else if hit(state.opcode_area) {
+                                let current = state.manual_selection.unwrap_or_else(|| {
+                                    state.opcode_table_state.selected().unwrap_or(0)
+                                });
+                                let max = state.total_rows.saturating_sub(1);
+                                state.manual_selection = Some((current + 3).min(max));
                             }
                         }
                         MouseEventKind::ScrollUp => {
@@ -400,6 +421,12 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
                             } else if hit(state.stack_area) {
                                 let cur = state.stack_manual_scroll.unwrap_or(state.stack_table_state.offset());
                                 state.stack_manual_scroll = Some(cur.saturating_sub(3));
+                            } else if hit(state.opcode_area) {
+                                let current = state.manual_selection.unwrap_or_else(|| {
+                                    state.opcode_table_state.selected().unwrap_or(0)
+                                });
+                                let max = state.total_rows.saturating_sub(1);
+                                state.manual_selection = Some(current.saturating_sub(3));
                             }
                         }
                         _ => {}
