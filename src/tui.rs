@@ -1,12 +1,56 @@
 use ratatui::{
-    Frame, Terminal, backend::CrosstermBackend, layout::{Constraint, Direction, Layout, Rect}, text::{Line, Span}, widgets::ScrollbarState
+    backend::{
+        CrosstermBackend,
+    },
+    Frame,
+    layout::{
+        Constraint,
+        Direction,
+        Layout,
+        Rect,
+    },
+    style::{
+        Color,
+        Modifier,
+        Style,
+    },
+    Terminal,
+    text::{
+        Line,
+        Span,
+    },
+    widgets::{
+        Block,
+        Paragraph,
+        Row,
+        Scrollbar,
+        ScrollbarOrientation,
+        ScrollbarState,
+        Table,
+        TableState,
+    },
 };
 
-use ratatui::widgets::{Table, Row, Block, TableState, Paragraph, Scrollbar, ScrollbarOrientation};
-use ratatui::style::{Style, Modifier, Color};
-
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event::{self}, KeyCode::{self}, MouseEventKind}, execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    event::{
+        DisableMouseCapture,
+        EnableMouseCapture,
+        Event::{
+            self,
+        },
+        KeyCode::{
+            self,
+        },
+        MouseEventKind,
+        self,
+    },
+    execute,
+    terminal::{
+        disable_raw_mode,
+        enable_raw_mode,
+        EnterAlternateScreen,
+        LeaveAlternateScreen,
+    },
 };
 
 use std::{collections::{HashMap, HashSet}, io};
