@@ -103,7 +103,7 @@ match opcode {
 - [x] add a stack viewer
     - [x] add scrolling
 
-- [ ] reorganize code
+- [x] reorganize code in tui.rs
 
 - [ ] add a file selector
     - [ ] if demo program are selected no need to enter the start point
