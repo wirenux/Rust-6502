@@ -124,6 +124,10 @@ match opcode {
 - [x] add opcode disasm
     - [x] print the whole program in the tui
 
+- [x] add name on the file : Opcodes - FILENAME
+
+- [ ] add keyboard use
+
 - [ ] add color to the TUI
 
 - [x] add a screen
@@ -131,7 +135,7 @@ match opcode {
 
 - [ ] add test program
 - [ ] hello world on screen
-- [ ] rainbow
+- [x] rainbow
 
 - [ ] create a doc to write data to screen
 

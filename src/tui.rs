@@ -57,10 +57,7 @@ use std::{
     collections::{
         HashMap,
         HashSet
-    },
-    io,
-    thread,
-    time::Duration,
+    }, io, path::Path, thread, time::Duration,
 };
 
 use crate::{
@@ -74,6 +71,7 @@ use crate::{
 
 struct TuiState {
     disasm_lines: Vec<DisasmLine>,
+    filename: String,
     instructions_per_second: u32,
     manual_selection: Option<usize>,
     memory_area: Rect,
@@ -364,6 +362,13 @@ fn render_opcodes(frame: &mut Frame, area: Rect, cpu: &mut CPU, state: &mut TuiS
         }
     }
 
+    let display_name = Path::new(&state.filename)
+        .file_name()
+        .map(|name| name.to_string_lossy().into_owned())
+        .unwrap_or_else(|| state.filename.clone());
+
+    let title_string = format!("Opcodes - \"{}\"", display_name);
+
     let opcode_table = Table::new(rows, [
         Constraint::Length(9),
         Constraint::Min(10),
@@ -371,7 +376,7 @@ fn render_opcodes(frame: &mut Frame, area: Rect, cpu: &mut CPU, state: &mut TuiS
         .column_spacing(1)
         .header(header)
         .row_highlight_style(Style::default().add_modifier(Modifier::REVERSED))
-        .block(Block::bordered().title("Opcodes"));
+        .block(Block::bordered().title(title_string));
 
     frame.render_stateful_widget(opcode_table, area, &mut state.opcode_table_state);
 
@@ -479,7 +484,7 @@ fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus)
     state.opcode_area = main_chunk[0];
 }
 
-pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
+pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, filename: &str) -> io::Result<()> {
     let _ = enable_raw_mode();
 
     let mut stdout = io::stdout();
@@ -491,6 +496,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
 
     let mut state = TuiState {
         disasm_lines,
+        filename: filename.to_string(),
         instructions_per_second: IPS,
         manual_selection: None,
         memory_scroll_row: 0,
