@@ -53,28 +53,39 @@ use crossterm::{
     },
 };
 
-use std::{collections::{HashMap, HashSet}, io};
+use std::{
+    collections::{
+        HashMap,
+        HashSet
+    },
+    io,
+    thread,
+    time::Duration,
+};
 
-use crate::cpu::CPU;
-use crate::bus::Bus;
-use crate::disasm::{disassemble_range, DisasmLine};
-
-use std::{thread, time::Duration};
+use crate::{
+    cpu::CPU,
+    bus::Bus,
+    disasm::{
+        disassemble_range,
+        DisasmLine
+    }
+};
 
 struct TuiState {
-    running: bool,
     disasm_lines: Vec<DisasmLine>,
+    instructions_per_second: u32,
     manual_selection: Option<usize>,
-    total_rows: usize,
     memory_area: Rect,
     memory_table_state: TableState,
     memory_scroll_row: usize,
+    opcode_area: Rect,
+    opcode_table_state: TableState,
+    running: bool,
     stack_area: Rect,
     stack_table_state: TableState,
     stack_manual_scroll: Option<usize>,
-    opcode_area: Rect,
-    opcode_table_state: TableState,
-    instructions_per_second: u32,
+    total_rows: usize,
 }
 
 fn find_label_addr(lines: &[DisasmLine]) -> HashSet<u16> {
