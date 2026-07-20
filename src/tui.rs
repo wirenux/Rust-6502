@@ -346,8 +346,15 @@ fn render_opcodes(frame: &mut Frame, area: Rect, cpu: &mut CPU, state: &mut TuiS
 
     let selected_index = match state.manual_selection {
         Some(idx) => Some(idx),
-        None => addr_to_row.get(&cpu.pc).copied(),
+        None => {
+            if cpu.halted && state.opcode_table_state.selected().is_some() {
+                state.opcode_table_state.selected()
+            } else {
+                addr_to_row.get(&cpu.pc).copied().or(state.opcode_table_state.selected())
+            }
+        }
     };
+
     state.opcode_table_state.select(selected_index);
 
     if state.manual_selection.is_none() {
@@ -510,9 +517,21 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
                     match key.code {
                         KeyCode::Char('q') => should_quit = true,
                         KeyCode::Char('n') => {
-                            cpu.clock_tick(bus);
-                            state.manual_selection = None;
-                            state.stack_manual_scroll = None;
+                            if !cpu.halted {
+                                let prev_pc = cpu.pc;
+                                cpu.clock_tick(bus);
+
+                                if bus.read_ram(prev_pc) == 0x00 { // BRK
+                                    let labels = find_label_addr(&state.disasm_lines);
+                                    let (_, addr_to_row) = build_opcode_rows(&state.disasm_lines, &labels);
+                                    if let Some(&row_idx) = addr_to_row.get(&prev_pc) {
+                                        state.manual_selection = Some(row_idx);
+                                    }
+                                } else {
+                                    state.manual_selection = None;
+                                }
+                                state.stack_manual_scroll = None;
+                            }
                         },
                         KeyCode::Char('r') => {
                             state.running = !state.running;
@@ -587,11 +606,25 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
 
             for _ in 0..instructions_to_run {
                 if cpu.halted { break; }
+
+                let prev_pc = cpu.pc;
                 cpu.clock_tick(bus);
+
+                if bus.read_ram(prev_pc) == 0x00 { // BRK
+                    state.running = false; // the emulator goes to HALTED mode
+
+                    let labels = find_label_addr(&state.disasm_lines);
+                    let (_, addr_to_row) = build_opcode_rows(&state.disasm_lines, &labels);
+                    if let Some(&row_idx) = addr_to_row.get(&prev_pc) {
+                        state.manual_selection = Some(row_idx);
+                    }
+                }
             }
 
-            state.manual_selection = None;
-            state.stack_manual_scroll = None;
+            if state.running {
+                state.manual_selection = None;
+                state.stack_manual_scroll = None;
+            }
         } else {
             last_frame_time = std::time::Instant::now();
         }
