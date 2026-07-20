@@ -6,7 +6,7 @@ use ratatui::widgets::{Table, Row, Block, TableState, Paragraph, Scrollbar, Scro
 use ratatui::style::{Style, Modifier, Color};
 
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event::{self, Mouse}, KeyCode::{self}, MouseEventKind}, execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event::{self}, KeyCode::{self}, MouseEventKind}, execute, terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 
 use std::{collections::{HashMap, HashSet}, io};
