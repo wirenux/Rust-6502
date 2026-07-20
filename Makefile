@@ -7,9 +7,9 @@ all:
 	rm build/asm/program.o
 
 rainbow:
-	ca65 src/asm/rainbow/rainbow.s -o build/asm/rainbow.o
+	ca65 src/asm/rainbow/rainbow_demo.s -o build/asm/rainbow_demo.o
 	ld65 \
 		-C src/asm/rainbow/linker.cfg \
-		build/asm/rainbow.o \
-		-o build/asm/rainbow.bin
-	rm build/asm/rainbow.o
+		build/asm/rainbow_demo.o \
+		-o build/asm/rainbow_demo.bin
+	rm build/asm/rainbow_demo.o

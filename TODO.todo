@@ -113,7 +113,7 @@ match opcode {
 - [x] reorganize code in tui.rs
 
 - [ ] add a file selector
-    - [ ] if demo program are selected no need to enter the start point
+    - [ ] if demo program are selected no need to enter the start point (use name of the file)
 - [ ] add a popup to select the start point
 
 - [ ] add key binds at the bottom
