@@ -120,13 +120,18 @@ fn find_label_addr(lines: &[DisasmLine]) -> HashSet<u16> {
 
     for line in lines {
         if let Some(addr_str) = line.text.split('$').nth(1) {
-            let addr_str: String = addr_str.chars().take(4).collect();
-            if let Ok(addr) = u16::from_str_radix(&addr_str, 16) {
+            let clean_str: String = addr_str.chars().filter(|c| c.is_ascii_hexdigit()).collect();
+            if let Ok(val) = u16::from_str_radix(&clean_str, 16) {
                 if line.text.starts_with("JSR")
                     || line.text.starts_with("JMP")
-                    || line.text.starts_with('B') // BEQ, BNE, BCC, BCS, BMI, BPL, BVC, BVS
                 {
-                    labels.insert(addr);
+                    labels.insert(val);
+                } else if line.text.starts_with('B') { // BEQ, BNE, BCC, BCS, BMI, BPL, BVC, BVS
+                    if clean_str.len() <= 2 {
+                        let offset = val as u8 as i8;
+                        let target_addr = (line.addr as i32 + 2 + offset as i32) as u16;
+                        labels.insert(target_addr);
+                    }
                 }
             }
         }
