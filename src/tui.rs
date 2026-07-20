@@ -29,10 +29,8 @@ struct TuiState {
     stack_manual_scroll: Option<usize>,
     memory_area: Rect,
     stack_area: Rect,
+    instructions_per_second: u32,
 }
-
-const TARGET_HZ: u64 = 1_000_000; // 1 MHz
-const NS_PER_CYCLE: u64 = 1_000_000_000 / TARGET_HZ; // nanosecond per cycle
 
 fn find_label_addr(lines: &[DisasmLine]) -> HashSet<u16> {
     let mut labels = HashSet::new();
@@ -337,16 +335,19 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
         stack_manual_scroll: None,
         memory_area: Rect::default(),
         stack_area: Rect::default(),
+        instructions_per_second: 100,
     };
+
+    let mut should_quit = false;
 
     loop {
         terminal.draw(|frame| render(frame, cpu, &mut state, bus))?;
 
-        if event::poll(Duration::from_millis(16))? {
+        while event::poll(Duration::from_millis(0))? {
             match event::read()? {
                 Event::Key(key) => {
                     match key.code {
-                        KeyCode::Char('q') => break,
+                        KeyCode::Char('q') => should_quit = true,
                         KeyCode::Char('n') => {
                             cpu.clock_tick(bus);
                             state.manual_selection = None;
@@ -403,9 +404,13 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
             }
         }
 
+        if should_quit {
+            break;
+        }
+
         if state.running && !cpu.halted {
-            let delay_ns = NS_PER_CYCLE * cpu.last_cycles as u64;
-            thread::sleep(Duration::from_nanos(delay_ns));
+            let delay_ms = 1000 / state.instructions_per_second.max(1);
+            thread::sleep(Duration::from_millis(delay_ms as u64));
             cpu.clock_tick(bus);
             state.manual_selection = None;
             state.stack_manual_scroll = None;
