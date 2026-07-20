@@ -1,8 +1,8 @@
 use ratatui::{
-    Frame, Terminal, backend::CrosstermBackend, layout::{Constraint, Direction, Layout, Rect}, text::{Line, Span}
+    Frame, Terminal, backend::CrosstermBackend, layout::{Constraint, Direction, Layout, Rect}, text::{Line, Span}, widgets::ScrollbarState
 };
 
-use ratatui::widgets::{Table, Row, Block, TableState, Paragraph};
+use ratatui::widgets::{Table, Row, Block, TableState, Paragraph, Scrollbar, ScrollbarOrientation};
 use ratatui::style::{Style, Modifier, Color};
 
 use crossterm::{
@@ -24,6 +24,9 @@ struct TuiState {
     manual_selection: Option<usize>,
     total_rows: usize,
     stack_table_state: TableState,
+    memory_scroll_row: usize,
+    memory_table_state: TableState,
+    stack_manual_scroll: Option<usize>,
 }
 
 const TARGET_HZ: u64 = 1_000_000; // 1 MHz
@@ -145,21 +148,19 @@ fn render_register(frame: &mut Frame, area: Rect, cpu: &CPU) {
     frame.render_widget(register_table, area);
 }
 
-fn render_stack(frame: &mut Frame, area: Rect, cpu: &CPU, bus: &Bus, table_state: &mut TableState) {
+fn render_stack(frame: &mut Frame, area: Rect, cpu: &CPU, bus: &Bus, state: &mut TuiState) {
     let header = Row::new(vec!["ADDR", "VALUE"])
         .style(Style::default().add_modifier(Modifier::BOLD));
 
     let rows: Vec<Row> = (0x00..=0xFF).rev().map(|offset: u8| {
-        let addr =  0x0100u16 + offset as u16;
+        let addr = 0x0100u16 + offset as u16;
         let value = bus.read_ram(addr);
         let is_top = offset == cpu.sp;
-
         let style = if is_top {
             Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
         } else {
             Style::default()
         };
-
         Row::new(vec![
             Span::styled(format!("${:04X}", addr), Style::default().fg(Color::DarkGray)),
             Span::styled(format!("{:02X}", value), style),
@@ -167,18 +168,68 @@ fn render_stack(frame: &mut Frame, area: Rect, cpu: &CPU, bus: &Bus, table_state
     }).collect();
 
     let sp_row_index = (0xFFu16 - cpu.sp as u16) as usize;
-    table_state.select(Some(sp_row_index));
 
-    let stack_table = Table::new(rows, [
-        Constraint::Length(7),
-        Constraint::Length(5),
-    ])
+    if state.stack_manual_scroll.is_none() {
+        state.stack_table_state.select(Some(sp_row_index));
+    } else {
+        *state.stack_table_state.offset_mut() = state.stack_manual_scroll.unwrap();
+    }
+
+    let stack_table = Table::new(rows, [Constraint::Length(7), Constraint::Length(5)])
         .column_spacing(1)
         .header(header)
         .row_highlight_style(Style::default().add_modifier(Modifier::REVERSED))
         .block(Block::bordered().title("Stack"));
 
-    frame.render_stateful_widget(stack_table, area, table_state);
+    frame.render_stateful_widget(stack_table, area, &mut state.stack_table_state);
+
+    let mut scrollbar_state = ScrollbarState::new(256).position(state.stack_table_state.offset());
+    let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight);
+    frame.render_stateful_widget(scrollbar, area, &mut scrollbar_state);
+}
+
+fn build_memory_rows(bus: &Bus) -> Vec<Row<'static>> {
+    (0u32..4096).map(|row_idx| {
+        let addr = (row_idx * 16) as u16;
+        let mut hex_bytes = String::new();
+
+        for col in 0..16 {
+            hex_bytes.push_str(&format!("{:02X} ", bus.read_ram(addr.wrapping_add(col))));
+        }
+
+        Row::new(vec![
+            Span::styled(format!("${:04X}", addr), Style::default().fg(Color::DarkGray)),
+            Span::raw(hex_bytes),
+        ])
+    }).collect()
+}
+
+
+fn render_memory(frame: &mut Frame, area: Rect, bus: &Bus, state: &mut TuiState) {
+    let rows = build_memory_rows(bus);
+    let total_rows = rows.len();
+
+    *state.memory_table_state.offset_mut() = state.memory_scroll_row;
+
+    let header = Row::new(vec!["ADDR", "BYTES"])
+        .style(Style::default().add_modifier(Modifier::BOLD));
+
+    let memory_table = Table::new(rows, [
+        Constraint::Length(7),
+        Constraint::Min(10),
+    ])
+        .column_spacing(1)
+        .header(header)
+        .block(Block::bordered().title("Memory"));
+
+    frame.render_stateful_widget(memory_table, area, &mut state.memory_table_state);
+
+    let mut scrollbar_state = ScrollbarState::new(total_rows)
+        .position(state.memory_scroll_row);
+
+    let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight);
+    frame.render_stateful_widget(scrollbar, area, &mut scrollbar_state);
+
 }
 
 fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus) {
@@ -210,7 +261,6 @@ fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus)
     let right_chunk = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(3),
             Constraint::Percentage(50),
             Constraint::Percentage(50),
         ])
@@ -252,8 +302,8 @@ fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus)
 
     render_register(frame, left_chunk[1], cpu);
     render_flags(frame, left_chunk[0], cpu, state);
-    frame.render_widget(Block::bordered().title("Memory"), right_chunk[1]);
-    render_stack(frame, left_chunk[2], cpu, bus, &mut state.stack_table_state);
+    render_memory(frame, right_chunk[0], bus, state);
+    render_stack(frame, left_chunk[2], cpu, bus, state);
 }
 
 pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
@@ -273,6 +323,9 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16) -> io::Result<()> {
         manual_selection: None,
         total_rows: 0,
         stack_table_state: TableState::default(),
+        memory_scroll_row: 0,
+        memory_table_state: TableState::default(),
+        stack_manual_scroll: None,
     };
 
     loop {
