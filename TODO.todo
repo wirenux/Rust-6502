@@ -114,7 +114,10 @@ match opcode {
     - [ ] if demo program are selected no need to enter the start point (use name of the file)
 - [ ] add a popup to select the start point
 
-- [ ] add key binds at the bottom
+- [x] add key binds at the bottom
+- [x] space -> running
+- [x] enter -> step
+- [ ] r -> reset
 - [x] map `?` to open settings panel/popup
 
 - [x] add indicator of running or not
