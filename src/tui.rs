@@ -530,19 +530,28 @@ fn render_screen(frame: &mut Frame, area: Rect, bus: &Bus) {
     frame.render_widget(screen_widget, screen_area);
 }
 
-fn render_footer(frame: &mut Frame, area: Rect) {
-    let spans = vec![
-        Span::styled(" N ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
-        Span::raw(" Step "),
-        Span::styled(" R ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
-        Span::raw(" Run/Paused "),
-        Span::styled(" ↑↓ ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
-        Span::raw(" Scroll "),
-        Span::styled(" ? ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
-        Span::raw(" Settings "),
-        Span::styled(" Q ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
-        Span::raw(" Quit "),
-    ];
+fn render_footer(frame: &mut Frame, area: Rect, state: &TuiState) {
+    let spans = if state.show_settings {
+        vec![
+            Span::styled(" ↑↓ ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Adjust Speed  "),
+            Span::styled(" ESC/? ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Close "),
+        ]
+    } else {
+        vec![
+            Span::styled(" N ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Step  "),
+            Span::styled(" R ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Run/Pause  "),
+            Span::styled(" ↑↓ ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Scroll  "),
+            Span::styled(" ? ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Settings  "),
+            Span::styled(" Q ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Quit "),
+        ]
+    };
 
     let footer = Paragraph::new(Line::from(spans));
     frame.render_widget(footer, area);
@@ -596,7 +605,7 @@ fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus)
     render_opcodes(frame, main_chunk[0], cpu, state);
     render_memory(frame, right_chunk[0], bus, state);
     render_screen(frame, right_chunk[1], bus);
-    render_footer(frame, screen_chunk[1]);
+    render_footer(frame, screen_chunk[1], state);
 
     state.memory_area = right_chunk[0];
     state.stack_area = left_chunk[2];
