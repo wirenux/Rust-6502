@@ -911,6 +911,14 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
         total_rows: 0,
     };
 
+    cpu.reset_cpu(bus);
+    cpu.reset_stack(bus);
+    cpu.reset_screen(bus);
+    cpu.halted = false;
+    state.manual_selection = None;
+    state.running = false;
+    state.stack_manual_scroll = None;
+
     let mut last_frame_time = std::time::Instant::now();
     let mut should_quit = false;
 
