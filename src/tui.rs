@@ -300,7 +300,7 @@ fn render_flags(frame: &mut Frame, area: Rect, cpu: &CPU, state: &TuiState) {
     let flags_line = Line::from(spans);
 
     let flag_widget = Paragraph::new(flags_line)
-        .block(Block::bordered().title("Flags"));
+        .block(Block::bordered().title(" Flags "));
 
     frame.render_widget(flag_widget, area);
 }
@@ -364,7 +364,7 @@ fn render_stack(frame: &mut Frame, area: Rect, cpu: &CPU, bus: &Bus, state: &mut
         .column_spacing(1)
         .header(header)
         .row_highlight_style(Style::default().add_modifier(Modifier::REVERSED))
-        .block(Block::bordered().title("Stack"));
+        .block(Block::bordered().title(" Stack "));
 
     frame.render_stateful_widget(stack_table, area, &mut state.stack_table_state);
 
@@ -416,7 +416,7 @@ fn render_memory(frame: &mut Frame, area: Rect, bus: &Bus, state: &mut TuiState)
     ])
         .column_spacing(1)
         .header(header)
-        .block(Block::bordered().title("Memory"));
+        .block(Block::bordered().title(" Memory "));
 
     frame.render_stateful_widget(memory_table, area, &mut state.memory_table_state);
 
@@ -467,7 +467,7 @@ fn render_opcodes(frame: &mut Frame, area: Rect, cpu: &mut CPU, state: &mut TuiS
         .map(|name| name.to_string_lossy().into_owned())
         .unwrap_or_else(|| state.filename.clone());
 
-    let title_string = format!("Opcodes - \"{}\"", display_name);
+    let title_string = format!(" Opcodes - \"{}\" ", display_name);
 
     let opcode_table = Table::new(rows, [
         Constraint::Length(9),
@@ -488,7 +488,7 @@ fn render_opcodes(frame: &mut Frame, area: Rect, cpu: &mut CPU, state: &mut TuiS
 }
 
 fn render_screen(frame: &mut Frame, area: Rect, bus: &Bus) {
-    let block = Block::bordered().title("Screen");
+    let block = Block::bordered().title(" Screen ");
     let inner = block.inner(area);
 
     frame.render_widget(block, area);
