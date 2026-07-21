@@ -129,8 +129,6 @@ match opcode {
 
 - [ ] add keyboard use
 
-- [ ] add key to reset
-
 - [ ] add color to the TUI
 
 - [x] add a screen
