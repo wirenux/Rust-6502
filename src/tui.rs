@@ -1,27 +1,61 @@
 use ansi_to_tui::IntoText;
 
 use ratatui::{
-    Frame, Terminal, backend::CrosstermBackend, layout::{
-        Alignment, Constraint, Direction, Layout, Rect,
-    }, style::{
-        Color, Modifier, Style, Stylize,
-    }, text::{
+    backend::CrosstermBackend,
+    Frame,
+    layout::{
+        Alignment,
+        Constraint,
+        Direction,
+        Layout,
+        Rect,
+    },
+    style::{
+        Color,
+        Modifier,
+        Style,
+        Stylize,
+    },
+    Terminal,
+    text::{
         Line,
         Span,
-    }, widgets::{
-        Block, Gauge, List, ListItem, ListState, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState,
+    },
+    widgets::{
+        Block,
+        Gauge,
+        List,
+        ListItem,
+        ListState,
+        Paragraph,
+        Row,
+        Scrollbar,
+        ScrollbarOrientation,
+        ScrollbarState,
+        Table,
+        TableState,
     },
 };
 
 use crossterm::{
     event::{
-        self, DisableMouseCapture, EnableMouseCapture, Event::{
+        self,
+        DisableMouseCapture,
+        EnableMouseCapture,
+        Event::{
             self,
-        }, KeyCode::{
+        },
+        KeyCode::{
             self,
-        }, MouseEventKind,
-    }, execute, terminal::{
-        EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+        },
+        MouseEventKind,
+    },
+    execute,
+    terminal::{
+        disable_raw_mode,
+        enable_raw_mode,
+        EnterAlternateScreen,
+        LeaveAlternateScreen,
     },
 };
 
@@ -29,31 +63,37 @@ use std::{
     collections::{
         HashMap,
         HashSet
-    }, fs, io, path::{
-        Path, PathBuf
-    }, thread, time::Duration,
+    },
+    fs,
+    io,
+    path::{
+        Path,
+        PathBuf
+    },
+    thread,
+    time::Duration,
 };
 
 use crate::{
     cpu::CPU,
     bus::Bus,
     disasm::{
+        DisasmLine,
         disassemble_range,
-        DisasmLine
     }
 };
 
 #[derive(PartialEq)]
 enum AppScreen {
-    Home,
     Emulator,
+    Home,
 }
 
 #[derive(PartialEq)]
 enum HomeFocus {
     FileList,
-    StartAddr,
     Speed,
+    StartAddr,
     StartButton
 }
 
@@ -62,9 +102,9 @@ struct TuiState {
     screen: AppScreen,
     show_settings: bool,
 
-    home_focus: HomeFocus,
     available_files: Vec<String>,
     file_list_state: ListState,
+    home_focus: HomeFocus,
     start_addr_input: String,
 
     disasm_lines: Vec<DisasmLine>,
