@@ -1,27 +1,19 @@
 use ansi_to_tui::IntoText;
 
 use ratatui::{
-    backend::{
-        CrosstermBackend,
-    },
     Frame,
+    Terminal,
+    backend::CrosstermBackend,
     layout::{
-        Constraint,
-        Direction,
-        Layout,
-        Rect,
-    },
-    style::{
+        Constraint, Direction, Layout, Rect,
+    }, style::{
         Color,
         Modifier,
         Style,
-    },
-    Terminal,
-    text::{
+    }, text::{
         Line,
         Span,
-    },
-    widgets::{
+    }, widgets::{
         Block,
         Paragraph,
         Row,
@@ -59,7 +51,7 @@ use std::{
     collections::{
         HashMap,
         HashSet
-    }, io, ops::ControlFlow, path::Path, thread, time::Duration,
+    }, io, path::Path, thread, time::Duration,
 };
 
 use crate::{
@@ -104,22 +96,22 @@ const IPS: u32 = 7000; // instruction per second
 
 fn palette_color(index: u8) -> Color {
     match index & 0x0F {
-        0 => Color::Black,
-        1 => Color::White,
-        2 => Color::Red,
-        3 => Color::Cyan,
-        4 => Color::Magenta,
-        5 => Color::Green,
-        6 => Color::Blue,
-        7 => Color::Yellow,
-        8 => Color::Rgb(255, 165, 0), // Orange
-        9 => Color::Rgb(153, 76, 0), // Brown
-        10 => Color::DarkGray,
-        11 => Color::Gray,
-        12 => Color::LightRed,
-        13 => Color::LightBlue,
-        14 => Color::LightGreen,
-        _ => Color::Reset, // 15 transparent
+        0 => Color::Rgb(0, 0, 0),
+        1 => Color::Rgb(255, 255, 255),
+        2 => Color::Rgb(255, 0, 0),
+        3 => Color::Rgb(0, 255, 255),
+        4 => Color::Rgb(255, 0, 255),
+        5 => Color::Rgb(0, 255, 0),
+        6 => Color::Rgb(0, 0, 255),
+        7 => Color::Rgb(255, 255, 0),
+        8 => Color::Rgb(255, 128, 0),
+        9 => Color::Rgb(128, 64, 0),
+        10 => Color::Rgb(255, 64, 64),
+        11 => Color::Rgb(32, 32, 32),
+        12 => Color::Rgb(128, 128, 128),
+        13 => Color::Rgb(64, 64, 255),
+        14 => Color::Rgb(64, 255, 64),
+        _ => Color::Rgb(200, 200, 200),
     }
 }
 
