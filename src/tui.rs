@@ -146,85 +146,22 @@ const SCREEN_HEIGHT: usize = 32;
 
 const IPS: u32 = 7000; // instruction per second
 
-fn palette_color(index: u8) -> Color {
-    match index & 0x0F {
-        0 => Color::Rgb(0, 0, 0),
-        1 => Color::Rgb(255, 255, 255),
-        2 => Color::Rgb(255, 0, 0),
-        3 => Color::Rgb(0, 255, 255),
-        4 => Color::Rgb(255, 0, 255),
-        5 => Color::Rgb(0, 255, 0),
-        6 => Color::Rgb(0, 0, 255),
-        7 => Color::Rgb(255, 255, 0),
-        8 => Color::Rgb(255, 128, 0),
-        9 => Color::Rgb(128, 64, 0),
-        10 => Color::Rgb(255, 64, 64),
-        11 => Color::Rgb(32, 32, 32),
-        12 => Color::Rgb(128, 128, 128),
-        13 => Color::Rgb(64, 64, 255),
-        14 => Color::Rgb(64, 255, 64),
-        _ => Color::Rgb(200, 200, 200),
-    }
+fn build_memory_rows(bus: &Bus, start_row: usize, visible_count: usize) -> Vec<Row<'static>> {
+    (start_row..(start_row + visible_count).min(4096)).map(|row_idx| {
+        let addr = (row_idx * 16) as u16;
+        let mut hex_bytes = String::new();
+
+        for col in 0..16 {
+            hex_bytes.push_str(&format!("{:02X} ", bus.read_ram(addr.wrapping_add(col))));
+        }
+
+        Row::new(vec![
+            Span::styled(format!("${:04X}", addr), Style::default().fg(Color::DarkGray)),
+            Span::raw(hex_bytes),
+        ])
+    }).collect()
 }
 
-fn load_directory_contents(path: &Path) -> Vec<String> {
-    let mut dirs = Vec::new();
-    let mut files = Vec::new();
-
-    dirs.push("..".to_string()); // always add ../ path
-
-    if let Ok(entries) = fs::read_dir(path) {
-        for entry in entries.flatten() {
-            let name = entry.file_name().to_string_lossy().into_owned();
-            if let Ok(file_type) = entry.file_type() {
-                if file_type.is_dir() {
-                    dirs.push(format!("{}/", name));
-                } else {
-                    files.push(name);
-                }
-            }
-        }
-    }
-
-    dirs.sort_by(|a, b| {
-        if a == ".." {
-            std::cmp::Ordering::Less
-        } else if b == ".." {
-            std::cmp::Ordering::Greater
-        } else {
-            a.cmp(b)
-        }
-    });
-
-
-    files.sort();
-
-    dirs.extend(files);
-    dirs
-}
-
-fn find_label_addr(lines: &[DisasmLine]) -> HashSet<u16> {
-    let mut labels = HashSet::new();
-
-    for line in lines {
-        if let Some(addr_str) = line.text.split('$').nth(1) {
-            let clean_str: String = addr_str.chars().filter(|c| c.is_ascii_hexdigit()).collect();
-            if let Ok(val) = u16::from_str_radix(&clean_str, 16) {
-                if line.text.starts_with("JSR") || line.text.starts_with("JMP") {
-                    labels.insert(val);
-                } else if line.text.starts_with('B') { // BEQ, BNE, BCC, BCS, BMI, BPL, BVC, BVS
-                    if clean_str.len() <= 2 {
-                        let offset = val as u8 as i8;
-                        let target_addr = (line.addr as i32 + 2 + offset as i32) as u16;
-                        labels.insert(target_addr);
-                    }
-                }
-            }
-        }
-    }
-
-    labels
-}
 
 fn build_opcode_rows<'a>(lines: &'a [DisasmLine], labels: &HashSet<u16>) -> (Vec<Row<'a>>, HashMap<u16, usize>) {
     let mut rows = Vec::new();
@@ -271,6 +208,157 @@ fn centered_rect(percent_x: u16, percent_y: u16, area: Rect) -> Rect {
             Constraint::Percentage((100 - percent_x) / 2),
         ])
         .split(popup_layout[1])[1]
+}
+
+fn find_label_addr(lines: &[DisasmLine]) -> HashSet<u16> {
+    let mut labels = HashSet::new();
+
+    for line in lines {
+        if let Some(addr_str) = line.text.split('$').nth(1) {
+            let clean_str: String = addr_str.chars().filter(|c| c.is_ascii_hexdigit()).collect();
+            if let Ok(val) = u16::from_str_radix(&clean_str, 16) {
+                if line.text.starts_with("JSR") || line.text.starts_with("JMP") {
+                    labels.insert(val);
+                } else if line.text.starts_with('B') { // BEQ, BNE, BCC, BCS, BMI, BPL, BVC, BVS
+                    if clean_str.len() <= 2 {
+                        let offset = val as u8 as i8;
+                        let target_addr = (line.addr as i32 + 2 + offset as i32) as u16;
+                        labels.insert(target_addr);
+                    }
+                }
+            }
+        }
+    }
+
+    labels
+}
+
+fn flag_span(label: &str, set: bool) -> Span<'static> {
+    let style = if set {
+        Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default().fg(Color::DarkGray)
+    };
+
+    Span::styled(format!("{} ", label), style)
+}
+
+fn load_directory_contents(path: &Path) -> Vec<String> {
+    let mut dirs = Vec::new();
+    let mut files = Vec::new();
+
+    dirs.push("..".to_string()); // always add ../ path
+
+    if let Ok(entries) = fs::read_dir(path) {
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if let Ok(file_type) = entry.file_type() {
+                if file_type.is_dir() {
+                    dirs.push(format!("{}/", name));
+                } else {
+                    files.push(name);
+                }
+            }
+        }
+    }
+
+    dirs.sort_by(|a, b| {
+        if a == ".." {
+            std::cmp::Ordering::Less
+        } else if b == ".." {
+            std::cmp::Ordering::Greater
+        } else {
+            a.cmp(b)
+        }
+    });
+
+
+    files.sort();
+
+    dirs.extend(files);
+    dirs
+}
+
+fn palette_color(index: u8) -> Color {
+    match index & 0x0F {
+        0 => Color::Rgb(0, 0, 0),
+        1 => Color::Rgb(255, 255, 255),
+        2 => Color::Rgb(255, 0, 0),
+        3 => Color::Rgb(0, 255, 255),
+        4 => Color::Rgb(255, 0, 255),
+        5 => Color::Rgb(0, 255, 0),
+        6 => Color::Rgb(0, 0, 255),
+        7 => Color::Rgb(255, 255, 0),
+        8 => Color::Rgb(255, 128, 0),
+        9 => Color::Rgb(128, 64, 0),
+        10 => Color::Rgb(255, 64, 64),
+        11 => Color::Rgb(32, 32, 32),
+        12 => Color::Rgb(128, 128, 128),
+        13 => Color::Rgb(64, 64, 255),
+        14 => Color::Rgb(64, 255, 64),
+        _ => Color::Rgb(200, 200, 200),
+    }
+}
+
+fn render_flags(frame: &mut Frame, area: Rect, cpu: &CPU, state: &TuiState) {
+    let status_span = if state.running {
+        Span::styled("RUN", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD))
+    } else {
+        Span::styled("HALT", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD))
+    };
+
+    let flag_spans_width = 6 * 2;
+    let status_width = status_span.content.len();
+    let inner_width = area.width.saturating_sub(2) as usize;
+    let padding = inner_width.saturating_sub(flag_spans_width + status_width);
+
+    let mut spans = vec![
+        flag_span("N", cpu.get_flag(CPU::NEGATIVE_FLAG)),
+        flag_span("V", cpu.get_flag(CPU::OVERFLOW_FLAG)),
+        flag_span("D", cpu.get_flag(CPU::DECIMAL_FLAG)),
+        flag_span("I", cpu.get_flag(CPU::INTERRUPT_FLAG)),
+        flag_span("Z", cpu.get_flag(CPU::ZERO_FLAG)),
+        flag_span("C", cpu.get_flag(CPU::CARRY_FLAG)),
+    ];
+
+    spans.push(Span::raw(" ".repeat(padding)));
+    spans.push(status_span);
+
+    let flags_line = Line::from(spans);
+
+    let flag_widget = Paragraph::new(flags_line)
+        .block(Block::bordered().title(" Flags "));
+
+    frame.render_widget(flag_widget, area);
+}
+
+fn render_footer(frame: &mut Frame, area: Rect, state: &TuiState) {
+    let spans = if state.show_settings {
+        vec![
+            Span::styled(" ↑↓ ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Adjust Speed  "),
+            Span::styled(" ESC/? ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Close "),
+        ]
+    } else {
+        vec![
+            Span::styled(" Enter ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Step  "),
+            Span::styled(" Space ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Run/Pause  "),
+            Span::styled(" R ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Reset  "),
+            Span::styled(" ↑↓ ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Scroll  "),
+            Span::styled(" ? ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Settings  "),
+            Span::styled(" Q ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Quit "),
+        ]
+    };
+
+    let footer = Paragraph::new(Line::from(spans));
+    frame.render_widget(footer, area);
 }
 
 fn render_home(frame: &mut Frame, state: &mut TuiState) {
@@ -444,192 +532,6 @@ fn render_logo(frame: &mut Frame, area: Rect) {
     frame.render_widget(widget, area);
 }
 
-fn render_settings_popup(frame: &mut Frame, area: Rect, state: &TuiState) {
-    let popup_area = centered_rect(50, 40, area);
-
-    frame.render_widget(ratatui::widgets::Clear, popup_area);
-
-    let block = Block::bordered().title(" Settings ").border_style(Style::default().fg(Color::Yellow));
-    let inner = block.inner(popup_area);
-    frame.render_widget(block, popup_area);
-
-    let sections = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(5),
-            Constraint::Min(0),
-        ])
-        .split(inner);
-
-    render_logo(frame, sections[0]);
-
-    let lines = vec![
-        Line::from(""),
-        Line::from(vec![
-            Span::raw("Speed: "),
-            Span::styled(format!("{} ips", state.instructions_per_second), Style::default().fg(Color::Green)),
-        ]).centered(),
-        Line::from(Span::styled(" ↑/↓ to adjust", Style::default().fg(Color::DarkGray))).centered(),
-        Line::from(""),
-        Line::from(vec![
-            Span::raw("Github: "),
-            Span::styled("github.com/wirenux/rust-6502", Style::default().fg(Color::Cyan).add_modifier(Modifier::UNDERLINED)),
-        ]).centered(),
-        Line::from(vec![
-            Span::raw("Stardance: "),
-            Span::styled("stardance.hackclub.com/projects/34098", Style::default().fg(Color::Cyan).add_modifier(Modifier::UNDERLINED)),
-        ]).centered(),
-        Line::from(""),
-        Line::from(Span::styled("Press ? or ESC to close", Style::default().fg(Color::DarkGray))).centered(),
-    ];
-
-    let text_widget = Paragraph::new(lines);
-    frame.render_widget(text_widget, sections[1]);
-}
-
-fn render_popup_shadow(frame: &mut Frame, popup_area: Rect, full_area: Rect) {
-    let shadow_area = Rect {
-        x: popup_area.x + 1,
-        y: popup_area.y + 1,
-        width: popup_area.width,
-        height: popup_area.height,
-    }.intersection(full_area);
-
-    let shadow = Block::default().style(Style::default().bg(Color::White).fg(Color::White));
-    frame.render_widget(shadow, shadow_area);
-}
-
-fn flag_span(label: &str, set: bool) -> Span<'static> {
-    let style = if set {
-        Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)
-    } else {
-        Style::default().fg(Color::DarkGray)
-    };
-
-    Span::styled(format!("{} ", label), style)
-}
-
-fn render_flags(frame: &mut Frame, area: Rect, cpu: &CPU, state: &TuiState) {
-    let status_span = if state.running {
-        Span::styled("RUN", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD))
-    } else {
-        Span::styled("HALT", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD))
-    };
-
-    let flag_spans_width = 6 * 2;
-    let status_width = status_span.content.len();
-    let inner_width = area.width.saturating_sub(2) as usize;
-    let padding = inner_width.saturating_sub(flag_spans_width + status_width);
-
-    let mut spans = vec![
-        flag_span("N", cpu.get_flag(CPU::NEGATIVE_FLAG)),
-        flag_span("V", cpu.get_flag(CPU::OVERFLOW_FLAG)),
-        flag_span("D", cpu.get_flag(CPU::DECIMAL_FLAG)),
-        flag_span("I", cpu.get_flag(CPU::INTERRUPT_FLAG)),
-        flag_span("Z", cpu.get_flag(CPU::ZERO_FLAG)),
-        flag_span("C", cpu.get_flag(CPU::CARRY_FLAG)),
-    ];
-
-    spans.push(Span::raw(" ".repeat(padding)));
-    spans.push(status_span);
-
-    let flags_line = Line::from(spans);
-
-    let flag_widget = Paragraph::new(flags_line)
-        .block(Block::bordered().title(" Flags "));
-
-    frame.render_widget(flag_widget, area);
-}
-
-fn render_register(frame: &mut Frame, area: Rect, cpu: &CPU) {
-    let header = Row::new(vec!["AC", "XR", "YR", "SP"])
-        .style(Style::default().add_modifier(Modifier::BOLD));
-
-    let values_row = Row::new(vec![
-        format!("{:02X}", cpu.reg_a),
-        format!("{:02X}", cpu.reg_x),
-        format!("{:02X}", cpu.reg_y),
-        format!("$01{:02X}", cpu.sp),
-    ]);
-
-    let register_table = Table::new(
-        vec![values_row],
-        [
-            Constraint::Length(4),
-            Constraint::Length(4),
-            Constraint::Length(4),
-            Constraint::Length(5),
-        ],
-    )
-        .column_spacing(1)
-        .header(header)
-        .block(Block::bordered().title("Register"));
-
-    frame.render_widget(register_table, area);
-}
-
-fn render_stack(frame: &mut Frame, area: Rect, cpu: &CPU, bus: &Bus, state: &mut TuiState) {
-    let header = Row::new(vec!["ADDR", "VALUE"])
-        .style(Style::default().add_modifier(Modifier::BOLD));
-
-    let rows: Vec<Row> = (0x00..=0xFF).rev().map(|offset: u8| {
-        let addr = 0x0100u16 + offset as u16;
-        let value = bus.read_ram(addr);
-        let is_top = offset == cpu.sp;
-        let style = if is_top {
-            Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
-        } else {
-            Style::default()
-        };
-        Row::new(vec![
-            Span::styled(format!("${:04X}", addr), Style::default().fg(Color::DarkGray)),
-            Span::styled(format!("{:02X}", value), style),
-        ])
-    }).collect();
-
-    let sp_row_index = (0xFFu16 - cpu.sp as u16) as usize;
-
-    if state.stack_manual_scroll.is_none() {
-        state.stack_table_state.select(Some(sp_row_index));
-    } else {
-        state.stack_table_state.select(None);
-        *state.stack_table_state.offset_mut() = state.stack_manual_scroll.unwrap();
-    }
-
-    let stack_table = Table::new(rows, [Constraint::Length(7), Constraint::Length(5)])
-        .column_spacing(1)
-        .header(header)
-        .row_highlight_style(Style::default().add_modifier(Modifier::REVERSED))
-        .block(Block::bordered().title(" Stack "));
-
-    frame.render_stateful_widget(stack_table, area, &mut state.stack_table_state);
-
-    let visible_height = area.height.saturating_sub(3) as usize;
-    let max_offset = 256usize.saturating_sub(visible_height);
-
-    let mut scrollbar_state = ScrollbarState::new(max_offset).position(state.stack_table_state.offset());
-
-    let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight);
-    frame.render_stateful_widget(scrollbar, area, &mut scrollbar_state);
-}
-
-fn build_memory_rows(bus: &Bus, start_row: usize, visible_count: usize) -> Vec<Row<'static>> {
-    (start_row..(start_row + visible_count).min(4096)).map(|row_idx| {
-        let addr = (row_idx * 16) as u16;
-        let mut hex_bytes = String::new();
-
-        for col in 0..16 {
-            hex_bytes.push_str(&format!("{:02X} ", bus.read_ram(addr.wrapping_add(col))));
-        }
-
-        Row::new(vec![
-            Span::styled(format!("${:04X}", addr), Style::default().fg(Color::DarkGray)),
-            Span::raw(hex_bytes),
-        ])
-    }).collect()
-}
-
-
 fn render_memory(frame: &mut Frame, area: Rect, bus: &Bus, state: &mut TuiState) {
     let visible_count = area.height.saturating_sub(3) as usize;
     let start_row = state.memory_scroll_row;
@@ -723,6 +625,45 @@ fn render_opcodes(frame: &mut Frame, area: Rect, cpu: &mut CPU, state: &mut TuiS
     frame.render_stateful_widget(scrollbar, area, &mut scrollbar_state);
 }
 
+fn render_popup_shadow(frame: &mut Frame, popup_area: Rect, full_area: Rect) {
+    let shadow_area = Rect {
+        x: popup_area.x + 1,
+        y: popup_area.y + 1,
+        width: popup_area.width,
+        height: popup_area.height,
+    }.intersection(full_area);
+
+    let shadow = Block::default().style(Style::default().bg(Color::White).fg(Color::White));
+    frame.render_widget(shadow, shadow_area);
+}
+
+fn render_register(frame: &mut Frame, area: Rect, cpu: &CPU) {
+    let header = Row::new(vec!["AC", "XR", "YR", "SP"])
+        .style(Style::default().add_modifier(Modifier::BOLD));
+
+    let values_row = Row::new(vec![
+        format!("{:02X}", cpu.reg_a),
+        format!("{:02X}", cpu.reg_x),
+        format!("{:02X}", cpu.reg_y),
+        format!("$01{:02X}", cpu.sp),
+    ]);
+
+    let register_table = Table::new(
+        vec![values_row],
+        [
+            Constraint::Length(4),
+            Constraint::Length(4),
+            Constraint::Length(4),
+            Constraint::Length(5),
+        ],
+    )
+        .column_spacing(1)
+        .header(header)
+        .block(Block::bordered().title("Register"));
+
+    frame.render_widget(register_table, area);
+}
+
 fn render_screen(frame: &mut Frame, area: Rect, bus: &Bus) {
     let block = Block::bordered().title(" Screen ");
     let inner = block.inner(area);
@@ -774,33 +715,92 @@ fn render_screen(frame: &mut Frame, area: Rect, bus: &Bus) {
     frame.render_widget(screen_widget, screen_area);
 }
 
-fn render_footer(frame: &mut Frame, area: Rect, state: &TuiState) {
-    let spans = if state.show_settings {
-        vec![
-            Span::styled(" ↑↓ ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
-            Span::raw(" Adjust Speed  "),
-            Span::styled(" ESC/? ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
-            Span::raw(" Close "),
-        ]
-    } else {
-        vec![
-            Span::styled(" Enter ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
-            Span::raw(" Step  "),
-            Span::styled(" Space ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
-            Span::raw(" Run/Pause  "),
-            Span::styled(" R ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
-            Span::raw(" Reset  "),
-            Span::styled(" ↑↓ ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
-            Span::raw(" Scroll  "),
-            Span::styled(" ? ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
-            Span::raw(" Settings  "),
-            Span::styled(" Q ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
-            Span::raw(" Quit "),
-        ]
-    };
+fn render_settings_popup(frame: &mut Frame, area: Rect, state: &TuiState) {
+    let popup_area = centered_rect(50, 40, area);
 
-    let footer = Paragraph::new(Line::from(spans));
-    frame.render_widget(footer, area);
+    frame.render_widget(ratatui::widgets::Clear, popup_area);
+
+    let block = Block::bordered().title(" Settings ").border_style(Style::default().fg(Color::Yellow));
+    let inner = block.inner(popup_area);
+    frame.render_widget(block, popup_area);
+
+    let sections = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(5),
+            Constraint::Min(0),
+        ])
+        .split(inner);
+
+    render_logo(frame, sections[0]);
+
+    let lines = vec![
+        Line::from(""),
+        Line::from(vec![
+            Span::raw("Speed: "),
+            Span::styled(format!("{} ips", state.instructions_per_second), Style::default().fg(Color::Green)),
+        ]).centered(),
+        Line::from(Span::styled(" ↑/↓ to adjust", Style::default().fg(Color::DarkGray))).centered(),
+        Line::from(""),
+        Line::from(vec![
+            Span::raw("Github: "),
+            Span::styled("github.com/wirenux/rust-6502", Style::default().fg(Color::Cyan).add_modifier(Modifier::UNDERLINED)),
+        ]).centered(),
+        Line::from(vec![
+            Span::raw("Stardance: "),
+            Span::styled("stardance.hackclub.com/projects/34098", Style::default().fg(Color::Cyan).add_modifier(Modifier::UNDERLINED)),
+        ]).centered(),
+        Line::from(""),
+        Line::from(Span::styled("Press ? or ESC to close", Style::default().fg(Color::DarkGray))).centered(),
+    ];
+
+    let text_widget = Paragraph::new(lines);
+    frame.render_widget(text_widget, sections[1]);
+}
+
+fn render_stack(frame: &mut Frame, area: Rect, cpu: &CPU, bus: &Bus, state: &mut TuiState) {
+    let header = Row::new(vec!["ADDR", "VALUE"])
+        .style(Style::default().add_modifier(Modifier::BOLD));
+
+    let rows: Vec<Row> = (0x00..=0xFF).rev().map(|offset: u8| {
+        let addr = 0x0100u16 + offset as u16;
+        let value = bus.read_ram(addr);
+        let is_top = offset == cpu.sp;
+        let style = if is_top {
+            Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
+        } else {
+            Style::default()
+        };
+        Row::new(vec![
+            Span::styled(format!("${:04X}", addr), Style::default().fg(Color::DarkGray)),
+            Span::styled(format!("{:02X}", value), style),
+        ])
+    }).collect();
+
+    let sp_row_index = (0xFFu16 - cpu.sp as u16) as usize;
+
+    if state.stack_manual_scroll.is_none() {
+        state.stack_table_state.select(Some(sp_row_index));
+    } else {
+        state.stack_table_state.select(None);
+        *state.stack_table_state.offset_mut() = state.stack_manual_scroll.unwrap();
+    }
+
+    let stack_table = Table::new(rows, [Constraint::Length(7), Constraint::Length(5)])
+        .column_spacing(1)
+        .header(header)
+        .row_highlight_style(Style::default().add_modifier(Modifier::REVERSED))
+        .block(Block::bordered().title(" Stack "));
+
+    frame.render_stateful_widget(stack_table, area, &mut state.stack_table_state);
+
+    let visible_height = area.height.saturating_sub(3) as usize;
+    let max_offset = 256usize.saturating_sub(visible_height);
+
+    let mut scrollbar_state = ScrollbarState::new(max_offset).position(state.stack_table_state.offset());
+
+    let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight);
+    frame.render_stateful_widget(scrollbar, area, &mut scrollbar_state);
 }
 
 fn render_emulator(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus) {
