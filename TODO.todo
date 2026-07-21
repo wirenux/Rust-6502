@@ -127,14 +127,16 @@ match opcode {
 
 - [x] add name on the file : Opcodes - FILENAME
 
-- [ ] add keyboard use ?
 
 - [x] add color to the TUI
 
 - [x] add a screen
-    - [ ] make the screen grow
+- [ ] make the screen grow
+
+- [ ] add keyboard control (to use in asm) ?
 
 - [ ] add test program
+- [ ] snake (if keyboard is implemented)
 - [x] hello world on screen
 - [x] rainbow
 
