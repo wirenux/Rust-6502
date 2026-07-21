@@ -544,6 +544,8 @@ fn render_footer(frame: &mut Frame, area: Rect, state: &TuiState) {
             Span::raw(" Step  "),
             Span::styled(" Space ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
             Span::raw(" Run/Pause  "),
+            Span::styled(" R ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Reset  "),
             Span::styled(" ↑↓ ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
             Span::raw(" Scroll  "),
             Span::styled(" ? ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
@@ -672,6 +674,16 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, filename: &str) -> i
                     } else {
                         match key.code {
                             KeyCode::Char('q') => should_quit = true,
+                            KeyCode::Char('r') => {
+                                cpu.reset_cpu(bus);
+                                cpu.reset_stack(bus);
+                                cpu.reset_screen(bus);
+
+                                cpu.halted = false;
+                                state.manual_selection = None;
+                                state.running = false;
+                                state.stack_manual_scroll = None;
+                            },
                             KeyCode::Enter => {
                                 if !cpu.halted {
                                     let prev_pc = cpu.pc;

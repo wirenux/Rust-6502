@@ -73,6 +73,20 @@ impl CPU {
         self.pc = ((high_byte as u16) << 8) | (low_byte as u16); // as u16 transform a u8 var into a u16
     }
 
+    pub fn reset_stack(&mut self, bus: &mut Bus) {
+        for addr in 0x0100..=0x01FF {
+            bus.write_ram(addr, 0);
+        }
+
+        self.sp = 0xFD;
+    }
+
+    pub fn reset_screen(&mut self, bus: &mut Bus) {
+        for addr in 0x200..=0x5FF {
+            bus.write_ram(addr, 0);
+        }
+    }
+
     pub fn update_z_n_flags(&mut self, target_value: u8) {
         if target_value == 0 {
             self.sr = self.sr | 0x02;
