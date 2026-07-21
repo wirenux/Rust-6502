@@ -109,7 +109,7 @@ match opcode {
         - [ ] change step to 100
     - [x] Start button
 
-- [x] reorganize code in tui.rs
+- [ ] reorganize code in tui.rs
 
 - [x] add a file selector
     - [x] if demo program are selected no need to enter the start point (use name of the file)
