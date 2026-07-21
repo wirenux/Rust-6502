@@ -229,7 +229,7 @@ fn render_settings_popup(frame: &mut Frame, area: Rect, state: &TuiState) {
         Line::from(""),
         Line::from(vec![
             Span::raw("Github: "),
-            Span::styled("github.com/wirenux/rust6502", Style::default().fg(Color::Cyan).add_modifier(Modifier::UNDERLINED)),
+            Span::styled("github.com/wirenux/rust-6502", Style::default().fg(Color::Cyan).add_modifier(Modifier::UNDERLINED)),
         ]).centered(),
         Line::from(vec![
             Span::raw("Stardance: "),
