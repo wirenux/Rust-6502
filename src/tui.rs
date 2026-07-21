@@ -225,7 +225,7 @@ fn render_settings_popup(frame: &mut Frame, area: Rect, state: &TuiState) {
             Span::raw("Speed: "),
             Span::styled(format!("{} ips", state.instructions_per_second), Style::default().fg(Color::Green)),
         ]).centered(),
-        Line::from(Span::styled("  ↑/↓ to adjust", Style::default().fg(Color::DarkGray))).centered(),
+        Line::from(Span::styled(" ↑/↓ to adjust", Style::default().fg(Color::DarkGray))).centered(),
         Line::from(""),
         Line::from(vec![
             Span::raw("Github: "),
