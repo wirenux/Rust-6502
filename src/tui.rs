@@ -919,12 +919,12 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                 },
                                 KeyCode::Left => {
                                     if state.home_focus == HomeFocus::Speed {
-                                        state.instructions_per_second = state.instructions_per_second.saturating_sub(500);
+                                        state.instructions_per_second = state.instructions_per_second.saturating_sub(100);
                                     }
                                 },
                                 KeyCode::Right => {
                                     if state.home_focus == HomeFocus::Speed {
-                                        state.instructions_per_second = state.instructions_per_second.saturating_add(500).min(10_000);
+                                        state.instructions_per_second = state.instructions_per_second.saturating_add(100).min(10_000);
                                     }
                                 },
                                 KeyCode::Backspace => {
