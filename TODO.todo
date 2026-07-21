@@ -102,7 +102,7 @@ match opcode {
     - [x] add scrolling
 
 - [x] add home screen
-    - [ ] logo on middle top (in ascii)
+    - [x] logo on middle top (in ascii)
     - [x] enter file path / select file
     - [x] start addr
     - [x] speed (slider)
