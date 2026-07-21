@@ -147,6 +147,7 @@ match opcode {
     - [ ] copy folder structure
         - [ ] add the Klaus Dormann test
     - [ ] add badge for OS
+    - [ ] nerd font is better
 
 - [ ] say this project is to learn rust
 
