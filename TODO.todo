@@ -129,7 +129,7 @@ match opcode {
 
 - [ ] add keyboard use ?
 
-- [ ] add color to the TUI
+- [x] add color to the TUI
 
 - [x] add a screen
     - [ ] make the screen grow
