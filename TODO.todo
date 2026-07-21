@@ -101,18 +101,17 @@ match opcode {
 - [x] add a stack viewer
     - [x] add scrolling
 
-- [ ] add home screen
+- [x] add home screen
     - [ ] logo on middle top (in ascii)
-    - [ ] enter file path / select file
-    - [ ] start addr
-    - [ ] speed (slider)
-    - [ ] Start button with "3D" effect
+    - [x] enter file path / select file
+    - [x] start addr
+    - [x] speed (slider)
+    - [x] Start button
 
 - [x] reorganize code in tui.rs
 
-- [ ] add a file selector
-    - [ ] if demo program are selected no need to enter the start point (use name of the file)
-- [ ] add a popup to select the start point
+- [x] add a file selector
+    - [x] if demo program are selected no need to enter the start point (use name of the file)
 
 - [x] add key binds at the bottom
 - [x] space -> running
@@ -138,7 +137,7 @@ match opcode {
 - [x] hello world on screen
 - [x] rainbow
 
-- [ ] create a doc to write data to screen
+- [ ] create a doc to write data to screen (don't start program b/w $0200-$05FF)
 
 - [ ] publish to cargo
 

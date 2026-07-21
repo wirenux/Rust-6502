@@ -1,49 +1,27 @@
 use ansi_to_tui::IntoText;
 
 use ratatui::{
-    Frame,
-    Terminal,
-    backend::CrosstermBackend,
-    layout::{
-        Constraint, Direction, Layout, Rect,
+    Frame, Terminal, backend::CrosstermBackend, layout::{
+        Alignment, Constraint, Direction, Layout, Rect,
     }, style::{
-        Color,
-        Modifier,
-        Style,
+        Color, Modifier, Style, Stylize,
     }, text::{
         Line,
         Span,
     }, widgets::{
-        Block,
-        Paragraph,
-        Row,
-        Scrollbar,
-        ScrollbarOrientation,
-        ScrollbarState,
-        Table,
-        TableState,
+        Block, Gauge, List, ListItem, ListState, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState,
     },
 };
 
 use crossterm::{
     event::{
-        DisableMouseCapture,
-        EnableMouseCapture,
-        Event::{
+        self, DisableMouseCapture, EnableMouseCapture, Event::{
             self,
-        },
-        KeyCode::{
+        }, KeyCode::{
             self,
-        },
-        MouseEventKind,
-        self,
-    },
-    execute,
-    terminal::{
-        disable_raw_mode,
-        enable_raw_mode,
-        EnterAlternateScreen,
-        LeaveAlternateScreen,
+        }, MouseEventKind,
+    }, execute, terminal::{
+        EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
     },
 };
 
@@ -51,7 +29,9 @@ use std::{
     collections::{
         HashMap,
         HashSet
-    }, io, path::Path, thread, time::Duration,
+    }, fs, io, path::{
+        Path, PathBuf
+    }, thread, time::Duration,
 };
 
 use crate::{
@@ -63,7 +43,30 @@ use crate::{
     }
 };
 
+#[derive(PartialEq)]
+enum AppScreen {
+    Home,
+    Emulator,
+}
+
+#[derive(PartialEq)]
+enum HomeFocus {
+    FileList,
+    StartAddr,
+    Speed,
+    StartButton
+}
+
 struct TuiState {
+    current_dir: PathBuf,
+    screen: AppScreen,
+    show_settings: bool,
+
+    home_focus: HomeFocus,
+    available_files: Vec<String>,
+    file_list_state: ListState,
+    start_addr_input: String,
+
     disasm_lines: Vec<DisasmLine>,
     filename: String,
     instructions_per_second: u32,
@@ -78,7 +81,6 @@ struct TuiState {
     stack_table_state: TableState,
     stack_manual_scroll: Option<usize>,
     total_rows: usize,
-    show_settings: bool,
 }
 
 const SETTING_LOGO_ANSI: &str = "
@@ -87,6 +89,9 @@ const SETTING_LOGO_ANSI: &str = "
 [0;97;1;47m▓[0;37m██▀[0;97;1;47m▄[0;37m█▄ [0;97;1;47m▒[0;37m██ [0;97;1;47m▒[0;37m██ [0;97;1m▀[0;37m▀▀[0;97;1;47m▄[0;37m██  [0;97;1;47m▒[0;37m██       [0;97;1;47m▒[0;37m██ [0;97;1;47m▒[0;37m██ [0;97;1m▀[0;37m▀▀[0;97;1;47m▄[0;37m█▄ [0;97;1;47m▒[0;37m██ [0;97;1;47m▒[0;37m██ [0;97;1;47m▒[0;37m██▀▀ [0m
 [0;97;1m▀[0;37m▀▀ [0;97;1m▀[0;37m▀▀ [0;97;1m▀[0;37m▀▀▀▀▀▀ [0;90;1m▀[0;37m▀▀▀▀▀  [0;97;1m▀[0;37m▀▀        [0;97;1m▀[0;37m▀▀▀▀  [0;97;1m▀[0;37m▀▀▀▀  [0;97;1m▀[0;37m▀▀▀▀▀▀ [0;97;1m▀[0;37m▀▀▀▀▀[0m
 ";
+
+// TODO: Replace logo with the real one
+const HOME_LOGO_ANSI: &str = SETTING_LOGO_ANSI;
 
 const SCREEN_ADDR: u16 = 0x0200;
 const SCREEN_WIDTH: usize = 32;
@@ -113,6 +118,42 @@ fn palette_color(index: u8) -> Color {
         14 => Color::Rgb(64, 255, 64),
         _ => Color::Rgb(200, 200, 200),
     }
+}
+
+fn load_directory_contents(path: &Path) -> Vec<String> {
+    let mut dirs = Vec::new();
+    let mut files = Vec::new();
+
+    dirs.push("..".to_string()); // always add ../ path
+
+    if let Ok(entries) = fs::read_dir(path) {
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if let Ok(file_type) = entry.file_type() {
+                if file_type.is_dir() {
+                    dirs.push(format!("{}/", name));
+                } else {
+                    files.push(name);
+                }
+            }
+        }
+    }
+
+    dirs.sort_by(|a, b| {
+        if a == ".." {
+            std::cmp::Ordering::Less
+        } else if b == ".." {
+            std::cmp::Ordering::Greater
+        } else {
+            a.cmp(b)
+        }
+    });
+
+
+    files.sort();
+
+    dirs.extend(files);
+    dirs
 }
 
 fn find_label_addr(lines: &[DisasmLine]) -> HashSet<u16> {
@@ -183,6 +224,162 @@ fn centered_rect(percent_x: u16, percent_y: u16, area: Rect) -> Rect {
             Constraint::Percentage((100 - percent_x) / 2),
         ])
         .split(popup_layout[1])[1]
+}
+
+fn render_home(frame: &mut Frame, state: &mut TuiState) {
+    let area = frame.area();
+
+    let main_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(10), // logo
+            Constraint::Min(0), // content
+        ])
+        .split(area);
+
+    let mut text = HOME_LOGO_ANSI.into_text().unwrap_or_default();
+    for line in text.lines.iter_mut() {
+        for span in line.spans.iter_mut() {
+            if span.style.bg == Some(Color::Black) {
+                span.style.bg = Some(Color::Reset);
+            }
+        }
+    }
+
+    let logo_widget = Paragraph::new(text).centered();
+    frame.render_widget(logo_widget, main_layout[0]);
+
+    let content_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(40),
+            Constraint::Percentage(60),
+        ])
+        .margin(2)
+        .split(main_layout[1]);
+
+    let file_style = if state.home_focus == HomeFocus::FileList {
+        Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default().fg(Color::DarkGray)
+    };
+
+    let items: Vec<ListItem> = state.available_files.iter().map(|item| {
+        if item == ".." {
+            ListItem::new("  ../ (Parent Directory) ").style(Style::default().fg(Color::Cyan))
+        } else if item.ends_with('/') {
+            ListItem::new(format!("  {} ", item)).style(Style::default().fg(Color::Blue))
+        } else {
+            ListItem::new(format!("  {} ", item))
+        }
+    }).collect();
+
+    let file_list = List::new(items)
+        .block(Block::bordered().title(" Select File ").border_style(file_style))
+        .highlight_style(Style::default().bg(Color::DarkGray).fg(Color::White).add_modifier(Modifier::BOLD))
+        .highlight_symbol(">> ");
+
+    frame.render_stateful_widget(file_list, content_layout[0], &mut state.file_list_state);
+
+    let right_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(3), // file path display
+            Constraint::Length(3), // start addr
+            Constraint::Length(3), // speed slider
+            Constraint::Length(2), // spacer
+            Constraint::Length(5), // start btn
+        ])
+        .split(content_layout[1]);
+
+    let selected_file_display = state
+            .file_list_state
+            .selected()
+            .and_then(|i| state.available_files.get(i))
+            .and_then(|name| {
+                if name == ".." || name.ends_with("/") {
+                    None
+                } else {
+                    Some(state.current_dir.join(name).display().to_string())
+                }
+            })
+            .unwrap_or_else(|| "No file selected".to_string());
+
+    let path_display = Paragraph::new(format!(" {}", selected_file_display))
+        .block(Block::bordered().title(" Selected File "));
+
+    frame.render_widget(path_display, right_layout[0]);
+
+    let addr_style = if state.home_focus == HomeFocus::StartAddr {
+        Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default().fg(Color::DarkGray)
+    };
+
+    let addr_display = Paragraph::new(format!(" 0x{}", state.start_addr_input))
+        .block(Block::bordered().title(" Start Address (Hex) ").border_style(addr_style));
+
+    frame.render_widget(addr_display, right_layout[1]);
+
+    let speed_style = if state.home_focus == HomeFocus::Speed {
+        Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default().fg(Color::DarkGray)
+    };
+
+    let ratio = state.instructions_per_second as f64 / 10_000.0;
+    let speed_gauge = Gauge::default()
+        .block(Block::bordered().title(" Emulation Speed ").border_style(speed_style))
+        .gauge_style(Style::default().fg(if state.home_focus == HomeFocus::Speed { Color::DarkGray } else { Color::Black }))
+        .ratio(ratio.clamp(0.0, 1.0))
+        .label(format!("{} IPS", state.instructions_per_second));
+
+    frame.render_widget(speed_gauge, right_layout[2]);
+
+    let btn_area = centered_rect(50, 100, right_layout[4]);
+    let (btn_style, text_style, shadow_offset) = if state.home_focus == HomeFocus::StartButton {
+        (Style::default().fg(Color::Yellow), Style::default().fg(Color::Black).bg(Color::Yellow).add_modifier(Modifier::BOLD), 0)
+    } else {
+        (Style::default().fg(Color::White), Style::default().fg(Color::White).add_modifier(Modifier::BOLD), 1)
+    };
+
+    if shadow_offset > 0 {
+        let shadow_area = Rect {
+            x: btn_area.x - 1,
+            y: btn_area.y - 1,
+            ..btn_area
+        };
+        frame.render_widget(Block::default().fg(Color::DarkGray), shadow_area);
+    }
+
+    let face_area = Rect {
+        x: btn_area.x,
+        y: btn_area.y,
+        ..btn_area
+    };
+    frame.render_widget(ratatui::widgets::Clear, face_area);
+
+    let start_btn = Paragraph::new("Start Emulator")
+        .alignment(Alignment::Center)
+        .style(text_style)
+        .block(Block::bordered().border_type(ratatui::widgets::BorderType::Thick).border_style(btn_style));
+
+    let text_area = Rect {
+        y: face_area.y + 1,
+        height: face_area.height - 2,
+        ..face_area
+    };
+
+    frame.render_widget(start_btn, text_area);
+
+    let help_text = Paragraph::new(" [TAB] Change Focus   [↑↓] Select/Adjust   [ENTER] Confirm ")
+        .alignment(Alignment::Center)
+        .style(Style::default().fg(Color::DarkGray));
+
+    let mut footer_area = area;
+    footer_area.y = area.height.saturating_sub(2);
+    footer_area.height = 1;
+    frame.render_widget(help_text, footer_area);
 }
 
 fn render_logo(frame: &mut Frame, area: Rect) {
@@ -559,7 +756,7 @@ fn render_footer(frame: &mut Frame, area: Rect, state: &TuiState) {
     frame.render_widget(footer, area);
 }
 
-fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus) {
+fn render_emulator(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus) {
     let screen_chunk = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -622,8 +819,8 @@ fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus)
     }
 }
 
-pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, filename: &str) -> io::Result<()> {
-    let _ = enable_raw_mode();
+pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<String>) -> io::Result<()> {
+    enable_raw_mode()?;
 
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
@@ -632,9 +829,27 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, filename: &str) -> i
 
     let disasm_lines = disassemble_range(bus, disasm_start, 2000); // make cache
 
+    let current_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let files = load_directory_contents(&current_dir);
+
+    let initial_screen = if file_path.is_some() {
+        AppScreen::Emulator
+    } else {
+        AppScreen::Home
+    };
+
     let mut state = TuiState {
+        current_dir,
+        screen: initial_screen,
+        show_settings: false,
+
+        home_focus: HomeFocus::FileList,
+        available_files: files,
+        file_list_state: ListState::default().with_selected(Some(0)),
+        start_addr_input: format!("{:04X}", disasm_start),
+
         disasm_lines,
-        filename: filename.to_string(),
+        filename: file_path.unwrap_or_default(),
         instructions_per_second: IPS,
         manual_selection: None,
         memory_scroll_row: 0,
@@ -647,82 +862,191 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, filename: &str) -> i
         stack_manual_scroll: None,
         stack_table_state: TableState::default(),
         total_rows: 0,
-        show_settings: false,
     };
 
     let mut last_frame_time = std::time::Instant::now();
     let mut should_quit = false;
 
     loop {
-        terminal.draw(|frame| render(frame, cpu, &mut state, bus))?;
+        terminal.draw(|frame| {
+            match state.screen {
+                AppScreen::Home => render_home(frame, &mut state),
+                AppScreen::Emulator => render_emulator(frame, cpu, &mut state, bus),
+            }
+        })?;
 
         while event::poll(Duration::from_millis(0))? {
             match event::read()? {
                 Event::Key(key) => {
-                    if state.show_settings {
-                        match key.code {
-                            KeyCode::Char('q') => should_quit = true,
-                            KeyCode::Char('?') | KeyCode::Esc => state.show_settings = false,
-                            KeyCode::Up => {
-                                state.instructions_per_second = state.instructions_per_second.saturating_add(100);
-                            }
-                            KeyCode::Down => {
-                                state.instructions_per_second = state.instructions_per_second.saturating_sub(100);
-                            },
-                            _ => {}
-                        }
-                    } else {
-                        match key.code {
-                            KeyCode::Char('q') => should_quit = true,
-                            KeyCode::Char('r') => {
-                                cpu.reset_cpu(bus);
-                                cpu.reset_stack(bus);
-                                cpu.reset_screen(bus);
+                    if key.code == KeyCode::Char('q') && state.home_focus != HomeFocus::StartAddr {
+                        should_quit = true;
+                    }
 
-                                cpu.halted = false;
-                                state.manual_selection = None;
-                                state.running = false;
-                                state.stack_manual_scroll = None;
-                            },
-                            KeyCode::Enter => {
-                                if !cpu.halted {
-                                    let prev_pc = cpu.pc;
-                                    cpu.clock_tick(bus);
-
-                                    if bus.read_ram(prev_pc) == 0x00 { // BRK
-                                        let labels = find_label_addr(&state.disasm_lines);
-                                        let (_, addr_to_row) = build_opcode_rows(&state.disasm_lines, &labels);
-                                        if let Some(&row_idx) = addr_to_row.get(&prev_pc) {
-                                            state.manual_selection = Some(row_idx);
-                                        }
-                                    } else {
-                                        state.manual_selection = None;
+                    match state.screen {
+                        AppScreen::Home => {
+                            match key.code {
+                                KeyCode::Tab => {
+                                    state.home_focus = match state.home_focus {
+                                        HomeFocus::FileList => HomeFocus::StartAddr,
+                                        HomeFocus::StartAddr => HomeFocus::Speed,
+                                        HomeFocus::Speed => HomeFocus::StartButton,
+                                        HomeFocus::StartButton => HomeFocus::FileList,
                                     }
-                                    state.stack_manual_scroll = None;
+                                },
+                                KeyCode::Up => {
+                                    if state.home_focus == HomeFocus::FileList && !state.available_files.is_empty() {
+                                        let i = state.file_list_state.selected().unwrap_or(0);
+                                        let new_i = i.saturating_sub(1);
+                                        state.file_list_state.select(Some(new_i));
+
+                                        let file_name = &state.available_files[new_i].to_lowercase();
+                                        if file_name.contains("demo") && file_name.ends_with(".bin") {
+                                            state.start_addr_input = "C000".to_string();
+                                        }
+                                    }
+                                },
+                                KeyCode::Down => {
+                                    if state.home_focus == HomeFocus::FileList && !state.available_files.is_empty() {
+                                        let i = state.file_list_state.selected().unwrap_or(0);
+                                        let new_i = (i + 1).min(state.available_files.len().saturating_sub(1));
+                                        state.file_list_state.select(Some(new_i));
+
+                                        let file_name = &state.available_files[new_i].to_lowercase();
+                                        if file_name.contains("demo") && file_name.ends_with(".bin") {
+                                            state.start_addr_input = "C000".to_string();
+                                        }
+                                    }
+                                },
+                                KeyCode::Left => {
+                                    if state.home_focus == HomeFocus::Speed {
+                                        state.instructions_per_second = state.instructions_per_second.saturating_sub(500);
+                                    }
+                                },
+                                KeyCode::Right => {
+                                    if state.home_focus == HomeFocus::Speed {
+                                        state.instructions_per_second = state.instructions_per_second.saturating_add(500).min(10_000);
+                                    }
+                                },
+                                KeyCode::Backspace => {
+                                    if state.home_focus == HomeFocus::StartAddr {
+                                        state.start_addr_input.pop();
+                                    }
+                                },
+                                KeyCode::Char(c) => {
+                                    if state.home_focus == HomeFocus::StartAddr {
+                                        if c.is_ascii_hexdigit() && state.start_addr_input.len() < 4 {
+                                            state.start_addr_input.push(c.to_ascii_uppercase());
+                                        }
+                                    }
+                                },
+                                KeyCode::Enter => {
+                                    match state.home_focus {
+                                        HomeFocus::StartButton => {
+                                            if let Ok(addr) = u16::from_str_radix(&state.start_addr_input, 16) {
+                                                if let Some(idx) = state.file_list_state.selected() {
+                                                    if let Some(selected_name) = state.available_files.get(idx) {
+                                                        let full_path = state.current_dir.join(selected_name);
+
+                                                        if full_path.is_file() {
+                                                            match fs::read(&full_path) {
+                                                                Ok(program_bytes) => {
+                                                                    bus.load_rom(&program_bytes, addr);
+                                                                    state.disasm_lines = disassemble_range(bus, addr, 2000);
+                                                                    cpu.pc = addr;
+                                                                    state.screen = AppScreen::Emulator;
+                                                                }
+                                                                Err(err) => {
+                                                                    eprintln!("Failed to read file: {err}");
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        HomeFocus::FileList => {
+                                            if let Some(selected_idx) = state.file_list_state.selected() {
+                                                if let Some(selected_name) = state.available_files.get(selected_idx).cloned() {
+                                                    if selected_name == ".." {
+                                                        if let Some(parent) = state.current_dir.parent() {
+                                                            state.current_dir = parent.to_path_buf();
+                                                            state.available_files = load_directory_contents(&state.current_dir);
+                                                            state.file_list_state.select(Some(0));
+                                                        }
+                                                    } else if selected_name.ends_with('/') {
+                                                        let folder_name = selected_name.trim_end_matches('/');
+                                                        state.current_dir = state.current_dir.join(folder_name);
+                                                        state.available_files = load_directory_contents(&state.current_dir);
+                                                        state.file_list_state.select(Some(0));
+                                                    } else {
+                                                        let full_file_path = state.current_dir.join(&selected_name);
+                                                        state.filename = full_file_path.to_string_lossy().to_string();
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        _ => {}
+                                    }
+                                },
+                                _ => {}
+                            }
+                        },
+                        AppScreen::Emulator => {
+                            if state.show_settings {
+                                match key.code {
+                                    KeyCode::Char('?') | KeyCode::Esc => state.show_settings = false,
+                                    KeyCode::Up => state.instructions_per_second = state.instructions_per_second.saturating_add(100),
+                                    KeyCode::Down => state.instructions_per_second = state.instructions_per_second.saturating_sub(100),
+                                    _ => {}
                                 }
-                            },
-                            KeyCode::Char(' ') => {
-                                state.running = !state.running;
-                                state.manual_selection = None;
-                                state.stack_manual_scroll = None;
-                            },
-                            KeyCode::Char('?') => {
-                                state.show_settings = true;
+                            } else {
+                                match key.code {
+                                    KeyCode::Char('r') => {
+                                        cpu.reset_cpu(bus);
+                                        cpu.reset_stack(bus);
+                                        cpu.reset_screen(bus);
+                                        cpu.halted = false;
+                                        state.manual_selection = None;
+                                        state.running = false;
+                                        state.stack_manual_scroll = None;
+                                    },
+                                    KeyCode::Enter => {
+                                        if !cpu.halted {
+                                            let prev_pc = cpu.pc;
+                                            cpu.clock_tick(bus);
+                                            if bus.read_ram(prev_pc) == 0x00 {
+                                                let labels = find_label_addr(&state.disasm_lines);
+                                                let (_, addr_to_row) = build_opcode_rows(&state.disasm_lines, &labels);
+                                                if let Some(&row_idx) = addr_to_row.get(&prev_pc) {
+                                                    state.manual_selection = Some(row_idx);
+                                                }
+                                            } else {
+                                                state.manual_selection = None;
+                                            }
+                                            state.stack_manual_scroll = None;
+                                        }
+                                    },
+                                    KeyCode::Char(' ') => {
+                                        state.running = !state.running;
+                                        state.manual_selection = None;
+                                        state.stack_manual_scroll = None;
+                                    },
+                                    KeyCode::Char('?') => state.show_settings = true,
+                                    KeyCode::Up => {
+                                        let current = state.manual_selection.unwrap_or_else(|| state.opcode_table_state.selected().unwrap_or(0));
+                                        state.manual_selection = Some(current.saturating_sub(1));
+                                    }
+                                    KeyCode::Down => {
+                                        let current = state.manual_selection.unwrap_or_else(|| state.opcode_table_state.selected().unwrap_or(0));
+                                        state.manual_selection = Some((current + 1).min(state.total_rows.saturating_sub(1)));
+                                    },
+                                    KeyCode::Esc => {
+                                        state.screen = AppScreen::Home;
+                                        state.running = false;
+                                    }
+                                    _ => {}
+                                }
                             }
-                            KeyCode::Up => {
-                                let current = state.manual_selection.unwrap_or_else(|| {
-                                    state.opcode_table_state.selected().unwrap_or(0)
-                                });
-                                state.manual_selection = Some(current.saturating_sub(1));
-                            }
-                            KeyCode::Down => {
-                                let current = state.manual_selection.unwrap_or_else(|| {
-                                    state.opcode_table_state.selected().unwrap_or(0)
-                                });
-                                let max = state.total_rows.saturating_sub(1);
-                                state.manual_selection = Some((current + 1).min(max));
-                            },
-                            _ => {}
                         }
                     }
                 }

@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, path};
 
 mod bus;
 mod cpu;
@@ -9,20 +9,34 @@ mod disasm;
 use bus::Bus;
 use cpu::CPU;
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().collect();
-    let file_path = args.get(1).expect("Usage: rust6502 <file> [origin]");
-
-    let origin_str = args.get(2).map(|s| s.as_str()).unwrap_or("8000");
-    let origin = u16::from_str_radix(origin_str, 16).expect("Origin must be a hex value");
 
     let mut bus = Bus::new();
     let mut cpu = CPU::new();
 
-    let file_byte = std::fs::read(file_path).expect("Failed to read file");
-    bus.load_rom(&file_byte, origin);
+    let file_path = args.get(1).cloned();
 
-    cpu.reset_cpu(&bus);
+    let origin = args
+        .get(2)
+        .and_then(|s| u16::from_str_radix(s, 16).ok())
+        .unwrap_or(0x8000);
 
-    let _ = tui::run(&mut cpu, &mut bus, origin, file_path);
+    if let Some(ref path) = file_path {
+        match std::fs::read(path) {
+            Ok(file_bytes) => {
+                bus.load_rom(&file_bytes, origin);
+                cpu.reset_cpu(&bus);
+                cpu.pc = origin;
+            }
+            Err(err) => {
+                eprintln!("Error loading file '{}': {}", path, err);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    tui::run(&mut cpu, &mut bus, origin, file_path)?;
+
+    Ok(())
 }
