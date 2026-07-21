@@ -106,6 +106,7 @@ match opcode {
     - [x] enter file path / select file
     - [x] start addr
     - [x] speed (slider)
+        - [ ] change step to 100
     - [x] Start button
 
 - [x] reorganize code in tui.rs
