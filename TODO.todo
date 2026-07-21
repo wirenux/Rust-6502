@@ -127,7 +127,7 @@ match opcode {
 
 - [x] add name on the file : Opcodes - FILENAME
 
-- [ ] add keyboard use
+- [x] add keyboard use
 
 - [ ] add color to the TUI
 
