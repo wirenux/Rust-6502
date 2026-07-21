@@ -997,6 +997,8 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                                         if full_path.is_file() {
                                                             match fs::read(&full_path) {
                                                                 Ok(program_bytes) => {
+                                                                    state.filename = full_path.to_string_lossy().to_string();
+
                                                                     bus.load_rom(&program_bytes, addr);
                                                                     state.disasm_lines = disassemble_range(bus, addr, 2000);
                                                                     cpu.pc = addr;
