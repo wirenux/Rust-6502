@@ -1,3 +1,5 @@
+use ansi_to_tui::IntoText;
+
 use ratatui::{
     backend::{
         CrosstermBackend,
@@ -84,7 +86,15 @@ struct TuiState {
     stack_table_state: TableState,
     stack_manual_scroll: Option<usize>,
     total_rows: usize,
+    show_settings: bool,
 }
+
+const SETTING_LOGO_ANSI: &str = "
+[0;90;1m▄[0;37m▄▄▄▄▄▄ [0;90;1m▄[0;37m▄▄ [0;90;1m▄[0;37m▄▄ [0;90;1m▄[0;37m▄▄▄▄▄ [0;90;1m▄[0;37m▄▄▄▄       [0;90;1m▄[0;37m▄▄▄▄  [0;90;1m▄[0;37m▄▄▄▄▄ [0;90;1m▄[0;37m▄▄▄▄▄▄ [0;90;1m▄[0;37m▄▄▄▄ [0m
+[0;97;1;47m▒[0;37m██ [0;97;1;47m▒[0;37m██ [0;97;1;47m░[0;37m██ [0;97;1;47m░[0;37m██ [0;97;1;47m▒[0;37m██ [0;97;1m▀[0;37m▀  [0;97;1;47m░[0;37m██       [0;97;1;47m░[0;37m██▄▄▄  [0;97;1;47m▓[0;37m██ [0;97;1m▀[0;37m▀ [0;97;1;47m░[0;37m██ [0;97;1;47m░[0;37m██ [0;97;1m▀[0;37m▀ [0;97;1;47m▒[0;37m██[0m
+[0;97;1;47m▓[0;37m██▀[0;97;1;47m▄[0;37m█▄ [0;97;1;47m▒[0;37m██ [0;97;1;47m▒[0;37m██ [0;97;1m▀[0;37m▀▀[0;97;1;47m▄[0;37m██  [0;97;1;47m▒[0;37m██       [0;97;1;47m▒[0;37m██ [0;97;1;47m▒[0;37m██ [0;97;1m▀[0;37m▀▀[0;97;1;47m▄[0;37m█▄ [0;97;1;47m▒[0;37m██ [0;97;1;47m▒[0;37m██ [0;97;1;47m▒[0;37m██▀▀ [0m
+[0;97;1m▀[0;37m▀▀ [0;97;1m▀[0;37m▀▀ [0;97;1m▀[0;37m▀▀▀▀▀▀ [0;90;1m▀[0;37m▀▀▀▀▀  [0;97;1m▀[0;37m▀▀        [0;97;1m▀[0;37m▀▀▀▀  [0;97;1m▀[0;37m▀▀▀▀  [0;97;1m▀[0;37m▀▀▀▀▀▀ [0;97;1m▀[0;37m▀▀▀▀▀[0m
+";
 
 const SCREEN_ADDR: u16 = 0x0200;
 const SCREEN_WIDTH: usize = 32;
@@ -161,6 +171,96 @@ fn build_opcode_rows<'a>(lines: &'a [DisasmLine], labels: &HashSet<u16>) -> (Vec
     }
 
     (rows, addr_to_row)
+}
+
+fn centered_rect(percent_x: u16, percent_y: u16, area: Rect) -> Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage((100 - percent_y) / 2),
+            Constraint::Percentage(percent_y),
+            Constraint::Percentage((100 - percent_y) / 2),
+        ])
+        .split(area);
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+        ])
+        .split(popup_layout[1])[1]
+}
+
+fn render_logo(frame: &mut Frame, area: Rect) {
+    let mut text = SETTING_LOGO_ANSI.into_text().unwrap_or_default();
+
+    for line in text.lines.iter_mut() {
+        for span in line.spans.iter_mut() {
+            if span.style.bg == Some(Color::Black) {
+                span.style.bg = Some(Color::Reset);
+            }
+        }
+    }
+
+    let widget = Paragraph::new(text).centered();
+    frame.render_widget(widget, area);
+}
+
+fn render_settings_popup(frame: &mut Frame, area: Rect, state: &TuiState) {
+    let popup_area = centered_rect(50, 40, area);
+
+    frame.render_widget(ratatui::widgets::Clear, popup_area);
+
+    let block = Block::bordered().title(" Settings ").border_style(Style::default().fg(Color::Yellow));
+    let inner = block.inner(popup_area);
+    frame.render_widget(block, popup_area);
+
+    let sections = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(5),
+            Constraint::Min(0),
+        ])
+        .split(inner);
+
+    render_logo(frame, sections[0]);
+
+    let lines = vec![
+        Line::from(""),
+        Line::from(vec![
+            Span::raw("Speed: "),
+            Span::styled(format!("{} ips", state.instructions_per_second), Style::default().fg(Color::Green)),
+        ]).centered(),
+        Line::from(Span::styled("  ↑/↓ to adjust", Style::default().fg(Color::DarkGray))).centered(),
+        Line::from(""),
+        Line::from(vec![
+            Span::raw("Github: "),
+            Span::styled("github.com/wirenux/rust6502", Style::default().fg(Color::Cyan).add_modifier(Modifier::UNDERLINED)),
+        ]).centered(),
+        Line::from(vec![
+            Span::raw("Stardance: "),
+            Span::styled("stardance.hackclub.com/projects/34098", Style::default().fg(Color::Cyan).add_modifier(Modifier::UNDERLINED)),
+        ]).centered(),
+        Line::from(""),
+        Line::from(Span::styled("Press ? or ESC to close", Style::default().fg(Color::DarkGray))).centered(),
+    ];
+
+    let text_widget = Paragraph::new(lines);
+    frame.render_widget(text_widget, sections[1]);
+}
+
+fn render_popup_shadow(frame: &mut Frame, popup_area: Rect, full_area: Rect) {
+    let shadow_area = Rect {
+        x: popup_area.x + 1,
+        y: popup_area.y + 1,
+        width: popup_area.width,
+        height: popup_area.height,
+    }.intersection(full_area);
+
+    let shadow = Block::default().style(Style::default().bg(Color::White).fg(Color::White));
+    frame.render_widget(shadow, shadow_area);
 }
 
 fn flag_span(label: &str, set: bool) -> Span<'static> {
@@ -482,6 +582,14 @@ fn render(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus)
     state.memory_area = right_chunk[0];
     state.stack_area = left_chunk[2];
     state.opcode_area = main_chunk[0];
+
+    if state.show_settings {
+        let popup_area = centered_rect(50, 40, frame.area());
+
+        render_popup_shadow(frame, popup_area, frame.area());
+        frame.render_widget(ratatui::widgets::Clear, popup_area);
+        render_settings_popup(frame, frame.area(), state);
+    }
 }
 
 pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, filename: &str) -> io::Result<()> {
@@ -509,6 +617,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, filename: &str) -> i
         stack_manual_scroll: None,
         stack_table_state: TableState::default(),
         total_rows: 0,
+        show_settings: false,
     };
 
     let mut last_frame_time = std::time::Instant::now();
@@ -520,44 +629,61 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, filename: &str) -> i
         while event::poll(Duration::from_millis(0))? {
             match event::read()? {
                 Event::Key(key) => {
-                    match key.code {
-                        KeyCode::Char('q') => should_quit = true,
-                        KeyCode::Char('n') => {
-                            if !cpu.halted {
-                                let prev_pc = cpu.pc;
-                                cpu.clock_tick(bus);
-
-                                if bus.read_ram(prev_pc) == 0x00 { // BRK
-                                    let labels = find_label_addr(&state.disasm_lines);
-                                    let (_, addr_to_row) = build_opcode_rows(&state.disasm_lines, &labels);
-                                    if let Some(&row_idx) = addr_to_row.get(&prev_pc) {
-                                        state.manual_selection = Some(row_idx);
-                                    }
-                                } else {
-                                    state.manual_selection = None;
-                                }
-                                state.stack_manual_scroll = None;
+                    if state.show_settings {
+                        match key.code {
+                            KeyCode::Char('q') => should_quit = true,
+                            KeyCode::Char('?') | KeyCode::Esc => state.show_settings = false,
+                            KeyCode::Up => {
+                                state.instructions_per_second = state.instructions_per_second.saturating_add(100);
                             }
-                        },
-                        KeyCode::Char('r') => {
-                            state.running = !state.running;
-                            state.manual_selection = None;
-                            state.stack_manual_scroll = None;
-                        },
-                        KeyCode::Up => {
-                            let current = state.manual_selection.unwrap_or_else(|| {
-                                state.opcode_table_state.selected().unwrap_or(0)
-                            });
-                            state.manual_selection = Some(current.saturating_sub(1));
+                            KeyCode::Down => {
+                                state.instructions_per_second = state.instructions_per_second.saturating_sub(100);
+                            },
+                            _ => {}
                         }
-                        KeyCode::Down => {
-                            let current = state.manual_selection.unwrap_or_else(|| {
-                                state.opcode_table_state.selected().unwrap_or(0)
-                            });
-                            let max = state.total_rows.saturating_sub(1);
-                            state.manual_selection = Some((current + 1).min(max));
-                        },
-                        _ => {}
+                    } else {
+                        match key.code {
+                            KeyCode::Char('q') => should_quit = true,
+                            KeyCode::Char('n') => {
+                                if !cpu.halted {
+                                    let prev_pc = cpu.pc;
+                                    cpu.clock_tick(bus);
+
+                                    if bus.read_ram(prev_pc) == 0x00 { // BRK
+                                        let labels = find_label_addr(&state.disasm_lines);
+                                        let (_, addr_to_row) = build_opcode_rows(&state.disasm_lines, &labels);
+                                        if let Some(&row_idx) = addr_to_row.get(&prev_pc) {
+                                            state.manual_selection = Some(row_idx);
+                                        }
+                                    } else {
+                                        state.manual_selection = None;
+                                    }
+                                    state.stack_manual_scroll = None;
+                                }
+                            },
+                            KeyCode::Char('r') => {
+                                state.running = !state.running;
+                                state.manual_selection = None;
+                                state.stack_manual_scroll = None;
+                            },
+                            KeyCode::Char('?') => {
+                                state.show_settings = true;
+                            }
+                            KeyCode::Up => {
+                                let current = state.manual_selection.unwrap_or_else(|| {
+                                    state.opcode_table_state.selected().unwrap_or(0)
+                                });
+                                state.manual_selection = Some(current.saturating_sub(1));
+                            }
+                            KeyCode::Down => {
+                                let current = state.manual_selection.unwrap_or_else(|| {
+                                    state.opcode_table_state.selected().unwrap_or(0)
+                                });
+                                let max = state.total_rows.saturating_sub(1);
+                                state.manual_selection = Some((current + 1).min(max));
+                            },
+                            _ => {}
+                        }
                     }
                 }
                 Event::Mouse(mouse) => {

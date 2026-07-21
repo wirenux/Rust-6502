@@ -89,9 +89,7 @@ match opcode {
 - [x] check every print for each opcode
 
 - [x] set the speed like the real MOS 6502 speed
-    - [ ] add parameter to change the speed
-        - [ ] with a slider & w/ mouse &| keyboard
-
+    - [x] add parameter to change the speed
 
 - [ ] add a UI (like Jira TUI)
     - [x] (when in UI like Jira TUI) add scroll to mem viewer
@@ -117,7 +115,7 @@ match opcode {
 - [ ] add a popup to select the start point
 
 - [ ] add key binds at the bottom
-- [ ] map `?` to open settings panel/popup
+- [x] map `?` to open settings panel/popup
 
 - [x] add indicator of running or not
 
@@ -127,6 +125,8 @@ match opcode {
 - [x] add name on the file : Opcodes - FILENAME
 
 - [ ] add keyboard use
+
+- [ ] add key to reset
 
 - [ ] add color to the TUI
 
