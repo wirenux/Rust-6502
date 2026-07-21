@@ -540,9 +540,9 @@ fn render_footer(frame: &mut Frame, area: Rect, state: &TuiState) {
         ]
     } else {
         vec![
-            Span::styled(" N ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::styled(" Enter ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
             Span::raw(" Step  "),
-            Span::styled(" R ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::styled(" Space ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
             Span::raw(" Run/Pause  "),
             Span::styled(" ↑↓ ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
             Span::raw(" Scroll  "),
@@ -672,7 +672,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, filename: &str) -> i
                     } else {
                         match key.code {
                             KeyCode::Char('q') => should_quit = true,
-                            KeyCode::Char('n') => {
+                            KeyCode::Enter => {
                                 if !cpu.halted {
                                     let prev_pc = cpu.pc;
                                     cpu.clock_tick(bus);
@@ -689,7 +689,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, filename: &str) -> i
                                     state.stack_manual_scroll = None;
                                 }
                             },
-                            KeyCode::Char('r') => {
+                            KeyCode::Char(' ') => {
                                 state.running = !state.running;
                                 state.manual_selection = None;
                                 state.stack_manual_scroll = None;
