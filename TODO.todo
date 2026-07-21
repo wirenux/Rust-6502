@@ -115,10 +115,10 @@ match opcode {
     - [x] if demo program are selected no need to enter the start point (use name of the file)
 
 - [x] add key binds at the bottom
-- [x] space -> running
-- [x] enter -> step
-- [x] r -> reset
-- [x] map `?` to open settings panel/popup
+    - [x] space -> running
+    - [x] enter -> step
+    - [x] r -> reset
+    - [x] map `?` to open settings panel/popup
 
 - [x] add indicator of running or not
 
@@ -127,18 +127,17 @@ match opcode {
 
 - [x] add name on the file : Opcodes - FILENAME
 
-
 - [x] add color to the TUI
 
 - [x] add a screen
-- [ ] make the screen grow
+    - [ ] make the screen grow
 
 - [ ] add keyboard control (to use in asm) ?
 
 - [ ] add test program
-- [ ] snake (if keyboard is implemented)
-- [x] hello world on screen
-- [x] rainbow
+    - [ ] snake (if keyboard is implemented)
+    - [x] hello world on screen
+    - [x] rainbow
 
 - [ ] create a doc to write data to screen (don't start program b/w $0200-$05FF)
 
