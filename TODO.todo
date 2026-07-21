@@ -117,7 +117,7 @@ match opcode {
 - [x] add key binds at the bottom
 - [x] space -> running
 - [x] enter -> step
-- [ ] r -> reset
+- [x] r -> reset
 - [x] map `?` to open settings panel/popup
 
 - [x] add indicator of running or not
