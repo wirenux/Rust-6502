@@ -171,7 +171,7 @@ fn format_operand(mnemonic: &str, mode: &AddressingMode, bytes: &[u8]) -> String
         Immediate => format!("{} #${:02X}", mnemonic, bytes[1]),
         ZeroPage => format!("{} ${:02X}", mnemonic, bytes[1]),
         ZeroPageX => format!("{} ${:02X},X", mnemonic, bytes[1]),
-        ZeroPageY => format!("{} #${:02X},Y", mnemonic, bytes[1]),
+        ZeroPageY => format!("{} ${:02X},Y", mnemonic, bytes[1]),
         Absolute => format!("{} ${:02X}{:02X}", mnemonic, bytes[2], bytes[1]),
         AbsoluteX => format!("{} ${:02X}{:02X},X", mnemonic, bytes[2], bytes[1]),
         AbsoluteY => format!("{} ${:02X}{:02X},Y", mnemonic, bytes[2], bytes[1]),
@@ -180,16 +180,16 @@ fn format_operand(mnemonic: &str, mode: &AddressingMode, bytes: &[u8]) -> String
     }
 }
 
-pub fn disassemble_range(bus: &Bus, start_addr: u16, count: usize) -> Vec<DisasmLine> {
-    let mut lines = Vec::with_capacity(count);
+pub fn disassemble_range(bus: &Bus, start_addr: u16, max_count: usize) -> Vec<DisasmLine> {
+    let mut lines = Vec::with_capacity(max_count);
     let mut addr = start_addr;
 
-    for _ in 0..count {
+    for _ in 0..max_count {
         let opcode = bus.read_ram(addr);
 
         let (mnemonic, mode, length) = match decode_opcode(opcode) {
             Some(info) => info,
-            None => ("???", AddressingMode::Implied, 1)
+            None => break,
         };
 
         let mut raw_bytes = vec![opcode];
@@ -198,27 +198,23 @@ pub fn disassemble_range(bus: &Bus, start_addr: u16, count: usize) -> Vec<Disasm
         }
 
         let text = format_operand(mnemonic, &mode, &raw_bytes);
-
-        let is_terminal = mnemonic == "BRK" || (mnemonic == "JMP" && {
-            if let Some(target_str) = text.split('$').nth(1) {
-                let target_str: String = target_str.chars().take(4).collect();
-                u16::from_str_radix(&target_str, 16)
-                    .map(|target| target <= addr)
-                    .unwrap_or(false)
-            } else {
-                false
-            }
-        });
-
         lines.push(DisasmLine { addr, text });
 
-        if is_terminal {
-            break;
-        }
-
         addr = addr.wrapping_add(length as u16);
-    }
 
+        if mnemonic == "RTS" || mnemonic == "RTI" || mnemonic == "BRK" {
+            let b1 = bus.read_ram(addr);
+            let b2 = bus.read_ram(addr.wrapping_add(1));
+            let b3 = bus.read_ram(addr.wrapping_add(2));
+
+            if decode_opcode(b1).is_none()
+                || decode_opcode(b2).is_none()
+                || decode_opcode(b3).is_none()
+            {
+                break;
+            }
+        }
+    }
 
     lines
 }
