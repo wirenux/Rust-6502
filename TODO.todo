@@ -136,7 +136,7 @@ match opcode {
 
 - [ ] add test program
     - [ ] snake (if keyboard is implemented)
-    - [ ] stardance logo
+    - [ ] hackclub logo
         - [ ] draw the logo in aseprite
     - [x] hello world on screen
     - [x] rainbow
