@@ -148,7 +148,7 @@ For more information about the emulator subsystem, check out the dedicated docum
 
 ### Use of AI
 
-* Write little ASM program during developement to test the behavior of the CPU + Brainstorming
+* Write little ASM program during development to test the behavior of the CPU + Brainstorming
 
 ### Credits
 
