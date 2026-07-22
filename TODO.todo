@@ -151,3 +151,5 @@ match opcode {
 - [x] say this project is to learn rust
 
 - [x] add use of AI -> make ASM program to test during the development period
+
+- [ ] make an ascii cinema / youtube demo
