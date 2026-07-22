@@ -912,9 +912,12 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
         total_rows: 0,
     };
 
-    cpu.reset_cpu(bus);
-    cpu.reset_stack(bus);
-    cpu.reset_screen(bus);
+    if state.screen == AppScreen::Home {
+        cpu.reset_cpu(bus);
+        cpu.reset_stack(bus);
+        cpu.reset_screen(bus);
+    }
+
     cpu.halted = false;
     state.manual_selection = None;
     state.running = false;

@@ -26,7 +26,6 @@ pub enum AddressingMode {
     AbsoluteY,
     IndirectX,
     IndirectY,
-    #[allow(dead_code)]
     Implied,
 }
 

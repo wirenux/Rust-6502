@@ -91,7 +91,7 @@ match opcode {
 - [x] set the speed like the real MOS 6502 speed
     - [x] add parameter to change the speed
 
-- [ ] add a UI (like Jira TUI)
+- [x] add a UI (like Jira TUI)
     - [x] (when in UI like Jira TUI) add scroll to mem viewer
     - [x] add the flag viewer
 - [x] add a memory viewer
@@ -143,12 +143,11 @@ match opcode {
 
 - [ ] publish to cargo
 
-- [ ] idea for readme https://github.com/mre/mos6502
-    - [ ] copy folder structure
-        - [ ] add the Klaus Dormann test
-    - [ ] add badge for OS
-    - [ ] nerd font is better
+- [x] idea for readme https://github.com/mre/mos6502
+    - [x] copy folder structure
+    - [x] add badge for OS
+    - [x] nerd font is better
 
-- [ ] say this project is to learn rust
+- [x] say this project is to learn rust
 
-- [ ] add use of AI -> make ASM program to test during the development period
+- [x] add use of AI -> make ASM program to test during the development period
