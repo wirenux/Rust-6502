@@ -48,13 +48,14 @@ Source: [Wikipedia](https://en.wikipedia.org/wiki/MOS_Technology_6502)
 ## Core Features
 
 ### Emulator
-* **Virtual Screen**: A 32x32 pixel screen using Unicode half-block character `▀` with a custom color palette,
-  * **Color Palette**: Supports 16 custom colors, for more information see the [Color List](./Palette.md).
-* **Flags Container**: Displays the status flags ($N, V, D, I, Z, C$), highlighting active flags in a bright green.
+
+* **Virtual Screen**: A 32x32 pixel screen using the Unicode half-block character `▀` with a custom color palette.
+  * **Color Palette**: Supports 16 custom colors. For more information, see the [Color List](./Palette.md).
+* **Flags Container**: Displays the status flags ($N, V, D, I, Z, C$), highlighting active flags in bright green.
 * **Register Container**: Live tracking of registers ($AC, XR, YR, SP$).
 * **Stack Viewer**: A scrollable list showing stack addresses and values, with the current stack pointer highlighted.
 * **Memory Viewer**: A hexadecimal grid tracking system memory layout, complete with vertical scrolling.
-* **Dissassemble Program Viewer**: Automatically disassembles loaded ROM bytes into opcodes and functions (with indented code and labeled addresses). Includes a scrollbar.
+* **Disassembly Program Viewer**: Automatically disassembles loaded ROM bytes into opcodes and functions (with indented code and labeled addresses). Includes a scrollbar.
 * **Settings Menu**: Adjustable CPU speed settings and repository links.
 * **Footer Bar**: Quick reference guide for keyboard shortcuts and controls.
 
@@ -66,7 +67,7 @@ Source: [Wikipedia](https://en.wikipedia.org/wiki/MOS_Technology_6502)
 
 ## Built with...
 
-This project was built so I can learn Rust using my emulator knowledge. Here is what I have used:
+This project was built to help me learn Rust while using my emulator knowledge. Here is wh
 
 * [Rust](https://rust-lang.org/): for the whole app ! `ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧`
 * [Ratatui](https://ratatui.rs/): to create a nice looking TUI
@@ -89,7 +90,7 @@ cargo run
 
 ## Stardance Devlogs ᕙ( •̀ ᗜ •́ )ᕗ
 
-On [Stardance](https://stardance.hackclub.com/) you can watch the full development process via all the devlogs I've created here : [Rust 6502 Devlogs](https://stardance.hackclub.com/projects/34098)
+On [Stardance](https://stardance.hackclub.com/) you can watch the full development process via all the devlogs I've created here: [Rust 6502 Devlogs](https://stardance.hackclub.com/projects/34098)
 
 ## Development
 
@@ -148,7 +149,7 @@ For more information about the emulator subsystem, check out the dedicated docum
 
 ### Use of AI
 
-* Write little ASM program during development to test the behavior of the CPU + Brainstorming
+* Writing small ASM programs during development to test CPU behavior and brainstorming.
 
 ### Credits
 
