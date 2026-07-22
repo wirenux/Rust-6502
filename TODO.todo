@@ -136,6 +136,8 @@ match opcode {
 
 - [ ] add test program
     - [ ] snake (if keyboard is implemented)
+    - [ ] stardance logo
+        - [ ] draw the logo in aseprite
     - [x] hello world on screen
     - [x] rainbow
 
@@ -147,6 +149,7 @@ match opcode {
     - [x] copy folder structure
     - [x] add badge for OS
     - [x] nerd font is better
+    - [ ] add link to Program.md
 
 - [x] say this project is to learn rust
 
