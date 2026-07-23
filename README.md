@@ -136,9 +136,8 @@ cargo run
 
 * Download and install it with `cargo`:
 
-TODO: publish to cargo
 ```bash
-cargo install TODO
+cargo install rust6502
 ```
 
 ## Test & Validation
