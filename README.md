@@ -148,6 +148,7 @@ For more information about the emulator subsystem, check out the dedicated docum
 
 * **[Screen Documentation](./Screen.md)**: Details on the memory-mapped video buffer, resolution, and pixel rendering.
 * **[Color Palette](./Palette.md)**: Reference guide for the 16 custom display colors.
+* **[Assembly & Toolchain Guide](./ASM.md)**: Step by step guide to writing 6502 assembly, configuring `linker.cfg`, and compiling with `cc65`.
 
 ## Boring Stuff
 
