@@ -1,7 +1,7 @@
 import sys
 from PIL import Image
 
-PALETTE = {
+PALETTE = [
     (0, 0, 0),
     (255, 255, 255),
     (255, 0, 0),
@@ -18,7 +18,7 @@ PALETTE = {
     (64, 64, 255),
     (64, 255, 64),
     (200, 200, 200),
-}
+]
 
 def find_closest_color(rgb):
     r, g, b = rgb[:3]
@@ -42,7 +42,7 @@ def convert_image(image_path, output_asm_path):
             color_idx = find_closest_color(rgb)
             pixel_bytes.append(color_idx)
 
-    asm_template = f""";
+    asm_template = f"""
 .segment "CODE"
 
 .segment "RODATA"

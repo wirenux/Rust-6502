@@ -1,4 +1,4 @@
-all: program rainbow helloworld
+all: program rainbow helloworld hackclub
 
 
 program:
@@ -8,6 +8,14 @@ program:
 		build/asm/program.o \
 		-o build/asm/program.bin
 	rm build/asm/program.o
+
+hackclub:
+	ca65 src/asm/hackclub/hackclub_logo_demo.s -o build/asm/hackclub_logo_demo.o
+	ld65 \
+		-C src/asm/hackclub/linker.cfg \
+		build/asm/hackclub_logo_demo.o \
+		-o build/asm/hackclub_logo_demo.bin
+	rm build/asm/hackclub_logo_demo.o
 
 rainbow:
 	ca65 src/asm/rainbow/rainbow_demo.s -o build/asm/rainbow_demo.o
