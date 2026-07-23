@@ -2,6 +2,16 @@
 name = "rust6502"
 version = "0.1.0"
 edition = "2024"
+description = "A MOS 6502 CPU emulator"
+license = "MIT"
+repository = "https://github.com/wirenux/Rust-6502"
+
+include = [
+    "src/**/*.s",
+    "Cargo.toml",
+    "README.md",
+    "LICENSE",
+]
 
 [dependencies]
 crossterm = "0.29.0"
