@@ -150,15 +150,15 @@ To verify instruction behavior and debugging assembly routines I have used the [
 
 For more information about the emulator subsystem, check out the dedicated documentation:
 
-* **[Screen Documentation](./Screen.md)**: Details on the memory-mapped video buffer, resolution, and pixel rendering.
-* **[Color Palette](./Palette.md)**: Reference guide for the 16 custom display colors.
 * **[Assembly & Toolchain Guide](./ASM.md)**: Step by step guide to writing 6502 assembly, configuring `linker.cfg`, and compiling with `cc65`.
+* **[Color Palette](./Palette.md)**: Reference guide for the 16 custom display colors.
+* **[Screen Documentation](./Screen.md)**: Details on the memory-mapped video buffer, resolution, and pixel rendering.
 
 ## Boring Stuff
 
 ### Use of AI
 
-* Writing small ASM programs during development to test CPU behavior and brainstorming.
+* Writing small ASM programs during development to test CPU behavior, and brainstorming.
 
 ### Credits
 
