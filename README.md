@@ -85,7 +85,9 @@ cargo install rust6502
 > [!TIP]
 > To fully test the emulator, download the demo `.bin` files attached to the Github Release !
 
-1. Just run `rust6502` and use the built-in File Explorer to navigate to your `.bin` files and press Start `ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧`
+1. Just run `rust6502` and use the built-in File Explorer to navigate to your `.bin` files and press Start
+
+`ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧`
 
 ## Implemented Demo Programs:
 
