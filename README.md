@@ -88,6 +88,20 @@ cargo run
 
 2. **Using the Home Menu**: Navigate in the file browser into `"build/asm/"` and select a ROM, and press Start `ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧`
 
+## Implemented Demo Programs:
+
+### Rainbow
+
+<img src="assets/images/rainbow.png" />
+
+### Hello World !
+
+<img src="assets/images/hello.png" />
+
+### Hackclub Logo
+
+<img src="assets/images/hackclub_logo.png" />
+
 ## Stardance Devlogs ᕙ( •̀ ᗜ •́ )ᕗ
 
 On [Stardance](https://stardance.hackclub.com/) you can watch the full development process via all the devlogs I've created here: [Rust 6502 Devlogs](https://stardance.hackclub.com/projects/34098)
