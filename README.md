@@ -74,19 +74,18 @@ This project was built to help me learn Rust while using my emulator knowledge. 
 * [ca65](https://cc65.github.io/doc/ca65.html): to compile the ASM code
 * [ld65](https://cc65.github.io/doc/ld65.html): to link the `.o` file into a `.bin` file
 
-## What to do when testing ?
+## Installation & Quick Start
 
-To test and run programs on the emulator, you can boot it with the demo 6502 assembly code.
-
-*(Require to clone the repository)*
-
-1. **Launch the Emulator:**
+The easiest way to get the emulator is to install it directly via [crates.io](https://crates.io/crates/rust6502) using Cargo:
 
 ```bash
-cargo run
+cargo install rust6502
 ```
 
-2. **Using the Home Menu**: Navigate in the file browser into `"build/asm/"` and select a ROM, and press Start `ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧`
+> [!TIP]
+> To fully test the emulator, download the demo `.bin` files attached to the Github Release !
+
+1. Just run `rust6502` and use the built-in File Explorer to navigate to your `.bin` files and press Start `ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧`
 
 ## Implemented Demo Programs:
 
@@ -117,7 +116,7 @@ On [Stardance](https://stardance.hackclub.com/) you can watch the full developme
 * [`std` modules](https://doc.rust-lang.org/std/)
 * [Crossterm](https://docs.rs/crossterm/latest/crossterm/)
 
-### Building Rust-6502
+### Building Rust-6502 from source
 
 * Clone the repository with
 
@@ -130,14 +129,6 @@ cd Rust-6502
 
 ```bash
 cargo run
-```
-
-### Download Rust-6502
-
-* Download and install it with `cargo`:
-
-```bash
-cargo install rust6502
 ```
 
 ## Test & Validation
