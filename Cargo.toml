@@ -1,6 +1,6 @@
 [package]
 name = "rust6502"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
 description = "A MOS 6502 CPU emulator"
 license = "MIT"
