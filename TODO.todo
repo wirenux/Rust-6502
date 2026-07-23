@@ -145,6 +145,7 @@ match opcode {
 
 - [x] publish to cargo
 - [ ] add .bin file to a github release
+- [ ] change version to 1.0.0
 
 - [x] idea for readme https://github.com/mre/mos6502
     - [x] copy folder structure
