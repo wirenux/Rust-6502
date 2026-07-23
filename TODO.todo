@@ -144,8 +144,8 @@ match opcode {
 - [x] create a doc to write data to screen (don't start program b/w $0200-$05FF)
 
 - [x] publish to cargo
-- [ ] add .bin file to a github release
-- [ ] change version to 1.0.0
+- [x] add .bin file to a github release
+- [x] change version to 1.0.0
 
 - [x] idea for readme https://github.com/mre/mos6502
     - [x] copy folder structure
