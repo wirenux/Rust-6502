@@ -143,7 +143,8 @@ match opcode {
 
 - [x] create a doc to write data to screen (don't start program b/w $0200-$05FF)
 
-- [ ] publish to cargo
+- [x] publish to cargo
+- [ ] add .bin file to a github release
 
 - [x] idea for readme https://github.com/mre/mos6502
     - [x] copy folder structure
