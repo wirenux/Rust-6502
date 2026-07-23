@@ -25,6 +25,8 @@ Source: [Wikipedia](https://en.wikipedia.org/wiki/MOS_Technology_6502)
 
 ---
 
+[![asciicast](https://asciinema.org/a/1261432.svg)](https://asciinema.org/a/1261432)
+
 <table align="center" border="0">
   <tr>
     <td colspan="4" align="center">

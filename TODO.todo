@@ -157,4 +157,4 @@ match opcode {
 
 - [x] add use of AI -> make ASM program to test during the development period
 
-- [ ] make an ascii cinema / youtube demo
+- [x] make an ascii cinema / youtube demo
