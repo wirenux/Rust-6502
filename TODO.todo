@@ -133,6 +133,7 @@ match opcode {
     - [ ] make the screen grow
 
 - [ ] add keyboard control (to use in asm) ?
+- [ ] add mouse control (home screen)
 
 - [ ] add test program
     - [ ] snake (if keyboard is implemented)
