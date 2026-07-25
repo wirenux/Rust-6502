@@ -132,6 +132,10 @@ match opcode {
 - [x] add a screen
     - [ ] make the screen grow
 
+- [ ] screen can be open in a new terminal/window
+
+- [ ] add tips popup ?
+
 - [ ] add keyboard control (to use in asm) ?
 - [ ] add mouse control (home screen)
 
