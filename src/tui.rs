@@ -39,13 +39,22 @@ use ratatui::{
 
 use crossterm::{
     cursor::Show, event::{
-        self, DisableMouseCapture, EnableMouseCapture, read, Event::{
+        self,
+        DisableMouseCapture,
+        EnableMouseCapture,
+        Event::{
             self,
-        }, KeyCode::{
+        },
+        KeyCode::{
             self,
-        }, MouseEventKind, poll,
-    }, execute, terminal::{
-        EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+        },
+        MouseEventKind,
+    }, execute,
+    terminal::{
+        disable_raw_mode,
+        enable_raw_mode,
+        EnterAlternateScreen,
+        LeaveAlternateScreen,
     },
 };
 
