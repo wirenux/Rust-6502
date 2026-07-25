@@ -287,7 +287,7 @@ impl CPU {
         }
 
         let opcode = bus.read_ram(self.pc);
-        self.pc = self.pc + 1;
+        self.pc = self.pc.wrapping_add(1);
 
         match opcode {
             // 0x0X
