@@ -1,28 +1,12 @@
-TMP = $00
-
 .segment "CODE"
 
 start:
-    ldx #$00
+  lda #$01
+  sta $0200
 
-fill_loop:
-    txa
-    lsr
-    lsr
-    lsr
-    lsr
-    lsr
-    sta TMP
-
-    txa
-    clc
-    adc TMP
-    sta $0200,X ; page 0
-
-    inx
-    bne fill_loop
-
-    brk
+loop:
+  ror
+  sta $0204
 
 .segment "VECTORS"
     .word start     ; NMI

@@ -38,24 +38,14 @@ use ratatui::{
 };
 
 use crossterm::{
-    event::{
-        self,
-        DisableMouseCapture,
-        EnableMouseCapture,
-        Event::{
+    cursor::Show, event::{
+        self, DisableMouseCapture, EnableMouseCapture, read, Event::{
             self,
-        },
-        KeyCode::{
+        }, KeyCode::{
             self,
-        },
-        MouseEventKind,
-    },
-    execute,
-    terminal::{
-        disable_raw_mode,
-        enable_raw_mode,
-        EnterAlternateScreen,
-        LeaveAlternateScreen,
+        }, MouseEventKind, poll,
+    }, execute, terminal::{
+        EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
     },
 };
 
@@ -66,6 +56,7 @@ use std::{
     },
     fs,
     io,
+    panic,
     path::{
         Path,
         PathBuf
@@ -1192,6 +1183,27 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
     let _ = terminal.show_cursor();
+    println!();
 
     Ok(())
+}
+
+pub fn setup_panic_hook() {
+    let original_hook = panic::take_hook();
+
+    panic::set_hook(Box::new(move |panic_info| {
+
+        let _ = execute!(
+            io::stderr(),
+            LeaveAlternateScreen,
+            Show,
+            DisableMouseCapture
+        );
+
+        println!();
+
+        let _ = disable_raw_mode();
+
+        original_hook(panic_info);
+    }));
 }

@@ -10,6 +10,7 @@ use bus::Bus;
 use cpu::CPU;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    tui::setup_panic_hook();
     let args: Vec<String> = env::args().collect();
 
     let mut bus = Bus::new();
@@ -37,6 +38,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     tui::run(&mut cpu, &mut bus, origin, file_path)?;
-
     Ok(())
 }
