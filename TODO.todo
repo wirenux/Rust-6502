@@ -157,6 +157,8 @@ match opcode {
 
 - [x] optimize the screen by seing if it has been modified
 
+- [ ] change the project type to a fantasy console ? (maybe)
+
 - [x] publish to cargo
 - [x] add .bin file to a github release
 - [x] change version to 1.0.0
