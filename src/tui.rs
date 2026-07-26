@@ -1067,7 +1067,6 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                         cpu.reset_cpu(bus);
                                         cpu.reset_stack(bus);
                                         cpu.reset_screen(bus);
-                                        cpu.reset_memory(bus);
                                         cpu.halted = false;
                                         state.manual_selection = None;
                                         state.running = false;

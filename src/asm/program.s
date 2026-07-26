@@ -1,24 +1,25 @@
 .segment "CODE"
 
 start:
-  lda #$04
-  pha
-
   lda #$00
   sta $80
 
-  pla
-  sta $81
+  ldx #$02
 
-; loop:
-;   lda #$02
-;   sta $0200, X
-;
-;   cpx #255
-;   inx
-;
-;   bne loop
-;
+next_quarter:
+  stx $81
+  txa
+  ldy #$00
+
+draw_pixel:
+  sta ($80), Y
+  
+  iny
+  bne draw_pixel
+  
+  inx
+  cpx #$06
+  bne next_quarter
 
 halt:
   brk
