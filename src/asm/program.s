@@ -1,12 +1,27 @@
 .segment "CODE"
 
 start:
-  lda #$01 ; Load 1 into the A register
+  lda #$04
+  pha
 
-loop:
-  ror ; Rotate to the right the value present in the A register
-  sta $0200 ; Store the value present in the A register at $0200 (im memory)
-  jmp loop
+  lda #$00
+  sta $80
+
+  pla
+  sta $81
+
+; loop:
+;   lda #$02
+;   sta $0200, X
+;
+;   cpx #255
+;   inx
+;
+;   bne loop
+;
+
+halt:
+  brk
 
 .segment "VECTORS"
     .word start     ; NMI

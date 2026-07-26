@@ -147,6 +147,7 @@ match opcode {
     - [x] rainbow
 
 - [x] create a doc to write data to screen (don't start program b/w $0200-$05FF)
+- [ ] add info for each quarter of the screen (like addr for each)
 
 - [x] publish to cargo
 - [x] add .bin file to a github release

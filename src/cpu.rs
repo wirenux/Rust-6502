@@ -63,7 +63,7 @@ impl CPU {
         self.reg_a = 0;
         self.reg_x = 0;
         self.reg_y = 0;
-        self.sp = 0xFD; // to mimic 3 phantom cycle in the real chip
+        self.sp = 0xFF;
         self.sr = 0x24;
 
         let low_byte = bus.read_ram(0xFFFC);
@@ -77,11 +77,17 @@ impl CPU {
             bus.write_ram(addr, 0);
         }
 
-        self.sp = 0xFD;
+        self.sp = 0xFF;
     }
 
     pub fn reset_screen(&mut self, bus: &mut Bus) {
         for addr in 0x200..=0x5FF {
+            bus.write_ram(addr, 0);
+        }
+    }
+
+    pub fn reset_memory(&mut self, bus: &mut Bus) {
+        for addr in 0x0000..=0xFFFF {
             bus.write_ram(addr, 0);
         }
     }
