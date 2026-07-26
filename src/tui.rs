@@ -107,6 +107,9 @@ struct TuiState {
     home_focus: HomeFocus,
     start_addr_input: String,
 
+    last_screen_memory: [u8; 1024],
+    cached_screen_lines: Vec<Line<'static>>,
+
     disasm_lines: Vec<DisasmLine>,
     filename: String,
     cycles_per_second: u32,
@@ -673,7 +676,7 @@ fn render_register(frame: &mut Frame, area: Rect, cpu: &CPU) {
     frame.render_widget(register_table, area);
 }
 
-fn render_screen(frame: &mut Frame, area: Rect, bus: &Bus) {
+fn render_screen(frame: &mut Frame, area: Rect, bus: &Bus, state: &mut TuiState) {
     let block = Block::bordered().title(" Screen ");
     let inner = block.inner(area);
 
@@ -681,6 +684,45 @@ fn render_screen(frame: &mut Frame, area: Rect, bus: &Bus) {
 
     if inner.width == 0 || inner.height == 0 {
         return;
+    }
+    
+    let mut current_memory = [0u8; 1024];
+    for i in 0..1024 {
+        current_memory[i] = bus.read_ram(SCREEN_ADDR + i as u16);
+    }
+
+    let memory_changed = current_memory != state.last_screen_memory;
+
+    if memory_changed || state.cached_screen_lines.is_empty() {
+        state.last_screen_memory = current_memory;
+
+        let cell_cols = SCREEN_WIDTH;
+        let cell_rows = SCREEN_HEIGHT / 2;
+
+        let render_width = cell_cols.min(inner.width as usize);
+        let render_height = cell_rows.min(inner.height as usize);
+
+        let mut lines = Vec::with_capacity(render_height);
+
+        for row in 0..render_height {
+            let mut spans = Vec::with_capacity(render_width);
+            let top_pixel_row = row * 2;
+            let bottom_pixel_row = row * 2 + 1;
+
+
+            for col in 0..render_width {
+                let top_addr = top_pixel_row * SCREEN_WIDTH + col;
+                let bottom_addr = bottom_pixel_row * SCREEN_WIDTH + col;
+
+                let top_color = palette_color(current_memory[top_addr]);
+                let bottom_color = palette_color(current_memory[bottom_addr]);
+
+                spans.push(Span::styled("▀", Style::default().fg(top_color).bg(bottom_color)));
+            }
+            lines.push(Line::from(spans));
+        }
+
+        state.cached_screen_lines = lines;
     }
 
     let cell_cols = SCREEN_WIDTH;
@@ -692,27 +734,7 @@ fn render_screen(frame: &mut Frame, area: Rect, bus: &Bus) {
     let x_offset = (inner.width as usize).saturating_sub(cell_cols) / 2;
     let y_offset = (inner.height as usize).saturating_sub(cell_rows) / 2;
 
-    let mut lines = Vec::with_capacity(render_height);
-
-    for row in 0..render_height {
-        let mut spans = Vec::with_capacity(render_width);
-        let top_pixel_row = row * 2;
-        let bottom_pixel_row = row * 2 + 1;
-
-        for col in 0..render_width {
-            let top_addr = SCREEN_ADDR + (top_pixel_row * SCREEN_WIDTH + col) as u16;
-            let bottom_addr = SCREEN_ADDR + (bottom_pixel_row * SCREEN_HEIGHT + col) as u16;
-
-            let top_color = palette_color(bus.read_ram(top_addr));
-            let bottom_color = palette_color(bus.read_ram(bottom_addr));
-
-            spans.push(Span::styled("▀", Style::default().fg(top_color).bg(bottom_color)));
-        }
-
-        lines.push(Line::from(spans));
-    }
-
-    let screen_widget = Paragraph::new(lines);
+    let screen_widget = Paragraph::new(state.cached_screen_lines.clone());
 
     let screen_area = Rect {
         x: inner.x + x_offset as u16,
@@ -859,7 +881,7 @@ fn render_emulator(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: 
     render_register(frame, left_chunk[1], cpu);
     render_opcodes(frame, main_chunk[0], cpu, state);
     render_memory(frame, right_chunk[0], bus, state);
-    render_screen(frame, right_chunk[1], bus);
+    render_screen(frame, right_chunk[1], bus, state);
     render_footer(frame, screen_chunk[1], state);
 
     state.memory_area = right_chunk[0];
@@ -903,6 +925,9 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
         available_files: files,
         file_list_state: ListState::default().with_selected(Some(0)),
         start_addr_input: format!("{:04X}", disasm_start),
+
+        last_screen_memory: [0; 1024],
+        cached_screen_lines: Vec::new(),
 
         disasm_lines,
         filename: file_path.unwrap_or_default(),
