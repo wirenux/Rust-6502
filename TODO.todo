@@ -151,6 +151,12 @@ match opcode {
 
 - [ ] add a diagram / schematic for the space in the 64k space (screen, stack, etc...)
 
+- [x] use Hz / MHz
+
+- [x] disasm the whole program (using `.len()`)
+
+- [ ] optimize the screen by seing if it has been modified
+
 - [x] publish to cargo
 - [x] add .bin file to a github release
 - [x] change version to 1.0.0

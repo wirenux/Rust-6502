@@ -109,7 +109,7 @@ struct TuiState {
 
     disasm_lines: Vec<DisasmLine>,
     filename: String,
-    instructions_per_second: u32,
+    cycles_per_second: u32,
     manual_selection: Option<usize>,
     memory_area: Rect,
     memory_table_state: TableState,
@@ -145,7 +145,7 @@ const SCREEN_ADDR: u16 = 0x0200;
 const SCREEN_WIDTH: usize = 32;
 const SCREEN_HEIGHT: usize = 32;
 
-const IPS: u32 = 7000; // instruction per second
+const HZ: u32 = 1_000_000; // 1 MHz
 
 fn build_memory_rows(bus: &Bus, start_row: usize, visible_count: usize) -> Vec<Row<'static>> {
     (start_row..(start_row + visible_count).min(4096)).map(|row_idx| {
@@ -242,6 +242,14 @@ fn flag_span(label: &str, set: bool) -> Span<'static> {
     };
 
     Span::styled(format!("{} ", label), style)
+}
+
+fn format_frequency(hz: u32) -> String {
+    if hz >= 1_000_00 {
+        format!("{:.2} MHz", hz as f64 / 1_000_000.0)
+    } else {
+        format!("{} Hz", hz)
+    }
 }
 
 fn load_directory_contents(path: &Path) -> Vec<String> {
@@ -463,12 +471,12 @@ fn render_home(frame: &mut Frame, state: &mut TuiState) {
         Style::default().fg(Color::DarkGray)
     };
 
-    let ratio = state.instructions_per_second as f64 / 10_000.0;
+    let ratio = state.cycles_per_second as f64 / 5_000_000.0;
     let speed_gauge = Gauge::default()
         .block(Block::bordered().title(" Emulation Speed ").border_style(speed_style))
         .gauge_style(Style::default().fg(if state.home_focus == HomeFocus::Speed { Color::DarkGray } else { Color::Black }))
         .ratio(ratio.clamp(0.0, 1.0))
-        .label(format!("{} IPS", state.instructions_per_second));
+        .label(format_frequency(state.cycles_per_second));
 
     frame.render_widget(speed_gauge, right_layout[2]);
 
@@ -739,7 +747,7 @@ fn render_settings_popup(frame: &mut Frame, area: Rect, state: &TuiState) {
         Line::from(""),
         Line::from(vec![
             Span::raw("Speed: "),
-            Span::styled(format!("{} ips", state.instructions_per_second), Style::default().fg(Color::Green)),
+            Span::styled(format_frequency(state.cycles_per_second), Style::default().fg(Color::Green)),
         ]).centered(),
         Line::from(Span::styled(" ↑/↓ to adjust", Style::default().fg(Color::DarkGray))).centered(),
         Line::from(""),
@@ -898,7 +906,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
 
         disasm_lines,
         filename: file_path.unwrap_or_default(),
-        instructions_per_second: IPS,
+        cycles_per_second: HZ,
         manual_selection: None,
         memory_scroll_row: 0,
         memory_table_state: TableState::default(),
@@ -979,12 +987,12 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                 },
                                 KeyCode::Left => {
                                     if state.home_focus == HomeFocus::Speed {
-                                        state.instructions_per_second = state.instructions_per_second.saturating_sub(100);
+                                        state.cycles_per_second = state.cycles_per_second.saturating_sub(10_000);
                                     }
                                 },
                                 KeyCode::Right => {
                                     if state.home_focus == HomeFocus::Speed {
-                                        state.instructions_per_second = state.instructions_per_second.saturating_add(100).min(10_000);
+                                        state.cycles_per_second = state.cycles_per_second.saturating_add(10_000).min(5_000_000);
                                     }
                                 },
                                 KeyCode::Backspace => {
@@ -1013,7 +1021,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                                                     state.filename = full_path.to_string_lossy().to_string();
 
                                                                     bus.load_rom(&program_bytes, addr);
-                                                                    state.disasm_lines = disassemble_range(bus, addr, 2000);
+                                                                    state.disasm_lines = disassemble_range(bus, addr, program_bytes.len());
                                                                     cpu.pc = addr;
                                                                     state.screen = AppScreen::Emulator;
                                                                 }
@@ -1057,8 +1065,8 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                             if state.show_settings {
                                 match key.code {
                                     KeyCode::Char('?') | KeyCode::Esc => state.show_settings = false,
-                                    KeyCode::Up => state.instructions_per_second = state.instructions_per_second.saturating_add(100),
-                                    KeyCode::Down => state.instructions_per_second = state.instructions_per_second.saturating_sub(100),
+                                    KeyCode::Up => state.cycles_per_second = state.cycles_per_second.saturating_add(10_000),
+                                    KeyCode::Down => state.cycles_per_second = state.cycles_per_second.saturating_sub(10_000),
                                     _ => {}
                                 }
                             } else {
@@ -1160,16 +1168,22 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
         if state.running && !cpu.halted {
             let elapsed = last_frame_time.elapsed();
             last_frame_time = std::time::Instant::now();
-            let instructions_to_run = (elapsed.as_secs_f64() * state.instructions_per_second as f64) as u32;
 
-            for _ in 0..instructions_to_run {
-                if cpu.halted { break; }
+            let cycles_to_run = (elapsed.as_secs_f64() * state.cycles_per_second as f64) as u32;
+            let mut cycles_executed = 0;
+
+            while cycles_executed < cycles_to_run {
+                if cpu.halted {
+                    break;
+                }
 
                 let prev_pc = cpu.pc;
                 cpu.clock_tick(bus);
 
+                cycles_executed += cpu.last_cycles as u32;
+
                 if bus.read_ram(prev_pc) == 0x00 { // BRK
-                    state.running = false; // the emulator goes to HALTED mode
+                    state.running = false;
 
                     let labels = find_label_addr(&state.disasm_lines);
                     let (_, addr_to_row) = build_opcode_rows(&state.disasm_lines, &labels);
