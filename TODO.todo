@@ -155,7 +155,7 @@ match opcode {
 
 - [x] disasm the whole program (using `.len()`)
 
-- [ ] optimize the screen by seing if it has been modified
+- [x] optimize the screen by seing if it has been modified
 
 - [x] publish to cargo
 - [x] add .bin file to a github release
