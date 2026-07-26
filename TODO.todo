@@ -147,7 +147,7 @@ match opcode {
     - [x] rainbow
 
 - [x] create a doc to write data to screen (don't start program b/w $0200-$05FF)
-- [ ] add info for each quarter of the screen (like addr for each)
+- [x] add info for each quarter of the screen (like addr for each)
 
 - [ ] add a diagram / schematic for the space in the 64k space (screen, stack, etc...)
 

@@ -8,9 +8,15 @@ The 32x32 screen is rendered using the Unicode half block character `▀` and by
 
 ## Memory Mapping
 
-* **Base Address (Start)**: `$0200`
-* **Screen Resolution**: 32 x 32 pixels (1024 total pixels)
 * **Memory Footprint**: `$0200` to `$05FF` (1024 bytes)
+* **Screen Resolution**: 32 x 32 pixels (1024 total pixels)
+
+The screen is divided in 4 due to the 8-bit limitation. So each quarter contain 8 lines and 256 pixels.
+
+* 1st Quarter: `$0200-$02FF`
+* 2nd Quarter: `$0300-$03FF`
+* 4rd Quarter: `$0400-$04FF`
+* 4th Quarter: `$0500-$05FF`
 
 Every single byte in this memory range corresponds directly to a single pixel on the screen.
 
