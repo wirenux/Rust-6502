@@ -65,7 +65,7 @@ Source: [Wikipedia](https://en.wikipedia.org/wiki/MOS_Technology_6502)
 
 * **File Browser**: Lists files and folders present in the current directory, enhanced with Nerd Font icons.
 * **Start Address**: Automatically detects files ending with `_demo.bin` and configures the start address to `0xC000`.
-* **Emulation Speed**: Adjusts the instructions-per-second (IPS) target.
+* **Emulation Speed**: Adjusts the Hz / MHz target.
 
 ## Built with...
 
