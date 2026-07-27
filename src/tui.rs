@@ -477,7 +477,8 @@ fn render_home(frame: &mut Frame, state: &mut TuiState) {
     let ratio = state.cycles_per_second as f64 / 5_000_000.0;
     let speed_gauge = Gauge::default()
         .block(Block::bordered().title(" Emulation Speed ").border_style(speed_style))
-        .gauge_style(Style::default().fg(if state.home_focus == HomeFocus::Speed { Color::DarkGray } else { Color::Black }))
+        .gauge_style(Style::default().bg(Color::Black).fg(Color::White))
+        .style(Style::default().fg(Color::Black))
         .ratio(ratio.clamp(0.0, 1.0))
         .label(format_frequency(state.cycles_per_second));
 
