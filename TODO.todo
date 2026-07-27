@@ -158,6 +158,10 @@ match opcode {
 - [x] optimize the screen by seing if it has been modified
 
 - [x] fix text color on speed selection, home menu
+- [x] add key to simulate IRQ (`i`)
+- [x] add key to simulate NMI (`n`)
+
+- [x] fix all rust-analazyer things
 
 - [x] publish to cargo
 - [x] add .bin file to a github release

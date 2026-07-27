@@ -1,30 +1,63 @@
 .segment "CODE"
 
-start:
+reset_handler:
+  sei
+  cld
+  ldx #$FF
+  txs
+
   lda #$00
-  sta $80
+  sta $00 ; IRQ counter
+  sta $01 ; NMI counter
 
-  ldx #$02
+  cli ; clear I flag, Interrupt can happen
 
-next_quarter:
-  stx $81
+infinite_loop:
+  jmp infinite_loop
+
+
+nmi_handler:
+  ; save the context in stack
+  pha
   txa
-  ldy #$00
+  pha
+  tya
+  pha
 
-draw_pixel:
-  sta ($80), Y
-  
-  iny
-  bne draw_pixel
-  
-  inx
-  cpx #$06
-  bne next_quarter
+  ; increment NMI counter
+  inc $01
 
-halt:
-  brk
+  ; recover context from the stack
+  pla
+  tay
+  pla
+  tax
+  pla
+
+  rti
+
+
+irq_handler:
+  ; save the context in stack
+  pha
+  txa
+  pha
+  tya
+  pha
+
+  ; increment IRQ counter
+  inc $00
+
+  ; recover context from the stack
+  pla
+  tay
+  pla
+  tax
+  pla
+
+  rti
 
 .segment "VECTORS"
-    .word start     ; NMI
-    .word start     ; RESET
-    .word start     ; IRQ
+  .word nmi_handler   ; NMI   ($FFFA)
+  .word reset_handler ; RESET ($FFFC)
+  .word irq_handler   ; IRQ   ($FFFE)

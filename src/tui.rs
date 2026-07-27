@@ -248,7 +248,7 @@ fn flag_span(label: &str, set: bool) -> Span<'static> {
 }
 
 fn format_frequency(hz: u32) -> String {
-    if hz >= 1_000_00 {
+    if hz >= 1_000_000 {
         format!("{:.2} MHz", hz as f64 / 1_000_000.0)
     } else {
         format!("{} Hz", hz)
@@ -606,11 +606,9 @@ fn render_opcodes(frame: &mut Frame, area: Rect, cpu: &mut CPU, state: &mut TuiS
 
     state.opcode_table_state.select(selected_index);
 
-    if state.manual_selection.is_none() {
-        if let Some(idx) = selected_index {
-            let desired_offset = idx.saturating_sub(5);
-            *state.opcode_table_state.offset_mut() = desired_offset.min(max_offset);
-        }
+    if state.manual_selection.is_none() && let Some(idx) = selected_index {
+        let desired_offset = idx.saturating_sub(5);
+        *state.opcode_table_state.offset_mut() = desired_offset.min(max_offset);
     }
 
     let display_name = Path::new(&state.filename)
@@ -688,8 +686,8 @@ fn render_screen(frame: &mut Frame, area: Rect, bus: &Bus, state: &mut TuiState)
     }
     
     let mut current_memory = [0u8; 1024];
-    for i in 0..1024 {
-        current_memory[i] = bus.read_ram(SCREEN_ADDR + i as u16);
+    for (i, pixel) in current_memory.iter_mut().enumerate() {
+        *pixel = bus.read_ram(SCREEN_ADDR + i as u16);
     }
 
     let memory_changed = current_memory != state.last_screen_memory;
@@ -811,11 +809,11 @@ fn render_stack(frame: &mut Frame, area: Rect, cpu: &CPU, bus: &Bus, state: &mut
 
     let sp_row_index = (0xFFu16 - cpu.sp as u16) as usize;
 
-    if state.stack_manual_scroll.is_none() {
-        state.stack_table_state.select(Some(sp_row_index));
-    } else {
+    if let Some(scroll) = state.stack_manual_scroll {
         state.stack_table_state.select(None);
-        *state.stack_table_state.offset_mut() = state.stack_manual_scroll.unwrap();
+        *state.stack_table_state.offset_mut() = scroll;
+    } else {
+        state.stack_table_state.select(Some(sp_row_index));
     }
 
     let stack_table = Table::new(rows, [Constraint::Length(7), Constraint::Length(5)])
@@ -1027,57 +1025,54 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                     }
                                 },
                                 KeyCode::Char(c) => {
-                                    if state.home_focus == HomeFocus::StartAddr {
-                                        if c.is_ascii_hexdigit() && state.start_addr_input.len() < 4 {
-                                            state.start_addr_input.push(c.to_ascii_uppercase());
-                                        }
+                                    if state.home_focus == HomeFocus::StartAddr && (c.is_ascii_hexdigit() && state.start_addr_input.len() < 4) {
+                                        state.start_addr_input.push(c.to_ascii_uppercase());
                                     }
                                 },
                                 KeyCode::Enter => {
                                     match state.home_focus {
-                                        HomeFocus::StartButton => {
-                                            if let Ok(addr) = u16::from_str_radix(&state.start_addr_input, 16) {
-                                                if let Some(idx) = state.file_list_state.selected() {
-                                                    if let Some(selected_name) = state.available_files.get(idx) {
-                                                        let full_path = state.current_dir.join(selected_name);
+                                         HomeFocus::StartButton => {
+                                            if let Ok(addr) = u16::from_str_radix(&state.start_addr_input, 16)
+                                                && let Some(idx) = state.file_list_state.selected()
+                                                && let Some(selected_name) = state.available_files.get(idx)
+                                            {
+                                                let full_path = state.current_dir.join(selected_name);
 
-                                                        if full_path.is_file() {
-                                                            match fs::read(&full_path) {
-                                                                Ok(program_bytes) => {
-                                                                    state.filename = full_path.to_string_lossy().to_string();
+                                                if full_path.is_file() {
+                                                    match fs::read(&full_path) {
+                                                        Ok(program_bytes) => {
+                                                            state.filename = full_path.to_string_lossy().to_string();
 
-                                                                    bus.load_rom(&program_bytes, addr);
-                                                                    state.disasm_lines = disassemble_range(bus, addr, program_bytes.len());
-                                                                    cpu.pc = addr;
-                                                                    state.screen = AppScreen::Emulator;
-                                                                }
-                                                                Err(err) => {
-                                                                    eprintln!("Failed to read file: {err}");
-                                                                }
-                                                            }
+                                                            bus.load_rom(&program_bytes, addr);
+                                                            state.disasm_lines = disassemble_range(bus, addr, program_bytes.len());
+                                                            cpu.pc = addr;
+                                                            state.screen = AppScreen::Emulator;
+                                                        }
+                                                        Err(err) => {
+                                                            eprintln!("Failed to read file: {err}");
                                                         }
                                                     }
                                                 }
                                             }
-                                        }
+                                        }                                       
                                         HomeFocus::FileList => {
-                                            if let Some(selected_idx) = state.file_list_state.selected() {
-                                                if let Some(selected_name) = state.available_files.get(selected_idx).cloned() {
-                                                    if selected_name == ".." {
-                                                        if let Some(parent) = state.current_dir.parent() {
-                                                            state.current_dir = parent.to_path_buf();
-                                                            state.available_files = load_directory_contents(&state.current_dir);
-                                                            state.file_list_state.select(Some(0));
-                                                        }
-                                                    } else if selected_name.ends_with('/') {
-                                                        let folder_name = selected_name.trim_end_matches('/');
-                                                        state.current_dir = state.current_dir.join(folder_name);
+                                            if let Some(selected_idx) = state.file_list_state.selected()
+                                                && let Some(selected_name) = state.available_files.get(selected_idx).cloned()
+                                            {
+                                                if selected_name == ".." {
+                                                    if let Some(parent) = state.current_dir.parent() {
+                                                        state.current_dir = parent.to_path_buf();
                                                         state.available_files = load_directory_contents(&state.current_dir);
                                                         state.file_list_state.select(Some(0));
-                                                    } else {
-                                                        let full_file_path = state.current_dir.join(&selected_name);
-                                                        state.filename = full_file_path.to_string_lossy().to_string();
                                                     }
+                                                } else if selected_name.ends_with('/') {
+                                                    let folder_name = selected_name.trim_end_matches('/');
+                                                    state.current_dir = state.current_dir.join(folder_name);
+                                                    state.available_files = load_directory_contents(&state.current_dir);
+                                                    state.file_list_state.select(Some(0));
+                                                } else {
+                                                    let full_file_path = state.current_dir.join(&selected_name);
+                                                    state.filename = full_file_path.to_string_lossy().to_string();
                                                 }
                                             }
                                         },
@@ -1097,6 +1092,12 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                 }
                             } else {
                                 match key.code {
+                                    KeyCode::Char('i') => {
+                                        bus.irq_active = true;
+                                    },
+                                    KeyCode::Char('n') => {
+                                        bus.nmi_active = true;
+                                    }
                                     KeyCode::Char('r') => {
                                         cpu.reset_cpu(bus);
                                         cpu.reset_stack(bus);

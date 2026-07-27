@@ -94,15 +94,15 @@ impl CPU {
 
     pub fn update_z_n_flags(&mut self, target_value: u8) {
         if target_value == 0 {
-            self.sr = self.sr | 0x02;
+            self.sr |= 0x02;
         } else {
-            self.sr = self.sr & 0xFD;
+            self.sr &= 0xFD;
         }
 
         if (target_value & CPU::NEGATIVE_FLAG) != 0 {
-            self.sr = self.sr | CPU::NEGATIVE_FLAG;
+            self.sr |= CPU::NEGATIVE_FLAG;
         } else {
-            self.sr = self.sr & 0x7F;
+            self.sr &= 0x7F;
         }
     }
 
@@ -110,12 +110,12 @@ impl CPU {
         match mode {
             AddressingMode::Immediate => {
                 let addr = self.pc;
-                self.pc = self.pc + 1;
+                self.pc = self.pc.wrapping_add(1);
                 addr
             }
             AddressingMode::ZeroPage => {
                 let addr = bus.read_ram(self.pc) as u16;
-                self.pc = self.pc + 1;
+                self.pc = self.pc.wrapping_add(1);
                 addr
             }
             AddressingMode::ZeroPageX => {
@@ -123,7 +123,7 @@ impl CPU {
 
                 let addr = base.wrapping_add(self.reg_x) as u16;
 
-                self.pc = self.pc + 1;
+                self.pc = self.pc.wrapping_add(1);
                 addr
             }
             AddressingMode::ZeroPageY => {
@@ -131,13 +131,14 @@ impl CPU {
 
                 let addr = base.wrapping_add(self.reg_y) as u16;
 
-                self.pc = self.pc + 1;
+                self.pc = self.pc.wrapping_add(1);
                 addr
             }
             AddressingMode::Absolute => {
                 let low = bus.read_ram(self.pc) as u16;
                 let high = bus.read_ram(self.pc + 1) as u16;
-                self.pc = self.pc + 2;
+
+                self.pc = self.pc.wrapping_add(2);
                 (high << 8) | low
             }
             AddressingMode::AbsoluteX => {
@@ -147,7 +148,7 @@ impl CPU {
 
                 let addr = base.wrapping_add(self.reg_x as u16);
 
-                self.pc = self.pc + 2;
+                self.pc = self.pc.wrapping_add(2);
                 addr
             }
             AddressingMode::AbsoluteY => {
@@ -157,22 +158,27 @@ impl CPU {
 
                 let addr = base.wrapping_add(self.reg_y as u16);
 
-                self.pc = self.pc + 2;
+                self.pc = self.pc.wrapping_add(2);
                 addr
             },
             AddressingMode::IndirectX => {
                 let base = bus.read_ram(self.pc);
-                self.pc = self.pc + 1;
+                self.pc = self.pc.wrapping_add(1);
+
                 let ptr = base.wrapping_add(self.reg_x);
+
                 let low = bus.read_ram(ptr as u16) as u16;
                 let high = bus.read_ram(ptr.wrapping_add(1) as u16) as u16;
                 (high << 8) | low
             },
             AddressingMode::IndirectY => {
                 let ptr = bus.read_ram(self.pc);
-                self.pc = self.pc + 1;
+
+                self.pc = self.pc.wrapping_add(1);
+                
                 let low = bus.read_ram(ptr as u16) as u16;
                 let high = bus.read_ram(ptr.wrapping_add(1) as u16) as u16;
+                
                 let base = (high << 8) | low;
                 base.wrapping_add(self.reg_y as u16)
             },
@@ -289,6 +295,7 @@ impl CPU {
             return;
         } else if bus.irq_active && (self.sr & CPU::INTERRUPT_FLAG) == 0 {
             self.irq(bus);
+            bus.irq_active = false;
             return;
         }
 

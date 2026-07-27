@@ -124,7 +124,7 @@ pub fn and_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::Immediate, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a & value;
+    cpu.reg_a &= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -187,7 +187,7 @@ pub fn asl_accumulator(cpu: &mut CPU, opcode: u8) {
         cpu.sr &= !CPU::CARRY_FLAG;
     }
 
-    cpu.reg_a = cpu.reg_a << 1; // shift to the left
+    cpu.reg_a <<= 1; // shift to the left
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -204,7 +204,7 @@ pub fn asl_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u
         cpu.sr &= !CPU::CARRY_FLAG;
     }
 
-    value = value << 1; // shit to left
+    value <<= 1; // shift to left
 
     bus.write_ram(addr, value);
 
@@ -221,7 +221,7 @@ pub fn bcc(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
     }
 
-    cpu.set_instr(format!("{:02X}", opcode), format!("BCC"), 2);
+    cpu.set_instr(format!("{:02X}", opcode), "BCC".to_string(), 2);
 }
 
 pub fn bcs(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -232,7 +232,7 @@ pub fn bcs(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
     }
 
-    cpu.set_instr(format!("{:02X}", opcode), format!("BCS"), 2);
+    cpu.set_instr(format!("{:02X}", opcode), "BCS".to_string(), 2);
 }
 
 pub fn beq(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -243,7 +243,7 @@ pub fn beq(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
     }
 
-    cpu.set_instr(format!("{:02X}", opcode), format!("BEQ"), 2);
+    cpu.set_instr(format!("{:02X}", opcode), "BEQ".to_string(), 2);
 }
 
 pub fn bit_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u8) {
@@ -292,7 +292,7 @@ pub fn bmi(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
     }
 
-    cpu.set_instr(format!("{:02X}", opcode), format!("BMI"), 2);
+    cpu.set_instr(format!("{:02X}", opcode), "BMI".to_string(), 2);
 }
 
 pub fn bne(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -303,7 +303,7 @@ pub fn bne(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
     }
 
-    cpu.set_instr(format!("{:02X}", opcode), format!("BNE"), 2);
+    cpu.set_instr(format!("{:02X}", opcode), "BNE".to_string(), 2);
 }
 
 pub fn bpl(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -314,7 +314,7 @@ pub fn bpl(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
     }
 
-    cpu.set_instr(format!("{:02X}", opcode), format!("BPL"), 2);
+    cpu.set_instr(format!("{:02X}", opcode), "BPL".to_string(), 2);
 }
 
 pub fn brk(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -325,7 +325,7 @@ pub fn brk(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
 
     cpu.push_stack(bus, cpu.sr | 0x10);
 
-    cpu.sr = cpu.sr | 0x04;
+    cpu.sr |= 0x04;
 
     let low = bus.read_ram(0xFFFE);
     let high = bus.read_ram(0xFFFF);
@@ -343,7 +343,7 @@ pub fn bvc(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
     }
 
-    cpu.set_instr(format!("{:02X}", opcode), format!("BVC"), 2);
+    cpu.set_instr(format!("{:02X}", opcode), "BVC".to_string(), 2);
 }
 
 pub fn bvs(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
@@ -354,7 +354,7 @@ pub fn bvs(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
         cpu.pc = (cpu.pc as i16 + offset as i16) as u16;
     }
 
-    cpu.set_instr(format!("{:02X}", opcode), format!("BVS"), 2);
+    cpu.set_instr(format!("{:02X}", opcode), "BVS".to_string(), 2);
 }
 
 pub fn clc(cpu: &mut CPU, opcode: u8) {
@@ -557,7 +557,7 @@ pub fn eor_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::Absolute, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a ^ value;
+    cpu.reg_a ^= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -570,7 +570,7 @@ pub fn eor_absolute_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::AbsoluteX, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a ^ value;
+    cpu.reg_a ^= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -583,7 +583,7 @@ pub fn eor_absolute_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::AbsoluteY, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a ^ value;
+    cpu.reg_a ^= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -596,7 +596,7 @@ pub fn eor_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::Immediate, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a ^ value;
+    cpu.reg_a ^= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -607,7 +607,7 @@ pub fn eor_indirect_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::IndirectX, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a ^ value;
+    cpu.reg_a ^= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -619,7 +619,7 @@ pub fn eor_indirect_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::IndirectY, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a ^ value;
+    cpu.reg_a ^= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -631,7 +631,7 @@ pub fn eor_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::ZeroPage, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a ^ value;
+    cpu.reg_a ^= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -644,7 +644,7 @@ pub fn eor_zeropage_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::ZeroPageX, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a ^ value;
+    cpu.reg_a ^= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -946,7 +946,7 @@ pub fn lsr_accumulator(cpu: &mut CPU, opcode: u8) {
         cpu.sr &= !CPU::CARRY_FLAG;
     }
 
-    cpu.reg_a = cpu.reg_a >> 1; // shift to the right
+    cpu.reg_a >>= 1; // shift to the right
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -963,7 +963,7 @@ pub fn lsr_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u
         cpu.sr &= !CPU::CARRY_FLAG;
     }
 
-    value = value >> 1; // shift to the right
+    value >>= 1; // shift to the right
 
     bus.write_ram(addr, value);
 
@@ -980,7 +980,7 @@ pub fn ora_absolute(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::Absolute, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a | value;
+    cpu.reg_a |= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -993,7 +993,7 @@ pub fn ora_absolute_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::AbsoluteX, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a | value;
+    cpu.reg_a |= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -1006,7 +1006,7 @@ pub fn ora_absolute_y(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::AbsoluteY, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a | value;
+    cpu.reg_a |= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -1019,7 +1019,7 @@ pub fn ora_immediate(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::Immediate, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a | value;
+    cpu.reg_a |= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -1054,7 +1054,7 @@ pub fn ora_zeropage(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::ZeroPage, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a | value;
+    cpu.reg_a |= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -1066,7 +1066,7 @@ pub fn ora_zeropage_x(cpu: &mut CPU, bus: &mut Bus, opcode: u8) {
     let addr = cpu.get_operand_address(&AddressingMode::ZeroPageX, bus);
     let value = bus.read_ram(addr);
 
-    cpu.reg_a = cpu.reg_a | value;
+    cpu.reg_a |= value;
 
     cpu.update_z_n_flags(cpu.reg_a);
 
@@ -1113,7 +1113,7 @@ pub fn rol_accumulator(cpu: &mut CPU, opcode: u8) {
         cpu.sr &= !CPU::CARRY_FLAG;
     }
 
-    cpu.reg_a = cpu.reg_a << 1;
+    cpu.reg_a <<= 1;
     cpu.reg_a |= old_c_flag;
 
     cpu.update_z_n_flags(cpu.reg_a);
@@ -1132,7 +1132,7 @@ pub fn rol_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u
         cpu.sr &= !CPU::CARRY_FLAG;
     }
 
-    value = value << 1; // shit to left
+    value <<= 1; // shit to left
     value |= old_c_flag;
 
     bus.write_ram(addr, value);
@@ -1152,7 +1152,7 @@ pub fn ror_accumulator(cpu: &mut CPU, opcode: u8) {
         cpu.sr &= !CPU::CARRY_FLAG;
     }
 
-    cpu.reg_a = cpu.reg_a >> 1;
+    cpu.reg_a >>= 1;
     cpu.reg_a |= old_c_flag << 7;
 
     cpu.update_z_n_flags(cpu.reg_a);
@@ -1171,7 +1171,7 @@ pub fn ror_memory(cpu: &mut CPU, bus: &mut Bus, mode: &AddressingMode, opcode: u
         cpu.sr &= !CPU::CARRY_FLAG;
     }
 
-    value = value >> 1;
+    value >>= 1;
     value |= old_c_flag << 7;
 
     bus.write_ram(addr, value);
