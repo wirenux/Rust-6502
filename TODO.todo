@@ -163,6 +163,8 @@ match opcode {
 
 - [x] fix all rust-analazyer things
 
+- [x] add `i` and `n` to keybind bar
+
 - [x] publish to cargo
 - [x] add .bin file to a github release
 - [x] change version to 1.0.0
