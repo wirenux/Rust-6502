@@ -109,6 +109,7 @@ match opcode {
     - [x] start addr
     - [x] add a "force addr" toggle
         - [x] if force toggle not ON -> read `$FFFC/$FFFD`
+        - [x] if demo program is selected turn on force toggle addr
     - [x] speed (slider)
         - [x] change step to 100
     - [x] Start button

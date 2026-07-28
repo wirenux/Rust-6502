@@ -1032,7 +1032,8 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
 
                                         let file_name = &state.available_files[new_i].to_lowercase();
                                         if file_name.contains("demo") && file_name.ends_with(".bin") {
-                                            state.start_addr_input = "C000".to_string();
+                                            state.start_addr_input = "C000".to_string(); 
+                                            state.force_address = true;
                                         }
                                     }
                                 },
@@ -1045,6 +1046,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                         let file_name = &state.available_files[new_i].to_lowercase();
                                         if file_name.contains("demo") && file_name.ends_with(".bin") {
                                             state.start_addr_input = "C000".to_string();
+                                            state.force_address = true;
                                         }
                                     }
                                 },
