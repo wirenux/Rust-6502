@@ -92,6 +92,7 @@ enum AppScreen {
 #[derive(PartialEq)]
 enum HomeFocus {
     FileList,
+    ForceAddressToggle,
     Speed,
     StartAddr,
     StartButton
@@ -105,6 +106,7 @@ struct TuiState {
     available_files: Vec<String>,
     file_list_state: ListState,
     home_focus: HomeFocus,
+    force_address: bool,
     start_addr_input: String,
 
     last_screen_memory: [u8; 1024],
@@ -436,6 +438,7 @@ fn render_home(frame: &mut Frame, state: &mut TuiState) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(3), // file path display
+            Constraint::Length(3), // force address toggle
             Constraint::Length(3), // start addr
             Constraint::Length(3), // speed slider
             Constraint::Length(2), // spacer
@@ -461,16 +464,42 @@ fn render_home(frame: &mut Frame, state: &mut TuiState) {
 
     frame.render_widget(path_display, right_layout[0]);
 
-    let addr_style = if state.home_focus == HomeFocus::StartAddr {
+
+    let toggle_style = if state.home_focus == HomeFocus::ForceAddressToggle {
         Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
     } else {
         Style::default().fg(Color::DarkGray)
     };
 
-    let addr_display = Paragraph::new(format!(" 0x{}", state.start_addr_input))
+    let toggle_text = if state.force_address {
+        " [X] Force Custom Start Address"
+    } else {
+        " [ ] Force Custom Start Address"
+    };
+
+    let toggle_display = Paragraph::new(toggle_text)
+        .block(Block::bordered().title(" Address Mode ").border_style(toggle_style));
+    
+    frame.render_widget(toggle_display, right_layout[1]);
+
+    let addr_style = if state.home_focus == HomeFocus::StartAddr {
+        Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
+    } else if state.force_address {
+        Style::default()
+    } else {
+        Style::default().fg(Color::DarkGray)
+    };
+    
+    let addr_text_style = if state.force_address || state.home_focus == HomeFocus::StartAddr {
+        Style::default().fg(Color::White)
+    } else {
+        Style::default().fg(Color::DarkGray).add_modifier(Modifier::DIM)
+    };
+
+    let addr_display = Paragraph::new(Span::styled(format!(" 0x{}", state.start_addr_input), addr_text_style))
         .block(Block::bordered().title(" Start Address (Hex) ").border_style(addr_style));
 
-    frame.render_widget(addr_display, right_layout[1]);
+    frame.render_widget(addr_display, right_layout[2]);
 
     let speed_style = if state.home_focus == HomeFocus::Speed {
         Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
@@ -486,9 +515,9 @@ fn render_home(frame: &mut Frame, state: &mut TuiState) {
         .ratio(ratio.clamp(0.0, 1.0))
         .label(format_frequency(state.cycles_per_second));
 
-    frame.render_widget(speed_gauge, right_layout[2]);
+    frame.render_widget(speed_gauge, right_layout[3]);
 
-    let btn_area = centered_rect(50, 100, right_layout[4]);
+    let btn_area = centered_rect(50, 100, right_layout[5]);
     let (btn_style, text_style, shadow_offset) = if state.home_focus == HomeFocus::StartButton {
         (Style::default().fg(Color::Yellow), Style::default().fg(Color::Black).bg(Color::Yellow).add_modifier(Modifier::BOLD), 0)
     } else {
@@ -927,6 +956,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
         home_focus: HomeFocus::FileList,
         available_files: files,
         file_list_state: ListState::default().with_selected(Some(0)),
+        force_address: false, // default unchecked
         start_addr_input: format!("{:04X}", disasm_start),
 
         last_screen_memory: [0; 1024],
@@ -948,12 +978,10 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
         total_rows: 0,
     };
 
-    if state.screen == AppScreen::Home {
-        cpu.reset_cpu(bus);
-        cpu.reset_stack(bus);
-        cpu.reset_screen(bus);
-        cpu.reset_memory(bus);
-    }
+    cpu.reset_cpu(bus);
+    cpu.reset_stack(bus);
+    cpu.reset_screen(bus);
+    cpu.reset_memory(bus);
 
     cpu.halted = false;
     state.manual_selection = None;
@@ -983,7 +1011,14 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                             match key.code {
                                 KeyCode::Tab => {
                                     state.home_focus = match state.home_focus {
-                                        HomeFocus::FileList => HomeFocus::StartAddr,
+                                        HomeFocus::FileList => HomeFocus::ForceAddressToggle,
+                                        HomeFocus::ForceAddressToggle => {
+                                            if state.force_address {
+                                                HomeFocus::StartAddr
+                                            } else {
+                                                HomeFocus::Speed
+                                            }
+                                        },
                                         HomeFocus::StartAddr => HomeFocus::Speed,
                                         HomeFocus::Speed => HomeFocus::StartButton,
                                         HomeFocus::StartButton => HomeFocus::FileList,
@@ -1024,13 +1059,15 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                     }
                                 },
                                 KeyCode::Backspace => {
-                                    if state.home_focus == HomeFocus::StartAddr {
+                                    if state.home_focus == HomeFocus::StartAddr && state.force_address {
                                         state.start_addr_input.pop();
                                     }
                                 },
                                 KeyCode::Char(c) => {
-                                    if state.home_focus == HomeFocus::StartAddr && (c.is_ascii_hexdigit() && state.start_addr_input.len() < 4) {
+                                    if state.home_focus == HomeFocus::StartAddr && state.force_address && (c.is_ascii_hexdigit() && state.start_addr_input.len() < 4) {
                                         state.start_addr_input.push(c.to_ascii_uppercase());
+                                    } else if state.home_focus == HomeFocus::ForceAddressToggle && c == ' ' {
+                                        state.force_address = !state.force_address;
                                     }
                                 },
                                 KeyCode::Enter => {
@@ -1049,7 +1086,11 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
 
                                                             bus.load_rom(&program_bytes, addr);
                                                             state.disasm_lines = disassemble_range(bus, addr, program_bytes.len());
-                                                            cpu.pc = addr;
+                                                            if state.force_address {
+                                                                cpu.pc = addr;
+                                                            } else {
+                                                                cpu.reset_cpu(bus);
+                                                            }
                                                             state.screen = AppScreen::Emulator;
                                                         }
                                                         Err(err) => {
@@ -1080,6 +1121,9 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                                 }
                                             }
                                         },
+                                        HomeFocus::ForceAddressToggle => {
+                                            state.force_address = !state.force_address;
+                                        }
                                         _ => {}
                                     }
                                 },

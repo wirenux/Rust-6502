@@ -69,7 +69,9 @@ impl CPU {
         let low_byte = bus.read_ram(0xFFFC);
         let high_byte = bus.read_ram(0xFFFD);
 
-        self.pc = ((high_byte as u16) << 8) | (low_byte as u16); // as u16 transform a u8 var into a u16
+        self.pc = ((high_byte as u16) << 8) | (low_byte as u16); // look at $FFFC & $FFFD
+                                                                 // in little endian to know where
+                                                                 // the program start
     }
 
     pub fn reset_stack(&mut self, bus: &mut Bus) {

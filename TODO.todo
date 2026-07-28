@@ -107,6 +107,8 @@ match opcode {
     - [x] logo on middle top (in ascii)
     - [x] enter file path / select file
     - [x] start addr
+    - [x] add a "force addr" toggle
+        - [x] if force toggle not ON -> read `$FFFC/$FFFD`
     - [x] speed (slider)
         - [x] change step to 100
     - [x] Start button
@@ -153,6 +155,8 @@ match opcode {
 - [x] add info for each quarter of the screen (like addr for each)
 
 - [ ] add a diagram / schematic for the space in the 64k space (screen, stack, etc...)
+
+- [ ] add a option to change the value of the PC inside the emulator
 
 - [x] use Hz / MHz
 
