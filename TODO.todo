@@ -1,4 +1,6 @@
-- [x] refractor every opcode into function like this : ``
+- [x] refractor every opcode into function like this :
+
+```rust
 fn finish_instr(&self, opcode: u8, instr_bytes: String, disasm: String, cycles: u8) {
 
 }
@@ -9,7 +11,7 @@ match opcode {
     0x4C => self.jmp_absolute(bus, opcode),
     // ...
 }
-``
+```
 
 - [x] move all opcode to opcode.rs
 - [x] add LSR
@@ -146,7 +148,8 @@ match opcode {
     - [x] hello world on screen
     - [x] rainbow
 
-- [x] create a doc to write data to screen (don't start program b/w $0200-$05FF)
+- [ ] update `README.md` for the hello world rainbow program
+- [x] create a doc to write data to screen (don't start program b/w `$0200-$05FF`)
 - [x] add info for each quarter of the screen (like addr for each)
 
 - [ ] add a diagram / schematic for the space in the 64k space (screen, stack, etc...)
