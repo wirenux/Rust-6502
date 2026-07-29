@@ -250,7 +250,7 @@ fn flag_span(label: &str, set: bool) -> Span<'static> {
 }
 
 fn format_frequency(hz: u32) -> String {
-    if hz >= 1_000_000 {
+    if hz >= 100_000 {
         format!("{:.2} MHz", hz as f64 / 1_000_000.0)
     } else {
         format!("{} Hz", hz)
@@ -980,8 +980,6 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
 
     cpu.reset_cpu(bus);
     cpu.reset_stack(bus);
-    cpu.reset_screen(bus);
-    cpu.reset_memory(bus);
 
     cpu.halted = false;
     state.manual_selection = None;
@@ -1035,6 +1033,10 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                             state.start_addr_input = "C000".to_string(); 
                                             state.force_address = true;
                                         }
+                                        if !file_name.contains("demo") && !file_name.ends_with(".bin") {
+                                            state.start_addr_input = "8000".to_string();
+                                            state.force_address = false;
+                                        }
                                     }
                                 },
                                 KeyCode::Down => {
@@ -1047,6 +1049,10 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                         if file_name.contains("demo") && file_name.ends_with(".bin") {
                                             state.start_addr_input = "C000".to_string();
                                             state.force_address = true;
+                                        }
+                                        if !file_name.contains("demo") && !file_name.ends_with(".bin") {
+                                            state.start_addr_input = "8000".to_string();
+                                            state.force_address = false;
                                         }
                                     }
                                 },

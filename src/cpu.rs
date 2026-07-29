@@ -88,12 +88,6 @@ impl CPU {
         }
     }
 
-    pub fn reset_memory(&mut self, bus: &mut Bus) {
-        for addr in 0x0000..=0xFFFF {
-            bus.write_ram(addr, 0);
-        }
-    }
-
     pub fn update_z_n_flags(&mut self, target_value: u8) {
         if target_value == 0 {
             self.sr |= 0x02;
