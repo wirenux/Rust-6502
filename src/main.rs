@@ -7,14 +7,14 @@ mod tui;
 mod disasm;
 
 use bus::Bus;
-use cpu::CPU;
+use cpu::Cpu;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     tui::setup_panic_hook();
     let args: Vec<String> = env::args().collect();
 
     let mut bus = Bus::new();
-    let mut cpu = CPU::new();
+    let mut cpu = Cpu::new();
 
     let file_path = args.get(1).cloned();
 

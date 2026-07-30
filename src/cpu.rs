@@ -2,7 +2,7 @@ use crate::bus::Bus;
 use crate::opcodes;
 use core::panic;
 
-pub struct CPU {
+pub struct Cpu {
     pub reg_a: u8,
     pub reg_x: u8,
     pub reg_y: u8,
@@ -29,7 +29,7 @@ pub enum AddressingMode {
     Implied,
 }
 
-impl CPU {
+impl Cpu {
     pub const CARRY_FLAG: u8 = 0x01;
     pub const DECIMAL_FLAG: u8 = 0x08;
     pub const INTERRUPT_FLAG: u8 = 0x04;
@@ -38,7 +38,7 @@ impl CPU {
     pub const ZERO_FLAG: u8 = 0x02;
 
     pub fn new() -> Self {
-        CPU {
+        Cpu {
             reg_a: 0,
             reg_x: 0,
             reg_y: 0,
@@ -95,8 +95,8 @@ impl CPU {
             self.sr &= 0xFD;
         }
 
-        if (target_value & CPU::NEGATIVE_FLAG) != 0 {
-            self.sr |= CPU::NEGATIVE_FLAG;
+        if (target_value & Cpu::NEGATIVE_FLAG) != 0 {
+            self.sr |= Cpu::NEGATIVE_FLAG;
         } else {
             self.sr &= 0x7F;
         }
@@ -206,9 +206,9 @@ impl CPU {
 
     pub(crate) fn compare_registers(&mut self, register_value: u8, memory_value: u8) {
         if register_value >= memory_value {
-            self.sr |= CPU::CARRY_FLAG;
+            self.sr |= Cpu::CARRY_FLAG;
         } else {
-            self.sr &= !CPU::CARRY_FLAG;
+            self.sr &= !Cpu::CARRY_FLAG;
         }
 
         let temp_result = register_value.wrapping_sub(memory_value);
@@ -216,16 +216,16 @@ impl CPU {
     }
 
     pub(crate) fn adc(&mut self, value: u8) {
-        let carry = (self.sr & CPU::CARRY_FLAG) as u16;
+        let carry = (self.sr & Cpu::CARRY_FLAG) as u16;
         let a_u16 = self.reg_a as u16;
         let val_u16 = value as u16;
 
         let sum = a_u16 + val_u16 + carry;
 
         if sum > 0xFF {
-            self.sr |= CPU::CARRY_FLAG;
+            self.sr |= Cpu::CARRY_FLAG;
         } else {
-            self.sr &= !CPU::CARRY_FLAG;
+            self.sr &= !Cpu::CARRY_FLAG;
         }
 
         let result = (sum & 0xFF) as u8;
@@ -234,9 +234,9 @@ impl CPU {
             (!((self.reg_a ^ value) as u16) & (self.reg_a as u16 ^ result as u16) & 0x80) != 0;
 
         if overflow {
-            self.sr |= CPU::OVERFLOW_FLAG;
+            self.sr |= Cpu::OVERFLOW_FLAG;
         } else {
-            self.sr &= !CPU::OVERFLOW_FLAG;
+            self.sr &= !Cpu::OVERFLOW_FLAG;
         }
 
         self.reg_a = result;
@@ -251,7 +251,7 @@ impl CPU {
         status |= 0b0010_0000; // set unused flag
         self.push_stack(bus, status); // Push as a single 8-bit byte
 
-        self.sr |= CPU::INTERRUPT_FLAG;
+        self.sr |= Cpu::INTERRUPT_FLAG;
 
         let low = bus.read_ram(0xFFFA) as u16;
         let high = bus.read_ram(0xFFFB) as u16;
@@ -263,7 +263,7 @@ impl CPU {
     }
 
     pub fn irq(&mut self, bus: &mut Bus) {
-        if (self.sr & CPU::INTERRUPT_FLAG) == 0 {
+        if (self.sr & Cpu::INTERRUPT_FLAG) == 0 {
             self.push_stack_u16(bus, self.pc);
 
             let mut status = self.sr;
@@ -272,7 +272,7 @@ impl CPU {
             status |= 0b0010_0000;
             self.push_stack(bus, status);
 
-            self.sr |= CPU::INTERRUPT_FLAG;
+            self.sr |= Cpu::INTERRUPT_FLAG;
 
             let low = bus.read_ram(0xFFFE) as u16;
             let high = bus.read_ram(0xFFFF) as u16;
@@ -289,7 +289,7 @@ impl CPU {
             self.nmi(bus);
             bus.nmi_active = false;
             return;
-        } else if bus.irq_active && (self.sr & CPU::INTERRUPT_FLAG) == 0 {
+        } else if bus.irq_active && (self.sr & Cpu::INTERRUPT_FLAG) == 0 {
             self.irq(bus);
             bus.irq_active = false;
             return;

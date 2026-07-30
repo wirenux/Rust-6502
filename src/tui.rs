@@ -75,7 +75,7 @@ use std::{
 };
 
 use crate::{
-    cpu::CPU,
+    cpu::Cpu,
     bus::Bus,
     disasm::{
         DisasmLine,
@@ -266,6 +266,11 @@ fn load_directory_contents(path: &Path) -> Vec<String> {
     if let Ok(entries) = fs::read_dir(path) {
         for entry in entries.flatten() {
             let name = entry.file_name().to_string_lossy().into_owned();
+
+            if name.starts_with('.') {
+                continue;
+            }
+
             if let Ok(file_type) = entry.file_type() {
                 if file_type.is_dir() {
                     dirs.push(format!("{}/", name));
@@ -314,7 +319,7 @@ fn palette_color(index: u8) -> Color {
     }
 }
 
-fn render_flags(frame: &mut Frame, area: Rect, cpu: &CPU, state: &TuiState) {
+fn render_flags(frame: &mut Frame, area: Rect, cpu: &Cpu, state: &TuiState) {
     let status_span = if state.running {
         Span::styled("RUN", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD))
     } else {
@@ -327,12 +332,12 @@ fn render_flags(frame: &mut Frame, area: Rect, cpu: &CPU, state: &TuiState) {
     let padding = inner_width.saturating_sub(flag_spans_width + status_width);
 
     let mut spans = vec![
-        flag_span("N", cpu.get_flag(CPU::NEGATIVE_FLAG)),
-        flag_span("V", cpu.get_flag(CPU::OVERFLOW_FLAG)),
-        flag_span("D", cpu.get_flag(CPU::DECIMAL_FLAG)),
-        flag_span("I", cpu.get_flag(CPU::INTERRUPT_FLAG)),
-        flag_span("Z", cpu.get_flag(CPU::ZERO_FLAG)),
-        flag_span("C", cpu.get_flag(CPU::CARRY_FLAG)),
+        flag_span("N", cpu.get_flag(Cpu::NEGATIVE_FLAG)),
+        flag_span("V", cpu.get_flag(Cpu::OVERFLOW_FLAG)),
+        flag_span("D", cpu.get_flag(Cpu::DECIMAL_FLAG)),
+        flag_span("I", cpu.get_flag(Cpu::INTERRUPT_FLAG)),
+        flag_span("Z", cpu.get_flag(Cpu::ZERO_FLAG)),
+        flag_span("C", cpu.get_flag(Cpu::CARRY_FLAG)),
     ];
 
     spans.push(Span::raw(" ".repeat(padding)));
@@ -614,7 +619,7 @@ fn render_memory(frame: &mut Frame, area: Rect, bus: &Bus, state: &mut TuiState)
 
 }
 
-fn render_opcodes(frame: &mut Frame, area: Rect, cpu: &mut CPU, state: &mut TuiState) {
+fn render_opcodes(frame: &mut Frame, area: Rect, cpu: &mut Cpu, state: &mut TuiState) {
     let visible_height = area.height.saturating_sub(3) as usize;
 
     let header = Row::new(vec!["ADDR", "INSTRUCTION"])
@@ -681,7 +686,7 @@ fn render_popup_shadow(frame: &mut Frame, popup_area: Rect, full_area: Rect) {
     frame.render_widget(shadow, shadow_area);
 }
 
-fn render_register(frame: &mut Frame, area: Rect, cpu: &CPU) {
+fn render_register(frame: &mut Frame, area: Rect, cpu: &Cpu) {
     let header = Row::new(vec!["AC", "XR", "YR", "SP"])
         .style(Style::default().add_modifier(Modifier::BOLD));
 
@@ -821,7 +826,7 @@ fn render_settings_popup(frame: &mut Frame, area: Rect, state: &TuiState) {
     frame.render_widget(text_widget, sections[1]);
 }
 
-fn render_stack(frame: &mut Frame, area: Rect, cpu: &CPU, bus: &Bus, state: &mut TuiState) {
+fn render_stack(frame: &mut Frame, area: Rect, cpu: &Cpu, bus: &Bus, state: &mut TuiState) {
     let header = Row::new(vec!["ADDR", "VALUE"])
         .style(Style::default().add_modifier(Modifier::BOLD));
 
@@ -866,7 +871,7 @@ fn render_stack(frame: &mut Frame, area: Rect, cpu: &CPU, bus: &Bus, state: &mut
     frame.render_stateful_widget(scrollbar, area, &mut scrollbar_state);
 }
 
-fn render_emulator(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: &mut Bus) {
+fn render_emulator(frame: &mut Frame, cpu: &mut Cpu, state: &mut TuiState, bus: &mut Bus) {
     let screen_chunk = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -929,7 +934,7 @@ fn render_emulator(frame: &mut Frame, cpu: &mut CPU, state: &mut TuiState, bus: 
     }
 }
 
-pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<String>) -> io::Result<()> {
+pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<String>) -> io::Result<()> {
     enable_raw_mode()?;
 
     let mut stdout = io::stdout();
@@ -1032,8 +1037,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                         if file_name.contains("demo") && file_name.ends_with(".bin") {
                                             state.start_addr_input = "C000".to_string(); 
                                             state.force_address = true;
-                                        }
-                                        if !file_name.contains("demo") && !file_name.ends_with(".bin") {
+                                        } else if !file_name.contains("demo") {
                                             state.start_addr_input = "8000".to_string();
                                             state.force_address = false;
                                         }
@@ -1049,8 +1053,7 @@ pub fn run(cpu: &mut CPU, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                         if file_name.contains("demo") && file_name.ends_with(".bin") {
                                             state.start_addr_input = "C000".to_string();
                                             state.force_address = true;
-                                        }
-                                        if !file_name.contains("demo") && !file_name.ends_with(".bin") {
+                                        } else if !file_name.contains("demo") {
                                             state.start_addr_input = "8000".to_string();
                                             state.force_address = false;
                                         }
