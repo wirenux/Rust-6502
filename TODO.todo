@@ -151,7 +151,7 @@ match opcode {
     - [x] hello world on screen
     - [x] rainbow
 
-- [ ] update `README.md` for the hello world rainbow program
+- [x] update `README.md` for the hello world rainbow program
 - [x] create a doc to write data to screen (don't start program b/w `$0200-$05FF`)
 - [x] add info for each quarter of the screen (like addr for each)
 

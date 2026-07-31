@@ -47,6 +47,8 @@ Source: [Wikipedia](https://en.wikipedia.org/wiki/MOS_Technology_6502)
   </tr>
 </table>
 
+![alt text](image-1.png)
+
 ## Core Features
 
 ### Emulator
