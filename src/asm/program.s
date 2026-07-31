@@ -1,63 +1,31 @@
+ptr = $00
+
 .segment "CODE"
-
-reset_handler:
-  sei
-  cld
-  ldx #$FF
-  txs
-
+start:
   lda #$00
-  sta $00 ; IRQ counter
-  sta $01 ; NMI counter
+  sta ptr
+  sta ptr+1
 
-  cli ; clear I flag, Interrupt can happen
+  lda #$02
+  ldy #$00
 
-infinite_loop:
-  jmp infinite_loop
+loop:
+  sta (ptr), Y
+  iny
+  bne loop
 
+  inc ptr+1
 
-nmi_handler:
-  ; save the context in stack
-  pha
-  txa
-  pha
-  tya
-  pha
+  lda ptr+1
+  cmp #$D0
+  bne continue
+  rts
 
-  ; increment NMI counter
-  inc $01
-
-  ; recover context from the stack
-  pla
-  tay
-  pla
-  tax
-  pla
-
-  rti
-
-
-irq_handler:
-  ; save the context in stack
-  pha
-  txa
-  pha
-  tya
-  pha
-
-  ; increment IRQ counter
-  inc $00
-
-  ; recover context from the stack
-  pla
-  tay
-  pla
-  tax
-  pla
-
-  rti
+continue:
+  lda #$02
+  jmp loop
 
 .segment "VECTORS"
-  .word nmi_handler   ; NMI   ($FFFA)
-  .word reset_handler ; RESET ($FFFC)
-  .word irq_handler   ; IRQ   ($FFFE)
+  .word start
+  .word start
+  .word start
