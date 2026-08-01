@@ -13,7 +13,7 @@
 ---
 
 > [!NOTE]
-> A Nerd Font is strongly recommended in your terminal emulator for proper rendering of UI icons.
+> A Nerd Font is strongly recommended in your terminal emulator for proper rendering of UI icons. Modern terminal Emulator are recommended for better visuals.
 
 ## What is the MOS 6502
 
@@ -47,8 +47,6 @@ Source: [Wikipedia](https://en.wikipedia.org/wiki/MOS_Technology_6502)
   </tr>
 </table>
 
-![alt text](image-1.png)
-
 ## Core Features
 
 ### Emulator
@@ -66,12 +64,13 @@ Source: [Wikipedia](https://en.wikipedia.org/wiki/MOS_Technology_6502)
 ### Home Menu
 
 * **File Browser**: Lists files and folders present in the current directory, enhanced with Nerd Font icons.
+* **Force Address Toggle**: If set off, the CPU will look at the reset vector `$FFFD-$FFFC` to move the PC at his correct place.
 * **Start Address**: Automatically detects files ending with `_demo.bin` and configures the start address to `0xC000`.
 * **Emulation Speed**: Adjusts the Hz / MHz target.
 
 ## Built with...
 
-This project was built to help me learn Rust while using my emulator knowledge. Here is wh
+This project was built to help me learn Rust while using my emulator knowledge. Here is what I have used
 
 * [Rust](https://rust-lang.org/): for the whole app ! `ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧`
 * [Ratatui](https://ratatui.rs/): to create a nice looking TUI

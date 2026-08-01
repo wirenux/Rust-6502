@@ -144,6 +144,8 @@ match opcode {
 - [ ] add keyboard control (to use in asm) ?
 - [ ] add mouse control (home screen)
 
+- [ ] when force addr is on the program always load at `$8000` but look in the reset vector for a PC address. So when the reset vector addr is not the same as `$8000` the disasm work and print the code but the PC might read `0x00` (BRK opcode)
+
 - [ ] add test program
     - [ ] snake (if keyboard is implemented)
     - [x] hackclub logo
@@ -158,6 +160,8 @@ match opcode {
 - [ ] add a diagram / schematic for the space in the 64k space (screen, stack, etc...)
 
 - [ ] add a option to change the value of the PC inside the emulator
+
+- [ ] add table of contenti in the README.md
 
 - [x] use Hz / MHz
 
