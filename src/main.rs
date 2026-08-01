@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let origin = args
         .get(2)
-        .and_then(|s| u16::from_str_radix(s, 16).ok())
+        .and_then(|s| u16::from_str_radix(s.trim_start_matches("0x"), 16).ok())
         .unwrap_or(0x8000);
 
     if let Some(ref path) = file_path {
