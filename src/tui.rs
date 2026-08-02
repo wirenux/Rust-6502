@@ -38,7 +38,8 @@ use ratatui::{
 };
 
 use crossterm::{
-    cursor::Show, event::{
+    cursor::Show,
+    event::{
         self,
         DisableMouseCapture,
         EnableMouseCapture,
@@ -48,8 +49,10 @@ use crossterm::{
         KeyCode::{
             self,
         },
+        MouseButton,
         MouseEventKind,
-    }, execute,
+    },
+    execute,
     terminal::{
         disable_raw_mode,
         enable_raw_mode,
@@ -126,6 +129,15 @@ struct TuiState {
     stack_table_state: TableState,
     stack_manual_scroll: Option<usize>,
     total_rows: usize,
+
+    home_file_list_area: Rect,
+    home_force_toggle_area: Rect,
+    home_addr_area: Rect,
+    home_speed_area: Rect,
+    home_start_btn_area: Rect,
+
+    last_click_time: Option<std::time::Instant>,
+    last_clicked_file_idx: Option<usize>,
 }
 
 const SETTING_LOGO_ANSI: &str = "
@@ -438,6 +450,7 @@ fn render_home(frame: &mut Frame, state: &mut TuiState) {
         .highlight_symbol(">> ");
 
     frame.render_stateful_widget(file_list, content_layout[0], &mut state.file_list_state);
+    state.home_file_list_area = content_layout[0];
 
     let right_layout = Layout::default()
         .direction(Direction::Vertical)
@@ -469,7 +482,6 @@ fn render_home(frame: &mut Frame, state: &mut TuiState) {
 
     frame.render_widget(path_display, right_layout[0]);
 
-
     let toggle_style = if state.home_focus == HomeFocus::ForceAddressToggle {
         Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
     } else {
@@ -486,6 +498,7 @@ fn render_home(frame: &mut Frame, state: &mut TuiState) {
         .block(Block::bordered().title(" Address Mode ").border_style(toggle_style));
     
     frame.render_widget(toggle_display, right_layout[1]);
+    state.home_force_toggle_area = right_layout[1];
 
     let addr_style = if state.home_focus == HomeFocus::StartAddr {
         Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
@@ -505,6 +518,7 @@ fn render_home(frame: &mut Frame, state: &mut TuiState) {
         .block(Block::bordered().title(" Start Address (Hex) ").border_style(addr_style));
 
     frame.render_widget(addr_display, right_layout[2]);
+    state.home_addr_area = right_layout[2];
 
     let speed_style = if state.home_focus == HomeFocus::Speed {
         Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)
@@ -521,6 +535,7 @@ fn render_home(frame: &mut Frame, state: &mut TuiState) {
         .label(format_frequency(state.cycles_per_second));
 
     frame.render_widget(speed_gauge, right_layout[3]);
+    state.home_speed_area = right_layout[3];
 
     let btn_area = centered_rect(50, 100, right_layout[5]);
     let (btn_style, text_style, shadow_offset) = if state.home_focus == HomeFocus::StartButton {
@@ -557,6 +572,7 @@ fn render_home(frame: &mut Frame, state: &mut TuiState) {
     };
 
     frame.render_widget(start_btn, text_area);
+    state.home_start_btn_area = text_area;
 
     let help_text = Paragraph::new(" [TAB] Change Focus   [↑↓] Select/Adjust   [ENTER] Confirm ")
         .alignment(Alignment::Center)
@@ -981,6 +997,15 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
         stack_manual_scroll: None,
         stack_table_state: TableState::default(),
         total_rows: 0,
+
+        home_file_list_area: Rect::default(),
+        home_force_toggle_area: Rect::default(),
+        home_addr_area: Rect::default(),
+        home_speed_area: Rect::default(),
+        home_start_btn_area: Rect::default(),
+
+        last_click_time: None,
+        last_clicked_file_idx: None,
     };
 
     cpu.reset_cpu(bus);
@@ -1213,7 +1238,7 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                     };
 
                     match mouse.kind {
-                        MouseEventKind::ScrollDown => {
+                        MouseEventKind::ScrollDown if state.screen == AppScreen::Emulator => {
                             if hit(state.memory_area) {
                                 state.memory_scroll_row = (state.memory_scroll_row + 3).min(4096usize.saturating_sub(1));
                             } else if hit(state.stack_area) {
@@ -1227,7 +1252,7 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                 state.manual_selection = Some((current + 3).min(max));
                             }
                         }
-                        MouseEventKind::ScrollUp => {
+                        MouseEventKind::ScrollUp if state.screen == AppScreen::Emulator => {
                             if hit(state.memory_area) {
                                 state.memory_scroll_row = state.memory_scroll_row.saturating_sub(3);
                             } else if hit(state.stack_area) {
@@ -1238,6 +1263,116 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                     state.opcode_table_state.selected().unwrap_or(0)
                                 });
                                 state.manual_selection = Some(current.saturating_sub(3));
+                            }
+                        }
+                        MouseEventKind::Down(MouseButton::Left) if state.screen == AppScreen::Home => {
+                            if hit(state.home_start_btn_area) {
+                                state.home_focus = HomeFocus::StartButton;
+
+                                if let Ok(addr) = u16::from_str_radix(&state.start_addr_input, 16)
+                                    && let Some(idx) = state.file_list_state.selected()
+                                    && let Some(selected_name) = state.available_files.get(idx)
+                                    && state.current_dir.join(selected_name).is_file()
+                                {
+                                    let full_path = state.current_dir.join(selected_name);
+                                    match fs::read(&full_path) {
+                                        Ok(program_bytes) => {
+                                            state.filename = full_path.to_string_lossy().to_string();
+                                            bus.load_rom(&program_bytes, addr);
+                                            state.disasm_lines = disassemble_range(bus, addr, program_bytes.len());
+
+                                            if state.force_address {
+                                                cpu.pc = addr;
+                                            } else {
+                                                cpu.reset_cpu(bus);
+                                            }
+
+                                            state.screen = AppScreen::Emulator;
+                                        }
+                                        Err(err) => {
+                                            eprintln!("Failed to read file: {err}");
+                                        }
+                                    }
+                                }
+                            } else if hit(state.home_file_list_area) && !state.available_files.is_empty() {
+                                state.home_focus = HomeFocus::FileList;
+                                let clicked_idx = (mouse.row - state.home_file_list_area.y - 1) as usize;
+
+                                if clicked_idx < state.available_files.len() {
+                                    let now = std::time::Instant::now();
+
+                                    let is_double_click = state.last_clicked_file_idx == Some(clicked_idx)
+                                        && state.last_click_time.map_or(false, |t| now.duration_since(t).as_millis() < 500);
+
+                                    if is_double_click {
+                                        let selected_name = state.available_files[clicked_idx].clone();
+
+                                        if selected_name == ".." {
+                                            if let Some(parent) = state.current_dir.parent() {
+                                                state.current_dir = parent.to_path_buf();
+                                                state.available_files = load_directory_contents(&state.current_dir);
+                                                state.file_list_state.select(Some(0));
+                                            }
+                                        } else if selected_name.ends_with("/") {
+                                            let folder_name = selected_name.trim_end_matches('/');
+                                            state.current_dir = state.current_dir.join(folder_name);
+                                            state.available_files = load_directory_contents(&state.current_dir);
+                                            state.file_list_state.select(Some(0));
+                                        } else {
+                                            state.home_focus = HomeFocus::StartButton;
+                                            if let Ok(addr) = u16::from_str_radix(&state.start_addr_input, 16)
+                                                && state.current_dir.join(&selected_name).is_file()
+                                            {
+                                                let full_path = state.current_dir.join(selected_name);
+                                                match fs::read(&full_path) {
+                                                    Ok(program_bytes) => {
+                                                        state.filename = full_path.to_string_lossy().to_string();
+                                                        bus.load_rom(&program_bytes, addr);
+                                                        state.disasm_lines = disassemble_range(bus, addr, program_bytes.len());
+
+                                                        if state.force_address {
+                                                            cpu.pc = addr;
+                                                        } else {
+                                                            cpu.reset_cpu(bus);
+                                                        }
+
+                                                        state.screen = AppScreen::Emulator;
+                                                    }
+                                                    Err(err) => {
+                                                        eprintln!("Failed to read file: {err}");
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        state.last_click_time = None;
+                                    } else {
+                                        state.last_click_time = Some(now);
+                                        state.last_clicked_file_idx = Some(clicked_idx);
+
+                                        state.file_list_state.select(Some(clicked_idx));
+
+                                        let file_name = state.available_files[clicked_idx].to_lowercase();
+                                        if file_name.contains("demo") && file_name.ends_with(".bin") {
+                                            state.start_addr_input = "C000".to_string();
+                                            state.force_address = true;
+                                        } else if !file_name.contains("demo") {
+                                            state.start_addr_input = "8000".to_string();
+                                            state.force_address = false;
+                                        }
+                                    }
+                                }
+                            } else if hit(state.home_force_toggle_area) {
+                                state.home_focus = HomeFocus::ForceAddressToggle;
+                                state.force_address = !state.force_address;
+                            } else if hit(state.home_addr_area) {
+                                state.home_focus = if state.force_address {
+                                    HomeFocus::StartAddr
+                                } else {
+                                    HomeFocus::ForceAddressToggle
+                                };
+                            } else if hit(state.home_speed_area) {
+                                state.home_focus = HomeFocus::Speed;
                             }
                         }
                         _ => {}
