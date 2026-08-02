@@ -162,7 +162,9 @@ match opcode {
 
 - [ ] add a option to change the value of the PC inside the emulator
 
-- [ ] add table of contenti in the README.md
+- [ ] add table of content in the README.md
+
+- [ ] update the bin file in the release when release 1.1.0
 
 - [x] use Hz / MHz
 

@@ -1302,7 +1302,7 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                     let now = std::time::Instant::now();
 
                                     let is_double_click = state.last_clicked_file_idx == Some(clicked_idx)
-                                        && state.last_click_time.map_or(false, |t| now.duration_since(t).as_millis() < 500);
+                                        && state.last_click_time.is_some_and(|t| now.duration_since(t).as_millis() < 500);
 
                                     if is_double_click {
                                         let selected_name = state.available_files[clicked_idx].clone();
