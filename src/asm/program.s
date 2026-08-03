@@ -1,31 +1,37 @@
-ptr = $00
+KBD_DATA   = $BFF0
+KBD_STATUS = $BFF1
+KBD_ACK    = $BFF2
+KBD_READY  = $01
+
+BREAK_CODE = $F0
+EXT_CODE   = $E0
 
 .segment "CODE"
-start:
-  lda #$00
-  sta ptr
-  sta ptr+1
 
-  lda #$02
-  ldy #$00
+reset:
+    LDA #$00
+    STA $00
 
-loop:
-  sta (ptr), Y
-  iny
-  bne loop
+main_loop:
+    LDA KBD_STATUS
+    AND #KBD_READY
+    BEQ main_loop
 
-  inc ptr+1
+    LDA KBD_DATA
+    
+    CMP #BREAK_CODE
+    BEQ ack_and_loop
+    
+    CMP #EXT_CODE
+    BEQ ack_and_loop
 
-  lda ptr+1
-  cmp #$D0
-  bne continue
-  rts
+    STA $00
 
-continue:
-  lda #$02
-  jmp loop
+ack_and_loop:
+    STA KBD_ACK
+    JMP main_loop
 
 .segment "VECTORS"
-  .word start
-  .word start
-  .word start
+  .word reset     ; NMI
+  .word reset     ; RESET
+  .word reset     ; IRQ

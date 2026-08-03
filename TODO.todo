@@ -141,7 +141,8 @@ match opcode {
 
 - [ ] add tips popup ?
 
-- [ ] add keyboard control (to use in asm) ?
+- [x] add keyboard control (to use in asm) ?
+- [ ] say addr for the I/O (keyboard) in the README.md or Keyboard.md
 - [x] add mouse control (home screen)
     - [x] dbclick on folder to open & on file to launch
 

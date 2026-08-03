@@ -49,6 +49,8 @@ use crossterm::{
         KeyCode::{
             self,
         },
+        KeyEventKind,
+        KeyModifiers,
         MouseButton,
         MouseEventKind,
     },
@@ -138,6 +140,9 @@ struct TuiState {
 
     last_click_time: Option<std::time::Instant>,
     last_clicked_file_idx: Option<usize>,
+
+    keyboard_capture: bool,
+    screen_area: Rect,
 }
 
 const SETTING_LOGO_ANSI: &str = "
@@ -730,7 +735,14 @@ fn render_register(frame: &mut Frame, area: Rect, cpu: &Cpu) {
 }
 
 fn render_screen(frame: &mut Frame, area: Rect, bus: &Bus, state: &mut TuiState) {
-    let block = Block::bordered().title(" Screen ");
+    let block = if state.keyboard_capture {
+        Block::bordered()
+            .title(" Screen [PS/2 Capture - click away to release] ")
+            .border_style(Style::default().fg(Color::Yellow))
+    } else {
+        Block::bordered().title(" Screen (click to type into PS/2 Keyboard)")
+    };
+
     let inner = block.inner(area);
 
     frame.render_widget(block, area);
@@ -940,6 +952,7 @@ fn render_emulator(frame: &mut Frame, cpu: &mut Cpu, state: &mut TuiState, bus: 
     state.memory_area = right_chunk[0];
     state.stack_area = left_chunk[2];
     state.opcode_area = main_chunk[0];
+    state.screen_area = right_chunk[1];
 
     if state.show_settings {
         let popup_area = centered_rect(50, 40, frame.area());
@@ -1006,6 +1019,9 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
 
         last_click_time: None,
         last_clicked_file_idx: None,
+
+        keyboard_capture: false,
+        screen_area: Rect::default(),
     };
 
     cpu.reset_cpu(bus);
@@ -1030,7 +1046,7 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
         while event::poll(Duration::from_millis(0))? {
             match event::read()? {
                 Event::Key(key) => {
-                    if key.code == KeyCode::Char('q') && state.home_focus != HomeFocus::StartAddr {
+                    if state.screen == AppScreen::Home && key.code == KeyCode::Char('q') && state.home_focus != HomeFocus::StartAddr {
                         should_quit = true;
                     }
 
@@ -1127,6 +1143,8 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                                             } else {
                                                                 cpu.reset_cpu(bus);
                                                             }
+                                                            bus.kbd_reset();
+                                                            state.keyboard_capture = false;
                                                             state.screen = AppScreen::Emulator;
                                                         }
                                                         Err(err) => {
@@ -1174,6 +1192,10 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                     KeyCode::Down => state.cycles_per_second = state.cycles_per_second.saturating_sub(10_000),
                                     _ => {}
                                 }
+                            } else if state.keyboard_capture {
+                                if key.kind == KeyEventKind::Press || key.kind == KeyEventKind::Repeat {
+                                    bus.kbd_press(key.code);
+                                }
                             } else {
                                 match key.code {
                                     KeyCode::Char('i') => {
@@ -1186,10 +1208,12 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                         cpu.reset_cpu(bus);
                                         cpu.reset_stack(bus);
                                         cpu.reset_screen(bus);
+                                        bus.kbd_reset();
                                         cpu.halted = false;
                                         state.manual_selection = None;
                                         state.running = false;
                                         state.stack_manual_scroll = None;
+                                        state.keyboard_capture = false;
                                     },
                                     KeyCode::Enter => {
                                         if !cpu.halted {
@@ -1221,7 +1245,7 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                         let current = state.manual_selection.unwrap_or_else(|| state.opcode_table_state.selected().unwrap_or(0));
                                         state.manual_selection = Some((current + 1).min(state.total_rows.saturating_sub(1)));
                                     },
-                                    KeyCode::Esc => {
+                                    KeyCode::Char('q') | KeyCode::Esc => {
                                         state.screen = AppScreen::Home;
                                         state.running = false;
                                     }
@@ -1265,6 +1289,14 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                 state.manual_selection = Some(current.saturating_sub(3));
                             }
                         }
+                        MouseEventKind::Down(MouseButton::Left) if state.screen == AppScreen::Emulator && !state.show_settings => {
+                            if hit(state.screen_area) {
+                                state.keyboard_capture = !state.keyboard_capture;
+                            } else {
+                                state.keyboard_capture = false;
+                            }
+                            bus.kbd_capture_active = state.keyboard_capture;
+                        }
                         MouseEventKind::Down(MouseButton::Left) if state.screen == AppScreen::Home => {
                             if hit(state.home_start_btn_area) {
                                 state.home_focus = HomeFocus::StartButton;
@@ -1287,6 +1319,8 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                                 cpu.reset_cpu(bus);
                                             }
 
+                                            bus.kbd_reset();
+                                            state.keyboard_capture = false;
                                             state.screen = AppScreen::Emulator;
                                         }
                                         Err(err) => {
@@ -1336,6 +1370,8 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                                             cpu.reset_cpu(bus);
                                                         }
 
+                                                        bus.kbd_reset();
+                                                        state.keyboard_capture = false;
                                                         state.screen = AppScreen::Emulator;
                                                     }
                                                     Err(err) => {
