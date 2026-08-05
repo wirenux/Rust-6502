@@ -41,18 +41,20 @@ def process_image(path):
     return pixels
 
 SCANCODES = {
+    0x0E: ('backtick', 'tilde'),
     0x15: ('q', 'Q'), 0x16: ('1', 'exclamation'), 0x1A: ('z', 'Z'), 0x1B: ('s', 'S'),
-    0x1C: ('a', 'A'), 0x1D: ('w', 'W'), 0x1E: ('2', '@'), 0x21: ('c', 'C'),
+    0x1C: ('a', 'A'), 0x1D: ('w', 'W'), 0x1E: ('2', 'at'), 0x21: ('c', 'C'),
     0x22: ('x', 'X'), 0x23: ('d', 'D'), 0x24: ('e', 'E'), 0x25: ('4', 'dollar'),
     0x26: ('3', 'hash'), 0x29: ('space', 'space'), 0x2A: ('v', 'V'), 0x2B: ('f', 'F'),
-    0x2C: ('t', 'T'), 0x2D: ('r', 'R'), 0x2E: ('5', '%'), 0x31: ('n', 'N'),
+    0x2C: ('t', 'T'), 0x2D: ('r', 'R'), 0x2E: ('5', 'percentage'), 0x31: ('n', 'N'),
     0x32: ('b', 'B'), 0x33: ('h', 'H'), 0x34: ('g', 'G'), 0x35: ('y', 'Y'),
-    0x36: ('6', '^'), 0x3A: ('m', 'M'), 0x3B: ('j', 'J'), 0x3C: ('u', 'U'),
-    0x3D: ('7', '&'), 0x3E: ('8', 'asterix'), 0x41: ('comma', '<'), 0x42: ('k', 'K'),
+    0x36: ('6', 'hat'), 0x3A: ('m', 'M'), 0x3B: ('j', 'J'), 0x3C: ('u', 'U'),
+    0x3D: ('7', 'and'), 0x3E: ('8', 'asterix'), 0x41: ('comma', 'lessthan'), 0x42: ('k', 'K'),
+    0x4C: ('semicolon', "2points"),
     0x43: ('i', 'I'), 0x44: ('o', 'O'), 0x45: ('0', 'rightpar'), 0x46: ('9', 'leftpar'),
-    0x49: ('dot', '>'), 0x4A: ('slash', '?'), 0x4B: ('l', 'L'), 0x4D: ('p', 'P'),
-    0x4E: ('minus', 'underscore'), 0x52: ('quote2', 'quote'), 0x54: ('[', '{'), 0x55: ('equal', 'plus'),
-    0x5B: (']', '}'), 0x5D: ('slash', '|'),
+    0x49: ('dot', 'greaterthan'), 0x4A: ('slash', 'question'), 0x4B: ('l', 'L'), 0x4D: ('p', 'P'),
+    0x4E: ('minus', 'underscore'), 0x52: ('quote2', 'quote'), 0x54: ('leftbracket', 'leftparenthesis'), 0x55: ('equal', 'plus'),
+    0x5B: ('rightbracket', 'rightparenthesis'), 0x5D: ('backslash', 'pipe'),
     0x75: ('up', 'up'), 0x72: ('down', 'down'), 0x74: ('right', 'right'), 0x6B: ('left', 'left'),
 }
 
