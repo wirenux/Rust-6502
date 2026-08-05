@@ -92,7 +92,7 @@ fn char_code(c: char) -> Option<(bool, bool, u8)> {
         'v' => (false, 0x2A), 'V' => (true, 0x2A),
         'w' => (false, 0x1D), 'W' => (true, 0x1D),
         'x' => (false, 0x22), 'X' => (true, 0x22),
-        'y' => (false, 0x25), 'Y' => (true, 0x25),
+        'y' => (false, 0x35), 'Y' => (true, 0x35),
         'z' => (false, 0x1A), 'Z' => (true, 0x1A),
 
         '0' => (false, 0x45), ')' => (true, 0x45),
@@ -113,7 +113,7 @@ fn char_code(c: char) -> Option<(bool, bool, u8)> {
         ']' => (false, 0x5B), '}' => (true, 0x5B),
         '\\' => (false, 0x5D), '|' => (true, 0x5D),
         ';' => (false, 0x4C), ':' => (true, 0x4C),
-        '\'' => (false, 0x52), '"' => (true, 0x25),
+        '\'' => (false, 0x52), '"' => (true, 0x52),
         ',' => (false, 0x41), '<' => (true, 0x41),
         '.' => (false, 0x49), '>' => (true, 0x49),
         '/' => (false, 0x4A), '?' => (true, 0x4A),

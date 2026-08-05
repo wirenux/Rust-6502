@@ -1194,7 +1194,36 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                 }
                             } else if state.keyboard_capture {
                                 if key.kind == KeyEventKind::Press || key.kind == KeyEventKind::Repeat {
-                                    bus.kbd_press(key.code);
+                                    let code = if key.modifiers.contains(KeyModifiers::SHIFT) {
+                                        match key.code {
+                                            KeyCode::Char('1') => KeyCode::Char('!'),
+                                            KeyCode::Char('2') => KeyCode::Char('@'),
+                                            KeyCode::Char('3') => KeyCode::Char('#'),
+                                            KeyCode::Char('4') => KeyCode::Char('$'),
+                                            KeyCode::Char('5') => KeyCode::Char('%'),
+                                            KeyCode::Char('6') => KeyCode::Char('^'),
+                                            KeyCode::Char('7') => KeyCode::Char('&'),
+                                            KeyCode::Char('8') => KeyCode::Char('*'),
+                                            KeyCode::Char('9') => KeyCode::Char('('),
+                                            KeyCode::Char('0') => KeyCode::Char(')'),
+                                            KeyCode::Char('-') => KeyCode::Char('_'),
+                                            KeyCode::Char('=') => KeyCode::Char('+'),
+                                            KeyCode::Char('[') => KeyCode::Char('{'),
+                                            KeyCode::Char(']') => KeyCode::Char('}'),
+                                            KeyCode::Char('\\') => KeyCode::Char('|'),
+                                            KeyCode::Char(';') => KeyCode::Char(':'),
+                                            KeyCode::Char('\'') => KeyCode::Char('"'),
+                                            KeyCode::Char(',') => KeyCode::Char('<'),
+                                            KeyCode::Char('.') => KeyCode::Char('>'),
+                                            KeyCode::Char('/') => KeyCode::Char('?'),
+                                            KeyCode::Char('`') => KeyCode::Char('~'),
+                                            KeyCode::Char(c) => KeyCode::Char(c.to_ascii_uppercase()),
+                                            _ => key.code,
+                                        }
+                                    } else {
+                                        key.code
+                                    };
+                                    bus.kbd_press(code);
                                 }
                             } else {
                                 match key.code {

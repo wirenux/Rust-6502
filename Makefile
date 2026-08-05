@@ -32,3 +32,11 @@ helloworld:
 		build/asm/helloworld_demo.o \
 		-o build/asm/helloworld_demo.bin
 	rm build/asm/helloworld_demo.o
+
+font:
+	python3 tools/font_generator.py
+	rm src/asm/font.inc
+	mv font.inc src/asm/font.inc
+
+aseprite:
+	/Applications/Aseprite.app/Contents/MacOS/aseprite -b *.aseprite --save-as {path}/{title}.png
