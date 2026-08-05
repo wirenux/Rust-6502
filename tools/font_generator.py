@@ -54,7 +54,9 @@ SCANCODES = {
     0x43: ('i', 'I'), 0x44: ('o', 'O'), 0x45: ('0', 'rightpar'), 0x46: ('9', 'leftpar'),
     0x49: ('dot', 'greaterthan'), 0x4A: ('slash', 'question'), 0x4B: ('l', 'L'), 0x4D: ('p', 'P'),
     0x4E: ('minus', 'underscore'), 0x52: ('quote2', 'quote'), 0x54: ('leftbracket', 'leftparenthesis'), 0x55: ('equal', 'plus'),
+    0x5A: ('enter', 'enter'),
     0x5B: ('rightbracket', 'rightparenthesis'), 0x5D: ('backslash', 'pipe'),
+    0x66: ('backspace', 'backspace'),
     0x75: ('up', 'up'), 0x72: ('down', 'down'), 0x74: ('right', 'right'), 0x6B: ('left', 'left'),
 }
 

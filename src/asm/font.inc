@@ -1206,6 +1206,24 @@ img_other_backslash:
     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $01, $01, $00
     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $01, $01, $00
 
+img_other_backspace:
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $01, $01, $01, $01, $01, $01, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $01, $01, $01, $01, $01, $01, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $01, $01, $01, $01, $01, $01, $01, $01, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $01, $01, $01, $01, $01, $01, $01, $01, $00
+    .byte $00, $00, $00, $00, $00, $01, $01, $01, $01, $00, $00, $00, $00, $01, $01, $00
+    .byte $00, $00, $00, $00, $00, $01, $01, $01, $01, $00, $00, $00, $00, $01, $01, $00
+    .byte $00, $00, $00, $01, $01, $01, $01, $00, $00, $00, $00, $00, $00, $01, $01, $00
+    .byte $00, $00, $00, $01, $01, $01, $01, $00, $00, $00, $00, $00, $00, $01, $01, $00
+    .byte $00, $00, $00, $00, $00, $01, $01, $01, $01, $00, $00, $00, $00, $01, $01, $00
+    .byte $00, $00, $00, $00, $00, $01, $01, $01, $01, $00, $00, $00, $00, $01, $01, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $01, $01, $01, $01, $01, $01, $01, $01, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $01, $01, $01, $01, $01, $01, $01, $01, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $01, $01, $01, $01, $01, $01, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $01, $01, $01, $01, $01, $01, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+
 img_other_backtick:
     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     .byte $00, $00, $00, $00, $01, $01, $01, $01, $01, $01, $00, $00, $00, $00, $00, $00
@@ -1276,6 +1294,24 @@ img_other_dot:
     .byte $00, $00, $00, $00, $00, $00, $01, $01, $01, $01, $00, $00, $00, $00, $00, $00
     .byte $00, $00, $00, $00, $00, $00, $01, $01, $01, $01, $00, $00, $00, $00, $00, $00
     .byte $00, $00, $00, $00, $00, $00, $01, $01, $01, $01, $00, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+
+img_other_enter:
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $01, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $01, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $00, $01, $00, $00, $00, $00, $01, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $01, $01, $00, $00, $00, $00, $01, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $01, $01, $01, $01, $01, $01, $01, $01, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $01, $01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $00, $01, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 
 img_other_equal:
@@ -1788,8 +1824,8 @@ table_lo:
     .byte $00, <img_min_c, <img_min_x, <img_min_d, <img_min_e, <img_number_4, <img_number_3, $00, $00, <img_other_space, <img_min_v, <img_min_f, <img_min_t, <img_min_r, <img_number_5, $00
     .byte $00, <img_min_n, <img_min_b, <img_min_h, <img_min_g, <img_min_y, <img_number_6, $00, $00, $00, <img_min_m, <img_min_j, <img_min_u, <img_number_7, <img_number_8, $00
     .byte $00, <img_other_comma, <img_min_k, <img_min_i, <img_min_o, <img_number_0, <img_number_9, $00, $00, <img_other_dot, <img_other_slash, <img_min_l, <img_other_semicolon, <img_min_p, <img_other_minus, $00
-    .byte $00, $00, <img_other_quote2, $00, <img_other_leftbracket, <img_other_equal, $00, $00, $00, $00, $00, <img_other_rightbracket, $00, <img_other_backslash, $00, $00
-    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, <img_symbol_left, $00, $00, $00, $00
+    .byte $00, $00, <img_other_quote2, $00, <img_other_leftbracket, <img_other_equal, $00, $00, $00, $00, <img_other_enter, <img_other_rightbracket, $00, <img_other_backslash, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, <img_other_backspace, $00, $00, $00, $00, <img_symbol_left, $00, $00, $00, $00
     .byte $00, $00, <img_symbol_down, $00, <img_symbol_right, <img_symbol_up, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
@@ -1806,8 +1842,8 @@ table_hi:
     .byte $00, >img_min_c, >img_min_x, >img_min_d, >img_min_e, >img_number_4, >img_number_3, $00, $00, >img_other_space, >img_min_v, >img_min_f, >img_min_t, >img_min_r, >img_number_5, $00
     .byte $00, >img_min_n, >img_min_b, >img_min_h, >img_min_g, >img_min_y, >img_number_6, $00, $00, $00, >img_min_m, >img_min_j, >img_min_u, >img_number_7, >img_number_8, $00
     .byte $00, >img_other_comma, >img_min_k, >img_min_i, >img_min_o, >img_number_0, >img_number_9, $00, $00, >img_other_dot, >img_other_slash, >img_min_l, >img_other_semicolon, >img_min_p, >img_other_minus, $00
-    .byte $00, $00, >img_other_quote2, $00, >img_other_leftbracket, >img_other_equal, $00, $00, $00, $00, $00, >img_other_rightbracket, $00, >img_other_backslash, $00, $00
-    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, >img_symbol_left, $00, $00, $00, $00
+    .byte $00, $00, >img_other_quote2, $00, >img_other_leftbracket, >img_other_equal, $00, $00, $00, $00, >img_other_enter, >img_other_rightbracket, $00, >img_other_backslash, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, >img_other_backspace, $00, $00, $00, $00, >img_symbol_left, $00, $00, $00, $00
     .byte $00, $00, >img_symbol_down, $00, >img_symbol_right, >img_symbol_up, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
@@ -1824,8 +1860,8 @@ table_shift_lo:
     .byte $00, <img_cap_c, <img_cap_x, <img_cap_d, <img_cap_e, <img_other_dollar, <img_other_hash, $00, $00, <img_other_space, <img_cap_v, <img_cap_f, <img_cap_t, <img_cap_r, <img_other_percentage, $00
     .byte $00, <img_cap_n, <img_cap_b, <img_cap_h, <img_cap_g, <img_cap_y, <img_other_hat, $00, $00, $00, <img_cap_m, <img_cap_j, <img_cap_u, <img_other_and, <img_other_asterix, $00
     .byte $00, <img_other_lessthan, <img_cap_k, <img_cap_i, <img_cap_o, <img_other_rightpar, <img_other_leftpar, $00, $00, <img_other_greaterthan, <img_other_question, <img_cap_l, <img_other_2points, <img_cap_p, <img_other_underscore, $00
-    .byte $00, $00, <img_other_quote, $00, <img_other_leftparenthesis, <img_other_plus, $00, $00, $00, $00, $00, <img_other_rightparenthesis, $00, <img_other_pipe, $00, $00
-    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, <img_symbol_left, $00, $00, $00, $00
+    .byte $00, $00, <img_other_quote, $00, <img_other_leftparenthesis, <img_other_plus, $00, $00, $00, $00, <img_other_enter, <img_other_rightparenthesis, $00, <img_other_pipe, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, <img_other_backspace, $00, $00, $00, $00, <img_symbol_left, $00, $00, $00, $00
     .byte $00, $00, <img_symbol_down, $00, <img_symbol_right, <img_symbol_up, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
@@ -1842,8 +1878,8 @@ table_shift_hi:
     .byte $00, >img_cap_c, >img_cap_x, >img_cap_d, >img_cap_e, >img_other_dollar, >img_other_hash, $00, $00, >img_other_space, >img_cap_v, >img_cap_f, >img_cap_t, >img_cap_r, >img_other_percentage, $00
     .byte $00, >img_cap_n, >img_cap_b, >img_cap_h, >img_cap_g, >img_cap_y, >img_other_hat, $00, $00, $00, >img_cap_m, >img_cap_j, >img_cap_u, >img_other_and, >img_other_asterix, $00
     .byte $00, >img_other_lessthan, >img_cap_k, >img_cap_i, >img_cap_o, >img_other_rightpar, >img_other_leftpar, $00, $00, >img_other_greaterthan, >img_other_question, >img_cap_l, >img_other_2points, >img_cap_p, >img_other_underscore, $00
-    .byte $00, $00, >img_other_quote, $00, >img_other_leftparenthesis, >img_other_plus, $00, $00, $00, $00, $00, >img_other_rightparenthesis, $00, >img_other_pipe, $00, $00
-    .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, >img_symbol_left, $00, $00, $00, $00
+    .byte $00, $00, >img_other_quote, $00, >img_other_leftparenthesis, >img_other_plus, $00, $00, $00, $00, >img_other_enter, >img_other_rightparenthesis, $00, >img_other_pipe, $00, $00
+    .byte $00, $00, $00, $00, $00, $00, >img_other_backspace, $00, $00, $00, $00, >img_symbol_left, $00, $00, $00, $00
     .byte $00, $00, >img_symbol_down, $00, >img_symbol_right, >img_symbol_up, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00

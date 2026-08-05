@@ -76,7 +76,7 @@ fn char_code(c: char) -> Option<(bool, bool, u8)> {
         'f' => (false, 0x2B), 'F' => (true, 0x2B),
         'g' => (false, 0x34), 'G' => (true, 0x34),
         'h' => (false, 0x33), 'H' => (true, 0x33),
-        'i' => (false, 0x41), 'I' => (true, 0x41),
+        'i' => (false, 0x43), 'I' => (true, 0x43),
         'j' => (false, 0x3B), 'J' => (true, 0x3B),
         'k' => (false, 0x42), 'K' => (true, 0x42),
         'l' => (false, 0x4B), 'L' => (true, 0x4B),
