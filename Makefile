@@ -1,4 +1,4 @@
-all: program rainbow helloworld hackclub
+all: program rainbow helloworld hackclub keyboard
 
 
 program:
@@ -32,6 +32,14 @@ helloworld:
 		build/asm/helloworld_demo.o \
 		-o build/asm/helloworld_demo.bin
 	rm build/asm/helloworld_demo.o
+
+keyboard:
+	ca65 src/asm/keyboard/keyboard_demo.s -o build/asm/keyboard_demo.o
+	ld65 \
+		-C src/asm/keyboard/linker.cfg \
+		build/asm/keyboard_demo.o \
+		-o build/asm/keyboard_demo.bin
+	rm build/asm/keyboard_demo.o
 
 font:
 	python3 tools/font_generator.py

@@ -444,6 +444,8 @@ fn render_home(frame: &mut Frame, state: &mut TuiState) {
             ListItem::new("  ../ (Parent Directory) ").style(Style::default().fg(Color::Cyan))
         } else if item.ends_with('/') {
             ListItem::new(format!("  {} ", item)).style(Style::default().fg(Color::Blue))
+        } else if item.contains("_demo") {
+            ListItem::new(format!(" 󰗮 {} ", item))
         } else {
             ListItem::new(format!("  {} ", item))
         }
@@ -1075,8 +1077,11 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                         state.file_list_state.select(Some(new_i));
 
                                         let file_name = &state.available_files[new_i].to_lowercase();
-                                        if file_name.contains("demo") && file_name.ends_with(".bin") {
-                                            state.start_addr_input = "C000".to_string(); 
+                                        if file_name.contains("keyboard_demo") && file_name.ends_with(".bin") {
+                                            state.start_addr_input = "8000".to_string();
+                                            state.force_address = true;
+                                        } else if file_name.contains("demo") && file_name.ends_with(".bin") {
+                                            state.start_addr_input = "C000".to_string();
                                             state.force_address = true;
                                         } else if !file_name.contains("demo") {
                                             state.start_addr_input = "8000".to_string();
@@ -1091,7 +1096,10 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                         state.file_list_state.select(Some(new_i));
 
                                         let file_name = &state.available_files[new_i].to_lowercase();
-                                        if file_name.contains("demo") && file_name.ends_with(".bin") {
+                                        if file_name.contains("keyboard_demo") && file_name.ends_with(".bin") {
+                                            state.start_addr_input = "8000".to_string();
+                                            state.force_address = true;
+                                        } else if file_name.contains("demo") && file_name.ends_with(".bin") {
                                             state.start_addr_input = "C000".to_string();
                                             state.force_address = true;
                                         } else if !file_name.contains("demo") {

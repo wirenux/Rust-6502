@@ -1,3 +1,4 @@
+
 .segment "RODATA"
 
 img_cap_a:

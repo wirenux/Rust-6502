@@ -168,6 +168,8 @@ match opcode {
 
 - [ ] add table of content in the README.md
 
+- [ ] talk in the readme about the nerd font disc icon that mean a demo program
+
 - [ ] update the bin file in the release when release 1.1.0
 
 - [x] use Hz / MHz
