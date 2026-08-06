@@ -170,6 +170,10 @@ match opcode {
 
 - [ ] talk in the readme about the nerd font disc icon that mean a demo program
 
+- [ ] implement serial over tcp and netcat
+
+- [ ] try adding Wozmon
+
 - [ ] update the bin file in the release when release 1.1.0
 
 - [x] use Hz / MHz
