@@ -174,7 +174,15 @@ match opcode {
 
 - [x] add Wozmon
 
-- [ ] add modified version of apple 1 user manual exemple program
+- [ ] add modified version of apple 1 user manual exemple program in the readme or in "AppleI.md"
+
+- [ ] in "AppleI.md" add how to use Wozmon with netcat `nc`
+
+- [ ] say that the emulator can run AppleI OS (Wozmon)
+
+- [ ] talk about the serial monitor
+
+- [ ] Create Docs for the serial monitor
 
 - [ ] add random tip in the settings
 
