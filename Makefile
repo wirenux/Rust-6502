@@ -1,4 +1,4 @@
-all: program rainbow helloworld hackclub keyboard
+all: program rainbow helloworld hackclub keyboard wozmon
 
 
 program:
@@ -40,6 +40,14 @@ keyboard:
 		build/asm/keyboard_demo.o \
 		-o build/asm/keyboard_demo.bin
 	rm build/asm/keyboard_demo.o
+
+wozmon:
+	ca65 src/asm/wozmon/wozmon.s -o build/asm/wozmon.o
+	ld65 \
+		-C src/asm/wozmon/linker.cfg \
+		build/asm/wozmon.o \
+		-o build/asm/wozmon.bin
+	rm build/asm/wozmon.o
 
 font:
 	python3 tools/font_generator.py

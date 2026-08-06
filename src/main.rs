@@ -6,6 +6,7 @@ mod opcodes;
 mod tui;
 mod disasm;
 mod ps2;
+mod serial;
 
 use bus::Bus;
 use cpu::Cpu;

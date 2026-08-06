@@ -1,6 +1,11 @@
 use std::collections::VecDeque;
 use crossterm::event::KeyCode;
 use crate::ps2;
+use crate::serial::{
+    Serial,
+    SERIAL_DATA_ADDR,
+    SERIAL_STATUS_ADDR
+};
 
 pub const KBD_DATA_ADDR: u16 = 0xBFF0;      // read: peak at the next scancode byte
 pub const KBD_STATUS_ADDR: u16 = 0xBFF1;    // read: bit0 = byte waiting, bit1 = capture active
@@ -14,6 +19,7 @@ pub struct Bus {
     pub nmi_active: bool,
     kbd_queue: VecDeque<u8>,
     pub kbd_capture_active: bool,
+    pub serial: Serial,
 }
 
 impl Bus {
@@ -24,13 +30,14 @@ impl Bus {
             nmi_active: false,
             kbd_queue: VecDeque::new(),
             kbd_capture_active: false,
+            serial: Serial::new(8080),
         }
     }
 
     pub fn read_ram(&self, addr: u16) -> u8 {
         match addr {
             KBD_DATA_ADDR => self.kbd_queue.front().copied().unwrap_or(0),
-    
+
             KBD_STATUS_ADDR => {
                 let mut status = 0u8;
 
@@ -41,9 +48,11 @@ impl Bus {
                 if self.kbd_capture_active {
                     status |= KBD_STATUS_CAPUTRE_ACTIVE;
                 }
-                
+
                 status
-            }
+            },
+            
+            SERIAL_DATA_ADDR | SERIAL_STATUS_ADDR => self.serial.read_register(addr),
 
             _ => self.ram[addr as usize],
         }
@@ -57,6 +66,10 @@ impl Bus {
 
         if addr == KBD_ACK_ADDR {
             self.kbd_queue.pop_front();
+        }
+
+        if addr == SERIAL_DATA_ADDR {
+            self.serial.write_register(addr, data);
         }
 
         self.ram[addr as usize] = data;

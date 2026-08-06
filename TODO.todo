@@ -170,9 +170,13 @@ match opcode {
 
 - [ ] talk in the readme about the nerd font disc icon that mean a demo program
 
-- [ ] implement serial over tcp and netcat
+- [x] implement serial over tcp and netcat
 
-- [ ] try adding Wozmon
+- [x] add Wozmon
+
+- [ ] add modified version of apple 1 user manual exemple program
+
+- [ ] add random tip in the settings
 
 - [ ] update the bin file in the release when release 1.1.0
 
