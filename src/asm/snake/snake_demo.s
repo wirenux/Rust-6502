@@ -1,6 +1,8 @@
-;
-; Top left corner of the screen : (0, 0)
-;
+; =======
+;  Snake
+; =======
+; This program is released under the MIT license
+; This program is built for the rust6502 emulator created by @wirenux
 
 KBD_DATA    = $BFF0
 KBD_STATUS  = $BFF1

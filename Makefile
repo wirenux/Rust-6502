@@ -1,4 +1,4 @@
-all: program rainbow helloworld hackclub keyboard wozmon
+all: program rainbow helloworld hackclub keyboard wozmon serial snake
 
 
 program:
@@ -40,6 +40,23 @@ keyboard:
 		build/asm/keyboard_demo.o \
 		-o build/asm/keyboard_demo.bin
 	rm build/asm/keyboard_demo.o
+
+serial:
+	ca65 src/asm/serial/serial_demo.s -o build/asm/serial_demo.o
+	ld65 \
+		-C src/asm/serial/linker.cfg \
+		build/asm/serial_demo.o \
+		-o build/asm/serial_demo.bin
+	rm build/asm/serial_demo.o
+
+
+snake:
+	ca65 src/asm/snake/snake_demo.s -o build/asm/snake_demo.o
+	ld65 \
+		-C src/asm/snake/linker.cfg \
+		build/asm/snake_demo.o \
+		-o build/asm/snake_demo.bin
+	rm build/asm/snake_demo.o
 
 wozmon:
 	ca65 src/asm/wozmon/wozmon.s -o build/asm/wozmon.o

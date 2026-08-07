@@ -148,8 +148,8 @@ match opcode {
 
 - [ ] when force addr is on the program always load at `$8000` but look in the reset vector for a PC address. So when the reset vector addr is not the same as `$8000` the disasm work and print the code but the PC might read `0x00` (BRK opcode) (maybe good to say that from X to X it the rom and from X to X it the ram like a real 6502 pc)
 
-- [ ] add test program
-    - [ ] snake (if keyboard is implemented)
+- [x] add test program
+    - [x] snake (if keyboard is implemented)
     - [x] print pressed char (if keyboard is implemented)
         - [x] create a custom font with aseprite (white & black) an transform it with the python code
         - [x] change linker.cfg and program.s to keyboard.s in src/asm/keyboard/
