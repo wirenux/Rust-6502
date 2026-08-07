@@ -1,27 +1,18 @@
 use ansi_to_tui::IntoText;
 
 use ratatui::{
-    backend::CrosstermBackend,
-    Frame,
-    layout::{
+    Frame, Terminal, backend::CrosstermBackend, layout::{
         Alignment,
         Constraint,
         Direction,
         Layout,
         Rect,
-    },
-    style::{
-        Color,
-        Modifier,
-        Style,
-        Stylize,
-    },
-    Terminal,
-    text::{
+    }, style::{
+        Color, Modifier, Style, Styled, Stylize,
+    }, text::{
         Line,
         Span,
-    },
-    widgets::{
+    }, widgets::{
         Block,
         Gauge,
         List,
@@ -143,6 +134,9 @@ struct TuiState {
 
     keyboard_capture: bool,
     screen_area: Rect,
+
+    show_pc_input: bool,
+    pc_input: String,
 }
 
 const SETTING_LOGO_ANSI: &str = "
@@ -388,6 +382,8 @@ fn render_footer(frame: &mut Frame, area: Rect, state: &TuiState) {
             Span::raw(" IRQ  "),
             Span::styled(" N ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
             Span::raw(" NMI  "),
+            Span::styled(" P ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::raw(" Set PC Addr "),
             Span::styled(" ↑↓ ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
             Span::raw(" Scroll  "),
             Span::styled(" ? ", Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)),
@@ -521,7 +517,7 @@ fn render_home(frame: &mut Frame, state: &mut TuiState) {
         Style::default().fg(Color::DarkGray).add_modifier(Modifier::DIM)
     };
 
-    let addr_display = Paragraph::new(Span::styled(format!(" 0x{}", state.start_addr_input), addr_text_style))
+    let addr_display = Paragraph::new(Span::styled(format!(" 0x{}█", state.start_addr_input), addr_text_style))
         .block(Block::bordered().title(" Start Address (Hex) ").border_style(addr_style));
 
     frame.render_widget(addr_display, right_layout[2]);
@@ -963,6 +959,47 @@ fn render_emulator(frame: &mut Frame, cpu: &mut Cpu, state: &mut TuiState, bus: 
         frame.render_widget(ratatui::widgets::Clear, popup_area);
         render_settings_popup(frame, frame.area(), state);
     }
+
+    if state.show_pc_input {
+        let vertical = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Min(0),
+                Constraint::Length(3),
+                Constraint::Min(0),
+            ])
+            .split(frame.area());
+
+        let horizontal = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Min(0),
+                Constraint::Length(24),
+                Constraint::Min(0),
+            ])
+            .split(vertical[1]);
+
+        let popup_area = horizontal[1];
+
+        render_popup_shadow(frame, popup_area, frame.area());
+        frame.render_widget(ratatui::widgets::Clear, popup_area);
+
+        let block = Block::bordered()
+            .title(" Set PC (Hex) ")
+            .border_style(Style::default().fg(Color::Yellow));
+
+        let text = Paragraph::new(format!(" > {}█", state.pc_input))
+            .style(Style::default().fg(Color::White))
+            .block(block);
+
+        frame.render_widget(text, popup_area);
+    } else if state.show_settings {
+        let popup_area = centered_rect(50, 40, frame.area());
+        
+        render_popup_shadow(frame, popup_area, frame.area());
+        frame.render_widget(ratatui::widgets::Clear, popup_area);
+        render_settings_popup(frame, frame.area(), state);
+    }
 }
 
 pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<String>) -> io::Result<()> {
@@ -1024,6 +1061,9 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
 
         keyboard_capture: false,
         screen_area: Rect::default(),
+
+        show_pc_input: false,
+        pc_input: String::new(),
     };
 
     cpu.reset_cpu(bus);
@@ -1208,6 +1248,33 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                     KeyCode::Down => state.cycles_per_second = state.cycles_per_second.saturating_sub(10_000),
                                     _ => {}
                                 }
+                            } else if state.show_pc_input {
+                                match key.code {
+                                    KeyCode::Esc => state.show_pc_input = false,
+                                    KeyCode::Backspace => {
+                                        state.pc_input.pop();
+                                    },
+                                    KeyCode::Char(c) => {
+                                        if c.is_ascii_hexdigit() && state.pc_input.len() < 4 {
+                                            state.pc_input.push(c.to_ascii_uppercase());
+                                        }
+                                    },
+                                    KeyCode::Enter => {
+                                        if let Ok(addr) = u16::from_str_radix(&state.pc_input, 16) {
+                                            cpu.pc = addr;
+
+                                            let labels = find_label_addr(&state.disasm_lines);
+                                            let (_, addr_to_row) = build_opcode_rows(&state.disasm_lines, &labels);
+                                            if let Some(&row_idx) = addr_to_row.get(&addr) {
+                                                state.manual_selection = Some(row_idx);
+                                            } else {
+                                                state.manual_selection = None;
+                                            }
+                                        }
+                                        state.show_pc_input = false;
+                                    },
+                                    _ => {}
+                                }
                             } else if state.keyboard_capture {
                                 if key.kind == KeyEventKind::Press || key.kind == KeyEventKind::Repeat {
                                     let code = if key.modifiers.contains(KeyModifiers::SHIFT) {
@@ -1248,6 +1315,11 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                     },
                                     KeyCode::Char('n') => {
                                         bus.nmi_active = true;
+                                    },
+                                    KeyCode::Char('p') => {
+                                        state.show_pc_input = !state.show_pc_input;
+                                        state.pc_input.clear();
+                                        state.running = false;
                                     }
                                     KeyCode::Char('r') => {
                                         cpu.reset_cpu(bus);

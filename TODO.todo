@@ -164,7 +164,9 @@ match opcode {
 
 - [ ] add a diagram / schematic for the space in the 64k space (screen, stack, etc...)
 
-- [ ] add a option to change the value of the PC inside the emulator
+- [x] add a option to change the value of the PC inside the emulator
+
+- [x] add cursor to start addr input on home screen
 
 - [ ] add table of content in the README.md
 
