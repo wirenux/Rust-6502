@@ -150,9 +150,9 @@ match opcode {
 
 - [ ] add test program
     - [ ] snake (if keyboard is implemented)
-    - [ ] print pressed char (if keyboard is implemented)
-        - [ ] create a custom font with aseprite (white & black) an transform it with the python code
-        - [ ] change linker.cfg and program.s to keyboard.s in src/asm/keyboard/
+    - [x] print pressed char (if keyboard is implemented)
+        - [x] create a custom font with aseprite (white & black) an transform it with the python code
+        - [x] change linker.cfg and program.s to keyboard.s in src/asm/keyboard/
     - [x] hackclub logo
         - [x] draw the logo in aseprite
     - [x] hello world on screen
