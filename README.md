@@ -89,6 +89,7 @@ Source: [Wikipedia](https://en.wikipedia.org/wiki/MOS_Technology_6502)
 * **Memory Viewer**: A hexadecimal grid tracking system memory layout, complete with vertical scrolling.
 * **Disassembly Program Viewer**: Automatically disassembles loaded ROM bytes into opcodes and functions (with indented code and labeled addresses). Includes a scrollbar.
 * **PS/2 Keyboard**: Once the screen is clicked (captured), every keystroke is translated into PS/2 keyboard scancodes. For more information, see the [Keyboard Documentation](./Keyboard.md)
+* **Set PC**: Move the PC address
 * **Serial Monitor**: Useful to print debug value or to use [Wozmon](./AppleI.md). For more information, see [Serial Monitor Documentation](./Serial.md)
 * **Settings Menu**: Adjustable CPU speed settings and repository links.
   * **Tips**: Random tips for a better use of the emulator.
