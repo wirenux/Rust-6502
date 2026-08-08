@@ -1,25 +1,30 @@
 # Writing & Compiling 6502 Assembly
 
-This guide walk through writing custom 6502 assembly programs for the `rust6502` emulator using the `cc65` toolchain (`ca65` assembler and `ld65` linker).
+This guide walks through writing a custom 6502 assembly programs for the `rust6502` emulator using the `cc65` toolchain (`ca65` assembler and `ld65` linker).
 
 ## System Memory Map
 
-When writing assembly for this emulator| keep the internal memory layout in mind:
+When writing assembly for this emulator, keep the internal memory layout in mind:
 
 | Memory Range | Function | Description |
 | ------------ | -------- | ----------- |
 | `$0000 - $00FF` |Zero Page|Fast 8-bit addressing mode RAM
-| `$0100 - $01FF` |Stack Pointer|System Call/Return Stack
-| `$0200 - $05FF` |Video RAM|"32x32 pixels (1,024 bytes, 1 byte = 1 color)"
-| `$0600 - $BFFF` |General RAM|Free memory for user variables
-| `$C000 - $FFFF` |ROM Space|Program Code & Read-Only Data (16 KB)
-| `$FFFC - $FFFD` |Reset Vector|16-bit address pointing to program entry point
+| `$0100 - $01FF` |Stack |System Call/Return Stack
+| `$0200 - $05FF` |Screen Memory|"32x32 pixels (1,024 bytes, 1 byte = 1 color)"
+| `$0600 - $BFDF` |General RAM|Free memory for user variables
+| `$BFE0 - $BFEF` |Serial Monitor|Only `$BFE0` (data) and `$BFE1` (status) are implemented. More details [here](./Serial.md)
+| `$BFF0 - $BFFF` |PS/2 Keyboard|Used for [keyboard](./Keyboard.md) management
+| `$BFFC` |Control Register|Write: bit0 triggers IRQ, bit1 triggers NMI
+| `$C000 - $FFF9` |ROM Space|Program Code & Read-Only Data (~16 KB)
+| `$FFFA - $FFFF` |Vector|16-bit address pointing to program entry point
+
+<img src="assets/images/6502_memory_map_horizontal.png" />
 
 ## 1. Linker Configuration
 
-The linker configuration tells `ld65` how to lay out you code into memory and ensures the 16-bit reset vector is placed at `$FFFC`.
+The linker configuration tells `ld65` how to lay out your code in memory and ensures the 16-bit reset vector is placed at `$FFFC`.
 
-Create a file name `linker.cfg`:
+Create a file named `linker.cfg`:
 
 ```config
 MEMORY {
@@ -38,9 +43,9 @@ SEGMENTS {
 
 ## 2. Sample Program (`program.s`)
 
-Here is a basic program that initialize the CPU and paints the top 4 rows of the virtual screen with <span style="color: rgb(255, 0, 0); font-size: 1.2em;">■</span> **Red** pixels (color `$02`).
+Here is a basic program that initializes the CPU and paints the top 4 rows of the virtual screen with <span style="color: rgb(255, 0, 0); font-size: 1.2em;">■</span> **Red** pixels (color `$02`).
 
-Create a file named `program.s` :
+Create a file named `program.s`:
 
 ```asm
 .segment "CODE"
@@ -82,7 +87,7 @@ Install the `cc65` toolchain:
 
 ### Compilation Steps
 
-Run those tow commands in your terminal :
+Run these two commands in your terminal:
 
 ```bash
 # 1. Assemble source file into an object file (.o)
@@ -94,7 +99,7 @@ ld65 program.o -C linker.cfg -o program.bin
 
 ## 4. Running in `rust6502`
 
-Once compiled, launch your executable directly with the  generated `.bin` file:
+Once compiled, launch your executable directly with the generated `.bin` file:
 
 ```bash
 rust6502

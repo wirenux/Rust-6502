@@ -157,7 +157,7 @@ match opcode {
 - [x] create a doc to write data to screen (don't start program b/w `$0200-$05FF`)
 - [x] add info for each quarter of the screen (like addr for each)
 
-- [ ] add a diagram / schematic for the space in the 64k space (screen, stack, etc...)
+- [x] add a diagram / schematic for the space in the 64k space (screen, stack, etc...)
 
 - [x] add a option to change the value of the PC inside the emulator
 
@@ -165,23 +165,29 @@ match opcode {
 
 - [ ] add table of content in the README.md
 
-- [ ] talk in the readme about the nerd font disc icon that mean a demo program
+- [x] talk in the readme about the nerd font disc icon that mean a demo program
 
 - [x] implement serial over tcp and netcat
 
 - [x] add Wozmon
 
-- [ ] add modified version of apple 1 user manual exemple program in the readme or in "AppleI.md"
+- [x] add modified version of apple 1 user manual exemple program in the readme or in "AppleI.md"
 
-- [ ] in "AppleI.md" add how to use Wozmon with netcat `nc`
+- [x] in "AppleI.md" add how to use Wozmon with netcat `nc`
 
-- [ ] say that the emulator can run AppleI OS (Wozmon)
+- [x] say that the emulator can run AppleI OS (Wozmon)
 
-- [ ] talk about the serial monitor
+- [x] talk about the serial monitor
 
-- [ ] Create Docs for the serial monitor
+- [x] update screenshot
+
+- [ ] update video
+
+- [x] Create Docs for the serial monitor
 
 - [x] add random tip in the settings
+
+- [x] talk about the mouse support on the home screen and emulator
 
 - [ ] update the bin file in the release when release 1.1.0
 

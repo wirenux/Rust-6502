@@ -13,7 +13,37 @@
 ---
 
 > [!NOTE]
-> A Nerd Font is strongly recommended in your terminal emulator for proper rendering of UI icons. Modern terminal Emulator are recommended for better visuals.
+> A Nerd Font is strongly recommended in your terminal emulator for proper rendering of UI icons like the disk, file, folder icons. Modern terminal emulator are recommended for better visuals.
+
+
+## Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [What is the MOS 6502](#what-is-the-mos-6502)
+- [Core Features](#core-features)
+  - [Emulator](#emulator)
+  - [Home Menu](#home-menu)
+  - [Both](#both)
+- [Built with...](#built-with)
+- [Installation \& Quick Start](#installation--quick-start)
+- [Implemented Demo Programs:](#implemented-demo-programs)
+  - [Apple I](#apple-i)
+  - [Snake](#snake)
+  - [Rainbow](#rainbow)
+  - [Hello World !](#hello-world-)
+  - [Hackclub Logo](#hackclub-logo)
+  - [Keyboard](#keyboard)
+  - [Serial](#serial)
+- [Stardance Devlogs ᕙ( •̀ ᗜ •́ )ᕗ](#stardance-devlogs-ᕙ-̀-ᗜ-́-ᕗ)
+- [Development](#development)
+  - [Dependencies](#dependencies)
+  - [Building Rust-6502 from source](#building-rust-6502-from-source)
+- [Test \& Validation](#test--validation)
+- [Documentation](#documentation)
+- [Boring Stuff](#boring-stuff)
+  - [Use of AI](#use-of-ai)
+  - [Credits](#credits)
+  - [License](#license)
 
 ## What is the MOS 6502
 
@@ -51,22 +81,29 @@ Source: [Wikipedia](https://en.wikipedia.org/wiki/MOS_Technology_6502)
 
 ### Emulator
 
-* **Virtual Screen**: A 32x32 pixel screen using the Unicode half-block character `▀` with a custom color palette.
+* **Virtual Screen**: A 32x32 pixel screen using the Unicode half-block character `▀` with a custom color palette. For more information, see the [Screen Documentation](./Screen.md).
   * **Color Palette**: Supports 16 custom colors. For more information, see the [Color List](./Palette.md).
 * **Flags Container**: Displays the status flags ($N, V, D, I, Z, C$), highlighting active flags in bright green.
 * **Register Container**: Live tracking of registers ($AC, XR, YR, SP$).
 * **Stack Viewer**: A scrollable list showing stack addresses and values, with the current stack pointer highlighted.
 * **Memory Viewer**: A hexadecimal grid tracking system memory layout, complete with vertical scrolling.
 * **Disassembly Program Viewer**: Automatically disassembles loaded ROM bytes into opcodes and functions (with indented code and labeled addresses). Includes a scrollbar.
+* **PS/2 Keyboard**: Once the screen is clicked (captured), every keystroke is translated into PS/2 keyboard scancodes. For more information, see the [Keyboard Documentation](./Keyboard.md)
+* **Serial Monitor**: Useful to print debug value or to use [Wozmon](./AppleI.md). For more information, see [Serial Monitor Documentation](./Serial.md)
 * **Settings Menu**: Adjustable CPU speed settings and repository links.
-* **Footer Bar**: Quick reference guide for keyboard shortcuts and controls.
+  * **Tips**: Random tips for a better use of the emulator.
+* **Footer Bar**: List all keyboard shortcuts and controls.
 
 ### Home Menu
 
-* **File Browser**: Lists files and folders present in the current directory, enhanced with Nerd Font icons.
+* **File Browser**: Lists files and folders present in the current directory, enhanced with Nerd Font icons. **Demo files are represented with a disc icon**
 * **Force Address Toggle**: If set off, the CPU will look at the reset vector `$FFFD-$FFFC` to move the PC at his correct place.
-* **Start Address**: Automatically detects files ending with `_demo.bin` and configures the start address to `0xC000`.
+* **Start Address**: Automatically detects files ending with `_demo.bin` and configures the start address to `0xC000`. Address can change from a demo file to another (like the [Wozmon](./AppleI.md) or the Snake)
 * **Emulation Speed**: Adjusts the Hz / MHz target.
+
+### Both
+
+* **Mouse Support**: in the Home Menu or in the Emulator everything can be use via the mouse `ദ്ദി(˵ •̀ ᴗ - ˵ ) ✧`
 
 ## Built with...
 
@@ -94,6 +131,14 @@ cargo install rust6502
 
 ## Implemented Demo Programs:
 
+### Apple I
+
+<img src="assets/images/wozmon.png"/>
+
+### Snake
+
+<img src="assets/images/snake.png"/>
+
 ### Rainbow
 
 <img src="assets/images/rainbow.png" />
@@ -105,6 +150,14 @@ cargo install rust6502
 ### Hackclub Logo
 
 <img src="assets/images/hackclub_logo.png" />
+
+### Keyboard
+
+<img src="assets/images/keyboard.png"/>
+
+### Serial
+
+<img src="assets/images/serial.png"/>
 
 ## Stardance Devlogs ᕙ( •̀ ᗜ •́ )ᕗ
 
@@ -138,6 +191,8 @@ cargo run
 
 ## Test & Validation
 
+***This emulator is able to run the [Apple I](AppleI.md) OS (Wozmon) using the custom [Serial Monitor](Serial.md) I built.***
+
 To build custom assembly files without error (handling proper memory origin segments and interrupts), it is recommended to use the [`cc65` toolchain](https://cc65.github.io/) ([`ca65`](https://cc65.github.io/doc/ca65.html) for assembly and [`ld65`](https://cc65.github.io/doc/ld65.html) for linking):
 
 ```bash
@@ -154,6 +209,9 @@ For more information about the emulator subsystem, check out the dedicated docum
 * **[Assembly & Toolchain Guide](./ASM.md)**: Step by step guide to writing 6502 assembly, configuring `linker.cfg`, and compiling with `cc65`.
 * **[Color Palette](./Palette.md)**: Reference guide for the 16 custom display colors.
 * **[Screen Documentation](./Screen.md)**: Details on the memory-mapped video buffer, resolution, and pixel rendering.
+* **[Serial Monitor](./Serial.md)**: Details on how the Monitor works and how to use it.
+* **[Keyboard](./Keyboard.md)**: Details on how a PS/2 keyboard works and how it can be used
+* **[Apple I](./AppleI.md)**: Details on how the Apple I works how I modified it run on `rust6502` using the custom [Serial Monitor](./Serial.md) I built.
 
 ## Boring Stuff
 

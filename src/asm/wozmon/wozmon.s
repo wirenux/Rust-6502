@@ -72,12 +72,17 @@ nextchar:
   ldy #$FF          ; Reset text index
   lda #$00          ; For XAM mode
   tax               ; 0 -> X
+  beq setmode       ; Branch over the mode setters
+
+setblock:
+  lda #$AE          ; Force a bit7-set sentinel for BLOCK XAM
+  bne setmode       ; Always taken
 
 setstor:
-  asl               ; Leaves $0B if setting STOR mode
+  asl               ; Leaves $74 if setting STOR mode
 
 setmode:
-  sta MODE          ; $00 = XAM, $74 = STOR, $B8 = BLOCK XAM
+  sta MODE          ; $00 = XAM, $74 = STOR, $AE = BLOCK XAM
 
 blskip:
   iny               ; Advance text index
@@ -88,7 +93,7 @@ nextitem:
   beq getline       ; Yes, done this line
   cmp #$2E          ; "."?
   bcc blskip        ; Skip delimiter
-  beq setmode       ; Set BLOCK XAM mode
+  beq setblock      ; Set BLOCK XAM mode
   cmp #$3A          ; ":"?
   beq setstor       ; Set STOR mode
   cmp #$52          ; "R"?
@@ -174,13 +179,14 @@ prdata:
 xamnext:
   stx MODE          ; 0 -> Mode
   lda XAML
-  cmp L
+  cmp L             ; Acts as the lower-byte subtraction. Must set Carry if A >= M.
   lda XAMH
-  sbc H
-  bcs tonextitem
-  inc XAML
-  bne mod8chk
-  inc XAMH
+  sbc H             ; Subtracts H and the inverted Carry (borrow).
+  bcs tonextitem    ; Branches if the 16-bit value XAM >= L/H.
+
+  inc XAML          ; Advance to the next address
+  bne mod8chk       ; If no overflow, skip the high-byte increment
+  inc XAMH          ; Carry over to the high byte
 
 mod8chk:
   lda XAML

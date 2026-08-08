@@ -1,6 +1,6 @@
 # Screen & Video managements Documentation
 
-Rust-6502 features a memory-mapped virtual screen that update in real-time as your program write data to specific RAM addresses.
+`rust6502` features a memory-mapped virtual screen that update in real-time as your program write data to specific RAM addresses.
 
 ## How this work ?
 
@@ -15,7 +15,7 @@ The screen is divided in 4 due to the 8-bit limitation. So each quarter contain 
 
 * 1st Quarter: `$0200-$02FF`
 * 2nd Quarter: `$0300-$03FF`
-* 4rd Quarter: `$0400-$04FF`
+* 3rd Quarter: `$0400-$04FF`
 * 4th Quarter: `$0500-$05FF`
 
 Every single byte in this memory range corresponds directly to a single pixel on the screen.
@@ -29,7 +29,6 @@ $$\text{Address} = \$0200 + (Y \times 32) + X$$
 * $Y \times 32$: Moves down by whole rows (each row is 32 bytes wide).
 * $+ X$: Moves horizontally across the row to the target column.
 
----
 
 ## Color Mapping
 
