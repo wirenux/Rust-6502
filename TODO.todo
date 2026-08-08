@@ -163,7 +163,7 @@ match opcode {
 
 - [x] add cursor to start addr input on home screen
 
-- [ ] add table of content in the README.md
+- [x] add table of content in the README.md
 
 - [x] talk in the readme about the nerd font disc icon that mean a demo program
 
