@@ -181,7 +181,7 @@ match opcode {
 
 - [x] update screenshot
 
-- [ ] update video
+- [x] update video
 
 - [x] Create Docs for the serial monitor
 
