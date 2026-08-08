@@ -8,23 +8,12 @@ use ratatui::{
         Layout,
         Rect,
     }, style::{
-        Color, Modifier, Style, Styled, Stylize,
+        Color, Modifier, Style, Stylize,
     }, text::{
         Line,
         Span,
     }, widgets::{
-        Block,
-        Gauge,
-        List,
-        ListItem,
-        ListState,
-        Paragraph,
-        Row,
-        Scrollbar,
-        ScrollbarOrientation,
-        ScrollbarState,
-        Table,
-        TableState,
+        Block, Borders, Gauge, List, ListItem, ListState, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap,
     },
 };
 
@@ -58,16 +47,13 @@ use std::{
     collections::{
         HashMap,
         HashSet
-    },
-    fs,
-    io,
-    panic,
-    path::{
+    }, fs, io, panic, path::{
         Path,
         PathBuf
+    }, slice::Chunks, thread, time::{
+        Duration,
+        SystemTime
     },
-    thread,
-    time::Duration,
 };
 
 use crate::{
@@ -94,7 +80,26 @@ enum HomeFocus {
     StartButton
 }
 
+const TIPS: &[&str] = &[
+    "Press 'P' to manually jump the Program Counter to a specific address.",
+    "The 6502 stack is hardcoded to page 1 ($0100 - $01FF).",
+    "Zero Page ($0000 - $00FF) instructions execute faster than absolute ones.",
+    "The NMI vector is located at $FFFA, and the Reset vector at $FFFC.",
+    "BRK (Break) is a software interrupt that forces the PC to the IRQ vector.",
+    "Click on the screen area to capture PS/2 keyboard input, and click elsewhere to release it.",
+    "The display features a 32x32 pixel resolution mapped to memory addresses $0200 through $05FF.",
+    "Screen pixels use a 16-color palette, determined by the lower 4 bits of the byte written to memory.",
+    "You can manually trigger hardware interrupts by pressing 'I' for an IRQ or 'N' for an NMI.",
+    "Adjust the emulation clock speed in real-time by pressing the Up and Down arrows while the settings menu is open.",
+    "Pressing 'R' performs a hard reset, reloading the PC from $FFFC, clearing the stack, and wiping the screen.",
+    "While the emulator is paused with 'Space', you can press 'Enter' to execute instructions step-by-step.",
+    "The TUI supports mouse input, allowing you to scroll through the Memory, Stack, and Opcodes views.",
+    "To handle keyboard inputs in assembly, read the PS/2 data from $BFF0 and check the status register at $BFF1.",
+    "The file launcher automatically sets appropriate start addresses for recognized binaries, like $FE80 for Wozmon.",
+];
+
 struct TuiState {
+    tip_index: usize,
     current_dir: PathBuf,
     screen: AppScreen,
     show_settings: bool,
@@ -822,7 +827,8 @@ fn render_settings_popup(frame: &mut Frame, area: Rect, state: &TuiState) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(5),
-            Constraint::Min(0),
+            Constraint::Min(1),
+            Constraint::Length(3),
         ])
         .split(inner);
 
@@ -850,6 +856,14 @@ fn render_settings_popup(frame: &mut Frame, area: Rect, state: &TuiState) {
 
     let text_widget = Paragraph::new(lines);
     frame.render_widget(text_widget, sections[1]);
+
+    let tip_text = format!("󰌵 Tip: {}", TIPS[state.tip_index]);
+    let tip_widget = Paragraph::new(tip_text)
+        .style(Style::default().fg(Color::DarkGray).add_modifier(Modifier::ITALIC))
+        .block(Block::default().borders(Borders::TOP).border_style(Style::default().fg(Color::DarkGray)))
+        .wrap(Wrap { trim: true });
+
+    frame.render_widget(tip_widget, sections[2]);
 }
 
 fn render_stack(frame: &mut Frame, area: Rect, cpu: &Cpu, bus: &Bus, state: &mut TuiState) {
@@ -1022,6 +1036,7 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
     };
 
     let mut state = TuiState {
+        tip_index: 0,
         current_dir,
         screen: initial_screen,
         show_settings: false,
@@ -1353,7 +1368,12 @@ pub fn run(cpu: &mut Cpu, bus: &mut Bus, disasm_start: u16, file_path: Option<St
                                         state.manual_selection = None;
                                         state.stack_manual_scroll = None;
                                     },
-                                    KeyCode::Char('?') => state.show_settings = true,
+                                    KeyCode::Char('?') => {
+                                        state.show_settings = !state.show_settings;
+                                        if state.show_settings && let Ok(duration) = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+                                            state.tip_index = (duration.as_millis() as usize) % TIPS.len();
+                                        }
+                                    },
                                     KeyCode::Up => {
                                         let current = state.manual_selection.unwrap_or_else(|| state.opcode_table_state.selected().unwrap_or(0));
                                         state.manual_selection = Some(current.saturating_sub(1));

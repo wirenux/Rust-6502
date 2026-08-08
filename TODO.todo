@@ -135,11 +135,6 @@ match opcode {
 - [x] add color to the TUI
 
 - [x] add a screen
-    - [ ] make the screen grow
-
-- [ ] screen can be open in a new terminal/window
-
-- [ ] add tips popup ?
 
 - [x] add keyboard control (to use in asm) ?
 - [ ] say addr for the I/O (keyboard) in the README.md or Keyboard.md
@@ -186,7 +181,7 @@ match opcode {
 
 - [ ] Create Docs for the serial monitor
 
-- [ ] add random tip in the settings
+- [x] add random tip in the settings
 
 - [ ] update the bin file in the release when release 1.1.0
 
