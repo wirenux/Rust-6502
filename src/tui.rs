@@ -1,19 +1,41 @@
 use ansi_to_tui::IntoText;
 
 use ratatui::{
-    Frame, Terminal, backend::CrosstermBackend, layout::{
+    Frame,
+    Terminal,
+    backend::CrosstermBackend,
+    layout::{
         Alignment,
         Constraint,
         Direction,
         Layout,
         Rect,
-    }, style::{
-        Color, Modifier, Style, Stylize,
-    }, text::{
+    },
+    style::{
+        Color,
+        Modifier,
+        Style,
+        Stylize,
+    },
+    text::{
         Line,
         Span,
-    }, widgets::{
-        Block, Borders, Gauge, List, ListItem, ListState, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Wrap,
+    },
+    widgets::{
+        Block,
+        Borders,
+        Gauge,
+        List,
+        ListItem,
+        ListState,
+        Paragraph,
+        Row,
+        Scrollbar,
+        ScrollbarOrientation,
+        ScrollbarState,
+        Table,
+        TableState,
+        Wrap,
     },
 };
 
@@ -47,10 +69,16 @@ use std::{
     collections::{
         HashMap,
         HashSet
-    }, fs, io, panic, path::{
+    },
+    fs,
+    io,
+    panic,
+    path::{
         Path,
         PathBuf
-    }, slice::Chunks, thread, time::{
+    },
+    thread,
+    time::{
         Duration,
         SystemTime
     },
